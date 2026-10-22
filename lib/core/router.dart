@@ -22,11 +22,14 @@ abstract final class Routes {
   static const register = '/register';
   static const unlock = '/unlock';
   static const home = '/home';
-  static const profile = '/profile';
-  static const cards = '/cards';
-  static const cardNew = '/cards/new';
-  static String cardDetail(int id) => '/cards/$id';
-  static String cardEdit(int id) => '/cards/$id/edit';
+
+  // Private screens live under /home so `go` always keeps Home below them
+  // and the Android back button never closes the app from a sub-screen.
+  static const profile = '/home/profile';
+  static const cards = '/home/cards';
+  static const cardNew = '/home/cards/new';
+  static String cardDetail(int id) => '/home/cards/$id';
+  static String cardEdit(int id) => '/home/cards/$id/edit';
 }
 
 const _publicRoutes = {
@@ -98,29 +101,31 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.home,
         builder: (context, state) => const HomeScreen(),
-      ),
-      GoRoute(
-        path: Routes.profile,
-        builder: (context, state) => const ProfilePlaceholderScreen(),
-      ),
-      GoRoute(
-        path: Routes.cards,
-        builder: (context, state) => const CardsScreen(),
         routes: [
-          // 'new' must come before ':id'.
           GoRoute(
-            path: 'new',
-            builder: (context, state) => const CardFormScreen(),
+            path: 'profile',
+            builder: (context, state) => const ProfilePlaceholderScreen(),
           ),
           GoRoute(
-            path: ':id',
-            builder: (context, state) =>
-                CardDetailScreen(cardId: _cardId(state)),
+            path: 'cards',
+            builder: (context, state) => const CardsScreen(),
             routes: [
+              // 'new' must come before ':id'.
               GoRoute(
-                path: 'edit',
+                path: 'new',
+                builder: (context, state) => const CardFormScreen(),
+              ),
+              GoRoute(
+                path: ':id',
                 builder: (context, state) =>
-                    CardFormScreen(cardId: _cardId(state)),
+                    CardDetailScreen(cardId: _cardId(state)),
+                routes: [
+                  GoRoute(
+                    path: 'edit',
+                    builder: (context, state) =>
+                        CardFormScreen(cardId: _cardId(state)),
+                  ),
+                ],
               ),
             ],
           ),

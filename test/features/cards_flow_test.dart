@@ -182,6 +182,12 @@ void main() {
     expect(key('cards.root'), findsOneWidget);
     expect(find.text('•••• 1111'), findsNothing);
     expect(find.text('•••• 2222'), findsOneWidget);
+
+    // Home is still below: Android back returns to it instead of closing
+    // the app.
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(key('home.root'), findsOneWidget);
   });
 
   testWidgets('carousel opens the card movements', (tester) async {
@@ -249,7 +255,7 @@ void main() {
     final foreign = await seedCard(db, other.id!);
     await start(tester);
     final router = GoRouterHelper(tester);
-    router.go('/cards/${foreign.id}');
+    router.go('/home/cards/${foreign.id}');
     await tester.pumpAndSettle();
     expect(find.text('Tarjeta no encontrada'), findsOneWidget);
   });

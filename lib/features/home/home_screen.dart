@@ -143,7 +143,9 @@ class _MonthSummary extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          // Stretch so each row's Wrap gets the full width and pushes the
+          // amount to the right.
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text('Resumen de ${formatMonthName(now)}', style: text.titleMedium),
             const SizedBox(height: 12),
@@ -447,33 +449,43 @@ class _Carousel extends StatelessWidget {
     }
     // Carousel keeps the order the cards were added.
     final cards = [...ranked]..sort((a, b) => a.card.id!.compareTo(b.card.id!));
-    final padding = context.pagePadding;
-
     // Height follows the tallest card (IntrinsicHeight), so large text
-    // never overflows a fixed carousel height.
-    return SingleChildScrollView(
-      key: const ValueKey('home.carousel'),
-      scrollDirection: Axis.horizontal,
-      padding: EdgeInsets.symmetric(horizontal: padding),
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            for (final (i, r) in cards.indexed) ...[
-              if (i > 0) const SizedBox(width: 12),
-              SizedBox(
-                width: 280,
-                child: CreditCardTile(
-                  key: ValueKey('home.carousel.${r.card.id}'),
-                  card: r.card,
-                  recommendation: r,
-                  onTap: () => context.push(Routes.cardDetail(r.card.id!)),
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
+    // never overflows a fixed carousel height. The first card starts where
+    // the centered, width-capped content above starts (same math as
+    // ResponsiveCenter), and the cards can scroll to the screen edges.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final available = constraints.maxWidth;
+        final padding =
+            context.pagePadding +
+            (available > ContentWidth.page
+                ? (available - ContentWidth.page) / 2
+                : 0);
+        return SingleChildScrollView(
+          key: const ValueKey('home.carousel'),
+          scrollDirection: Axis.horizontal,
+          padding: EdgeInsets.symmetric(horizontal: padding),
+          child: IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (final (i, r) in cards.indexed) ...[
+                  if (i > 0) const SizedBox(width: 12),
+                  SizedBox(
+                    width: 280,
+                    child: CreditCardTile(
+                      key: ValueKey('home.carousel.${r.card.id}'),
+                      card: r.card,
+                      recommendation: r,
+                      onTap: () => context.push(Routes.cardDetail(r.card.id!)),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

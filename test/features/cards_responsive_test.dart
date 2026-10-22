@@ -66,24 +66,36 @@ void main() {
       root: 'home.root',
     ),
     'home with cards': (location: '/home', withCards: true, root: 'home.root'),
-    'cards empty': (location: '/cards', withCards: false, root: 'cards.empty'),
-    'cards list': (location: '/cards', withCards: true, root: 'cards.root'),
+    'cards empty': (
+      location: '/home/cards',
+      withCards: false,
+      root: 'cards.empty',
+    ),
+    'cards list': (
+      location: '/home/cards',
+      withCards: true,
+      root: 'cards.root',
+    ),
     'new card form': (
-      location: '/cards/new',
+      location: '/home/cards/new',
       withCards: false,
       root: 'cardForm.root',
     ),
     'edit card form': (
-      location: '/cards/:id/edit',
+      location: '/home/cards/:id/edit',
       withCards: true,
       root: 'cardForm.archive',
     ),
     'card detail': (
-      location: '/cards/:id',
+      location: '/home/cards/:id',
       withCards: true,
       root: 'cardDetail.empty',
     ),
-    'profile': (location: '/profile', withCards: false, root: 'profile.root'),
+    'profile': (
+      location: '/home/profile',
+      withCards: false,
+      root: 'profile.root',
+    ),
   };
 
   for (final MapEntry(key: name, value: s) in screens.entries) {
