@@ -15,6 +15,7 @@ class CardsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ranking = ref.watch(cardRankingProvider);
+    final cards = ref.watch(userCardsProvider).value ?? const [];
 
     return Scaffold(
       key: const ValueKey('cards.root'),
@@ -34,10 +35,8 @@ class CardsScreen extends ConsumerWidget {
             text: 'No se pudieron cargar tus tarjetas',
           ),
           AsyncData(value: final list) when list.isEmpty => const _Empty(),
-          // The list keeps the order in which cards were added; the ranking
-          // only provides the cycle data.
           AsyncData(value: final list) => _List(
-            items: [...list]..sort((a, b) => a.card.id!.compareTo(b.card.id!)),
+            items: inAddedOrder(cards, list),
           ),
           _ => const Center(child: CircularProgressIndicator()),
         },

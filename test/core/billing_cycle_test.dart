@@ -160,4 +160,16 @@ void main() {
       expect(ranked.map((r) => r.card.alias), ['C', 'A', 'b', 'Z']);
     });
   });
+
+  test('recommendationFor works for archived cards too', () {
+    final r = recommendationFor(
+      card('A', cutDay: 5, limitCents: 100000, archived: true),
+      d(2026, 10, 22),
+      balanceCents: 30000,
+    );
+    expect(r.nextCut, d(2026, 11, 5));
+    expect(r.dueDate, d(2026, 11, 25));
+    expect(r.financingDays, 34);
+    expect(r.availableCents, 70000);
+  });
 }

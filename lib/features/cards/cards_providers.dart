@@ -29,8 +29,8 @@ final userCardsProvider = FutureProvider<List<CreditCard>>((ref) async {
   return repo.listActive(user.id!);
 }, retry: (retryCount, error) => null);
 
-/// One card of the current user, or null if it does not exist (or is not
-/// theirs).
+/// One active card of the current user, or null if it does not exist, is
+/// not theirs, or is archived (archived cards cannot be opened or edited).
 final cardByIdProvider = FutureProvider.family<CreditCard?, int>((
   ref,
   id,
@@ -38,7 +38,8 @@ final cardByIdProvider = FutureProvider.family<CreditCard?, int>((
   final user = ref.watch(currentUserProvider);
   if (user == null) return null;
   final repo = await ref.watch(cardsRepositoryProvider.future);
-  return repo.getById(user.id!, id);
+  final card = await repo.getById(user.id!, id);
+  return card == null || card.archived ? null : card;
 }, retry: (retryCount, error) => null);
 
 /// "Mejor tarjeta hoy": active cards ranked for today. Balances are 0 until
@@ -49,6 +50,18 @@ final cardRankingProvider = FutureProvider<List<CardRecommendation>>((
   final cards = await ref.watch(userCardsProvider.future);
   return rankCards(cards, ref.watch(clockProvider)());
 }, retry: (retryCount, error) => null);
+
+/// [ranked] in the order the cards were added, as [cards] (from
+/// [userCardsProvider]) lists them. Kept as a plain function: a derived
+/// provider here triggers a Riverpod 3 "markNeedsBuild during build" when a
+/// paused screen resumes.
+List<CardRecommendation> inAddedOrder(
+  List<CreditCard> cards,
+  List<CardRecommendation> ranked,
+) {
+  final byId = {for (final r in ranked) r.card.id: r};
+  return [for (final c in cards) ?byId[c.id]];
+}
 
 /// Refreshes every card view after a create/update/archive.
 void refreshCards(WidgetRef ref) {

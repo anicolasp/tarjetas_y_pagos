@@ -15,17 +15,47 @@ import '../cards/cards_providers.dart';
 import '../cards/recommendation_text.dart';
 import '../cards/widgets/credit_card_tile.dart';
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  late final AppLifecycleListener _lifecycle;
+
+  @override
+  void initState() {
+    super.initState();
+    // "Today" changes while the app is in the background (a new day, a cut
+    // date passing, morning → evening): recompute greeting and ranking when
+    // the user comes back.
+    _lifecycle = AppLifecycleListener(
+      onResume: () {
+        ref.invalidate(cardRankingProvider);
+        if (mounted) setState(() {});
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final user = ref.watch(currentUserProvider);
     final now = ref.watch(clockProvider)();
     final ranking = ref.watch(cardRankingProvider);
+    final cards = ref.watch(userCardsProvider).value ?? const [];
     if (user == null) return const SizedBox.shrink();
 
     final ranked = ranking.value ?? const <CardRecommendation>[];
+    // A failed load must not look like "no cards" (and invite duplicates).
+    final failed = ranking.hasError;
     const gap = SizedBox(height: 20);
 
     return Scaffold(
@@ -42,7 +72,10 @@ class HomeScreen extends ConsumerWidget {
                   gap,
                   _MonthSummary(user: user, now: now, ranked: ranked),
                   gap,
-                  _BestCard(ranked: ranked, today: now),
+                  if (failed)
+                    const _LoadError()
+                  else
+                    _BestCard(ranked: ranked, today: now),
                   gap,
                   const _QuickAccess(),
                   gap,
@@ -66,7 +99,40 @@ class HomeScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 8),
-            _Carousel(ranked: ranked),
+            if (!failed) _Carousel(cards: inAddedOrder(cards, ranked)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LoadError extends ConsumerWidget {
+  const _LoadError();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      key: const ValueKey('home.loadError'),
+      color: scheme.errorContainer,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'No se pudieron cargar tus tarjetas',
+              style: Theme.of(context).textTheme.titleMedium
+                  ?.copyWith(color: scheme.onErrorContainer),
+            ),
+            const SizedBox(height: 8),
+            TextButton.icon(
+              key: const ValueKey('home.retry'),
+              onPressed: () => refreshCards(ref),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Reintentar'),
+            ),
           ],
         ),
       ),
@@ -432,13 +498,14 @@ class _QuickTile extends StatelessWidget {
 }
 
 class _Carousel extends StatelessWidget {
-  const _Carousel({required this.ranked});
+  const _Carousel({required this.cards});
 
-  final List<CardRecommendation> ranked;
+  /// Cards in the order they were added.
+  final List<CardRecommendation> cards;
 
   @override
   Widget build(BuildContext context) {
-    if (ranked.isEmpty) {
+    if (cards.isEmpty) {
       return ResponsiveCenter(
         child: Text(
           'Aún no tienes tarjetas.',
@@ -447,8 +514,6 @@ class _Carousel extends StatelessWidget {
         ),
       );
     }
-    // Carousel keeps the order the cards were added.
-    final cards = [...ranked]..sort((a, b) => a.card.id!.compareTo(b.card.id!));
     // Height follows the tallest card (IntrinsicHeight), so large text
     // never overflows a fixed carousel height. The first card starts where
     // the centered, width-capped content above starts (same math as

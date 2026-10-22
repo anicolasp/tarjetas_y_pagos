@@ -40,9 +40,25 @@ void main() {
       expect(parseMoneyToCents('15,000.50'), 1500050);
       expect(parseMoneyToCents(' 0.5 '), 50);
       expect(parseMoneyToCents('0'), 0);
+      expect(parseMoneyToCents('1,234,567.89'), 123456789);
+      expect(parseMoneyToCents('9999999999999'), 999999999999900);
     });
     test('rejects invalid amounts', () {
-      for (final bad in ['', 'abc', '-5', '1.234', '1.2.3', '1e5']) {
+      for (final bad in [
+        '',
+        'abc',
+        '-5',
+        '1.234',
+        '1.2.3',
+        '1e5',
+        // Comma as decimal separator must not become 150050.
+        '1500,50',
+        // Malformed thousands groups.
+        '1,2,3',
+        '15,00',
+        // Too many digits for int cents.
+        '99999999999999999999',
+      ]) {
         expect(parseMoneyToCents(bad), isNull, reason: bad);
       }
     });

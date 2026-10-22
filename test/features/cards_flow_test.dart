@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:tarjetas_y_pagos/core/clock.dart';
 import 'package:tarjetas_y_pagos/core/formatters.dart';
 import 'package:tarjetas_y_pagos/data/database.dart';
+import 'package:tarjetas_y_pagos/features/cards/cards_providers.dart';
 
 import '../helpers/fakes.dart';
 import '../helpers/seed.dart';
@@ -218,7 +220,10 @@ void main() {
     expect(find.text('Escribe el banco'), findsOneWidget);
     expect(find.text('Escribe los últimos 4 dígitos'), findsOneWidget);
     expect(find.text('Escribe un día del 1 al 31'), findsOneWidget);
-    expect(find.text('Monto no válido (ej. 50000 o 50000.00)'), findsOneWidget);
+    expect(
+      find.text('Monto no válido (ej. 50000 o 50,000.00)'),
+      findsOneWidget,
+    );
     expect(await db.db.query('cards'), isEmpty);
   });
 
@@ -258,6 +263,119 @@ void main() {
     router.go('/home/cards/${foreign.id}');
     await tester.pumpAndSettle();
     expect(find.text('Tarjeta no encontrada'), findsOneWidget);
+  });
+
+  group('code review regressions', () {
+    testWidgets('an archived card opened by URL shows "not found"', (
+      tester,
+    ) async {
+      final card = await seedCard(db, userId, alias: 'Vieja');
+      await db.db.update('cards', {'archived': 1});
+      await start(tester);
+      GoRouterHelper(tester).go('/home/cards/${card.id}');
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.text('Tarjeta no encontrada'), findsOneWidget);
+      GoRouterHelper(tester).go('/home/cards/${card.id}/edit');
+      await tester.pumpAndSettle();
+      expect(find.text('Tarjeta no encontrada'), findsOneWidget);
+    });
+
+    testWidgets('archive from detail → edit does not crash', (tester) async {
+      final card = await seedCard(db, userId, alias: 'Viajes');
+      await start(tester);
+      await tapVisible(tester, 'home.carousel.${card.id}');
+      await tester.tap(key('cardDetail.edit'));
+      await tester.pumpAndSettle();
+      await tapVisible(tester, 'cardForm.archive');
+      await tester.tap(key('cardForm.archiveConfirm'));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(key('cards.root'), findsOneWidget);
+    });
+
+    testWidgets('a typed limit must be greater than 0 and well formed', (
+      tester,
+    ) async {
+      await start(tester);
+      await tapVisible(tester, 'home.quick.cards');
+      await tester.tap(key('cards.emptyAdd'));
+      await tester.pumpAndSettle();
+      await tester.enterText(key('cardForm.alias'), 'A');
+      await tester.enterText(key('cardForm.bank'), 'Banco Prueba');
+      await tester.enterText(key('cardForm.last4'), '1111');
+      await tester.enterText(key('cardForm.cutDay'), '5');
+      for (final bad in ['0', '1500,50']) {
+        await tester.ensureVisible(key('cardForm.limit'));
+        await tester.enterText(key('cardForm.limit'), bad);
+        await tapVisible(tester, 'cardForm.save');
+        expect(
+          find.text('Monto no válido (ej. 50000 o 50,000.00)'),
+          findsOneWidget,
+          reason: bad,
+        );
+      }
+      expect(await db.db.query('cards'), isEmpty);
+    });
+
+    testWidgets('a failed load shows an error, not "no cards"', (tester) async {
+      final store = InMemorySecureStore()
+        ..values['session_user_id'] = '$userId';
+      await tester.pumpWidget(
+        testApp([
+          ...await testOverrides(
+            database: Future.value(db),
+            prefs: {'onboarding_seen': true},
+            secureStore: store,
+            now: today,
+          ),
+          userCardsProvider.overrideWith((ref) => Future.error('disco')),
+        ]),
+      );
+      await tester.pumpAndSettle();
+      expect(key('home.loadError'), findsOneWidget);
+      expect(key('home.addFirstCard'), findsNothing);
+      expect(key('home.carouselEmpty'), findsNothing);
+    });
+
+    testWidgets('greeting and ranking refresh when the app resumes', (
+      tester,
+    ) async {
+      var now = DateTime(2026, 10, 22, 10);
+      await seedCard(db, userId, alias: 'A', cutDay: 23);
+      final store = InMemorySecureStore()
+        ..values['session_user_id'] = '$userId';
+      await tester.pumpWidget(
+        testApp([
+          ...await testOverrides(
+            database: Future.value(db),
+            prefs: {'onboarding_seen': true},
+            secureStore: store,
+          ),
+          clockProvider.overrideWithValue(() => now),
+        ]),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Buenos días, María José'), findsOneWidget);
+      expect(find.textContaining('Corta mañana'), findsOneWidget);
+
+      // Back in the app the next evening.
+      now = DateTime(2026, 10, 23, 20);
+      // Real Android sequence when leaving and coming back.
+      for (final state in [
+        AppLifecycleState.inactive,
+        AppLifecycleState.hidden,
+        AppLifecycleState.paused,
+        AppLifecycleState.hidden,
+        AppLifecycleState.inactive,
+        AppLifecycleState.resumed,
+      ]) {
+        tester.binding.handleAppLifecycleStateChanged(state);
+      }
+      await tester.pumpAndSettle();
+      expect(find.text('Buenas noches, María José'), findsOneWidget);
+      expect(find.textContaining('Corta hoy'), findsOneWidget);
+    });
   });
 }
 

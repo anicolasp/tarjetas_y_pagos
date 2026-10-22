@@ -108,7 +108,8 @@ class _CardFormState extends ConsumerState<_CardForm> {
       }
       refreshCards(ref);
       if (mounted) context.pop();
-    } on Exception {
+    } catch (_) {
+      // Repository errors (StateError/ArgumentError) and I/O failures.
       if (mounted) showErrorSnackBar(context, unexpectedErrorMessage);
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -144,7 +145,8 @@ class _CardFormState extends ConsumerState<_CardForm> {
       await repo.archive(card.userId, card.id!);
       refreshCards(ref);
       if (mounted) context.go(Routes.cards);
-    } on Exception {
+    } catch (_) {
+      // Repository errors (StateError/ArgumentError) and I/O failures.
       if (mounted) showErrorSnackBar(context, unexpectedErrorMessage);
     }
   }
@@ -277,11 +279,14 @@ class _CardFormState extends ConsumerState<_CardForm> {
                       decimal: true,
                     ),
                     textInputAction: TextInputAction.done,
-                    validator: (v) =>
-                        (v ?? '').trim().isEmpty ||
-                            parseMoneyToCents(v!) != null
-                        ? null
-                        : 'Monto no válido (ej. 50000 o 50000.00)',
+                    // Empty = no limit registered; a typed limit must be > 0.
+                    validator: (v) {
+                      if ((v ?? '').trim().isEmpty) return null;
+                      final cents = parseMoneyToCents(v!);
+                      return cents != null && cents > 0
+                          ? null
+                          : 'Monto no válido (ej. 50000 o 50,000.00)';
+                    },
                     decoration: InputDecoration(
                       labelText: 'Límite de crédito (opcional)',
                       prefixText: '${_currency.symbol} ',

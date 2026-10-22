@@ -70,6 +70,25 @@ class CardRecommendation {
       availableCents! < card.creditLimitCents * lowCreditRatio;
 }
 
+/// The cycle data of one card for [today], whether archived or not.
+CardRecommendation recommendationFor(
+  CreditCard card,
+  DateTime today, {
+  int balanceCents = 0,
+}) {
+  final cut = nextCut(today, card.cutDay);
+  final due = dueDate(cut, card.paymentDays);
+  return CardRecommendation(
+    card: card,
+    nextCut: cut,
+    dueDate: due,
+    financingDays: due.difference(dateOnly(today)).inDays,
+    availableCents: card.creditLimitCents == 0
+        ? null
+        : card.creditLimitCents - balanceCents,
+  );
+}
+
 /// Active cards from best to worst to use [today]: cards with enough credit
 /// first, then low-credit ones; each group by most financing days, then most
 /// available credit, then alias.
@@ -81,14 +100,10 @@ List<CardRecommendation> rankCards(
   final ranked = [
     for (final card in cards)
       if (!card.archived)
-        CardRecommendation(
-          card: card,
-          nextCut: nextCut(today, card.cutDay),
-          dueDate: dueDate(nextCut(today, card.cutDay), card.paymentDays),
-          financingDays: financingDays(today, card.cutDay, card.paymentDays),
-          availableCents: card.creditLimitCents == 0
-              ? null
-              : card.creditLimitCents - (balancesCents[card.id] ?? 0),
+        recommendationFor(
+          card,
+          today,
+          balanceCents: balancesCents[card.id] ?? 0,
         ),
   ];
   ranked.sort((a, b) {

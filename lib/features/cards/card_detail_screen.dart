@@ -40,7 +40,7 @@ class CardDetailScreen extends ConsumerWidget {
       body: SafeArea(
         child: switch (card) {
           AsyncData(value: final c?) => _Body(
-            recommendation: rankCards([c], today).single,
+            recommendation: recommendationFor(c, today),
             today: today,
           ),
           AsyncData() ||
