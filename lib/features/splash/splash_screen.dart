@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/responsive.dart';
 import '../../data/providers.dart';
+import '../auth/auth_controller.dart';
 
 /// Shown while the app opens the database and decides the initial route.
 class SplashScreen extends ConsumerWidget {
@@ -68,7 +69,10 @@ class SplashScreen extends ConsumerWidget {
                     const SizedBox(height: 16),
                     OutlinedButton.icon(
                       key: const ValueKey('splash.retry'),
-                      onPressed: () => ref.invalidate(appDatabaseProvider),
+                      onPressed: () => ref
+                        ..invalidate(appDatabaseProvider)
+                        // Restores the session once the database opens.
+                        ..invalidate(authControllerProvider),
                       icon: const Icon(Icons.refresh),
                       label: const Text('Reintentar'),
                     ),
