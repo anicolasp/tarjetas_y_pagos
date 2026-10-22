@@ -15,8 +15,10 @@ class PasswordHasher {
     this.useIsolate = true,
   });
 
-  /// OWASP 2023 recommendation for PBKDF2-HMAC-SHA256.
-  static const defaultIterations = 210000;
+  /// Issue #2 rule: 210k (OWASP 2023) only if a login takes < 1 s on the
+  /// emulator; it measured 2.3 s in a debug build, so we use the 100k
+  /// minimum. Raising it later is safe: [needsRehash] upgrades on login.
+  static const defaultIterations = 100000;
   static const saltLength = 16;
   static const _scheme = 'pbkdf2-sha256';
 
