@@ -19,7 +19,11 @@ void main() {
       const MaterialApp(
         home: ResponsiveCenter(
           maxWidth: ContentWidth.form,
-          child: SizedBox(key: ValueKey('content'), height: 10),
+          child: SizedBox(
+            key: ValueKey('content'),
+            width: double.infinity,
+            height: 10,
+          ),
         ),
       ),
     );
@@ -34,7 +38,11 @@ void main() {
     await tester.pumpWidget(
       const MaterialApp(
         home: ResponsiveCenter(
-          child: SizedBox(key: ValueKey('content'), height: 10),
+          child: SizedBox(
+            key: ValueKey('content'),
+            width: double.infinity,
+            height: 10,
+          ),
         ),
       ),
     );
