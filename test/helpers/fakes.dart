@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tarjetas_y_pagos/app.dart';
+import 'package:tarjetas_y_pagos/core/clock.dart';
 import 'package:tarjetas_y_pagos/data/database.dart';
 import 'package:tarjetas_y_pagos/data/providers.dart';
 import 'package:tarjetas_y_pagos/services/biometric_service.dart';
@@ -63,6 +64,7 @@ Future<List<Override>> testOverrides({
   Map<String, Object> prefs = const {},
   InMemorySecureStore? secureStore,
   FakeBiometricService? biometrics,
+  DateTime? now,
 }) async {
   SharedPreferences.setMockInitialValues(prefs);
   final sharedPrefs = await SharedPreferences.getInstance();
@@ -74,6 +76,7 @@ Future<List<Override>> testOverrides({
     ),
     passwordHasherProvider.overrideWithValue(testHasher),
     if (database != null) appDatabaseProvider.overrideWith((ref) => database),
+    if (now != null) clockProvider.overrideWithValue(() => now),
   ];
 }
 

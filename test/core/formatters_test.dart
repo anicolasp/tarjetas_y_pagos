@@ -33,4 +33,45 @@ void main() {
     expect(formatDate(DateTime(2026, 10, 15)), '15 oct 2026');
     expect(formatShortDate(DateTime(2026, 1, 5)), '05/01/2026');
   });
+
+  group('parseMoneyToCents', () {
+    test('accepts plain, grouped and decimal amounts', () {
+      expect(parseMoneyToCents('15000'), 1500000);
+      expect(parseMoneyToCents('15,000.50'), 1500050);
+      expect(parseMoneyToCents(' 0.5 '), 50);
+      expect(parseMoneyToCents('0'), 0);
+      expect(parseMoneyToCents('1,234,567.89'), 123456789);
+      expect(parseMoneyToCents('9999999999999'), 999999999999900);
+    });
+    test('rejects invalid amounts', () {
+      for (final bad in [
+        '',
+        'abc',
+        '-5',
+        '1.234',
+        '1.2.3',
+        '1e5',
+        // Comma as decimal separator must not become 150050.
+        '1500,50',
+        // Malformed thousands groups.
+        '1,2,3',
+        '15,00',
+        // Too many digits for int cents.
+        '99999999999999999999',
+      ]) {
+        expect(parseMoneyToCents(bad), isNull, reason: bad);
+      }
+    });
+    test('round trips with centsToInput', () {
+      for (final cents in [0, 5, 50, 1500050, 123456789]) {
+        expect(parseMoneyToCents(centsToInput(cents)), cents);
+      }
+      expect(centsToInput(1500050), '15000.50');
+    });
+  });
+
+  test('day/month and month names in Spanish', () {
+    expect(formatDayMonth(DateTime(2026, 12, 15)), '15/dic');
+    expect(formatMonthName(DateTime(2026, 10, 1)), 'octubre');
+  });
 }

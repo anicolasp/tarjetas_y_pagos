@@ -53,6 +53,14 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  /// Logout lives in the profile, reached from the home avatar.
+  Future<void> logout(WidgetTester tester) async {
+    await tester.tap(key('home.avatar'));
+    await tester.pumpAndSettle();
+    await tester.tap(key('profile.logout'));
+    await tester.pumpAndSettle();
+  }
+
   Future<void> login(WidgetTester tester, String email, String password) async {
     await tester.enterText(key('login.email'), email);
     await tester.enterText(key('login.password'), password);
@@ -89,7 +97,7 @@ void main() {
     await start(tester);
     await register(tester);
     expect(key('home.root'), findsOneWidget);
-    expect(find.text('Hola, Ana'), findsOneWidget);
+    expect(find.textContaining(', Ana'), findsOneWidget);
     expect(secureStore.values['session_user_id'], isNotNull);
 
     // Reopen the app: straight to home, no slides, no login.
@@ -121,8 +129,7 @@ void main() {
   ) async {
     await start(tester);
     await register(tester);
-    await tester.tap(key('home.logout'));
-    await tester.pumpAndSettle();
+    await logout(tester);
 
     await register(tester, email: 'ANA@example.com');
     expect(find.text('Este correo ya está registrado'), findsOneWidget);
@@ -132,8 +139,7 @@ void main() {
   testWidgets('logout, wrong password, then right password', (tester) async {
     await start(tester);
     await register(tester);
-    await tester.tap(key('home.logout'));
-    await tester.pumpAndSettle();
+    await logout(tester);
     expect(key('login.root'), findsOneWidget);
     expect(secureStore.values['session_user_id'], isNull);
 
@@ -148,8 +154,7 @@ void main() {
   testWidgets('5 wrong passwords show the wait message', (tester) async {
     await start(tester);
     await register(tester);
-    await tester.tap(key('home.logout'));
-    await tester.pumpAndSettle();
+    await logout(tester);
 
     for (var i = 0; i < 5; i++) {
       await login(tester, 'ana@example.com', 'mala1234');
@@ -211,8 +216,7 @@ void main() {
       await tester.pumpWidget(const SizedBox());
       await start(tester, biometrics: bio);
 
-      await tester.tap(key('home.logout'));
-      await tester.pumpAndSettle();
+      await logout(tester);
       await tester.tap(key('login.biometric'));
       await tester.pumpAndSettle();
       expect(key('home.root'), findsOneWidget);
@@ -223,8 +227,7 @@ void main() {
     ) async {
       await start(tester, biometrics: FakeBiometricService());
       await register(tester);
-      await tester.tap(key('home.logout'));
-      await tester.pumpAndSettle();
+      await logout(tester);
       expect(key('login.biometric'), findsNothing);
     });
 
