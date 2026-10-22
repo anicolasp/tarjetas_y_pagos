@@ -9,10 +9,11 @@ String encodeDate(DateTime d) =>
 
 DateTime decodeDate(String s) => DateTime.parse(s);
 
-/// Timestamps (`created_at`) are stored as full ISO-8601.
-String encodeTimestamp(DateTime d) => d.toIso8601String();
+/// Timestamps (`created_at`) are stored as ISO-8601 in UTC so they keep their
+/// meaning if the device time zone changes, and are read back in local time.
+String encodeTimestamp(DateTime d) => d.toUtc().toIso8601String();
 
-DateTime decodeTimestamp(String s) => DateTime.parse(s);
+DateTime decodeTimestamp(String s) => DateTime.parse(s).toLocal();
 
 int encodeBool(bool b) => b ? 1 : 0;
 

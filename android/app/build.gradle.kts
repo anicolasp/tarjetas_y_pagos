@@ -21,7 +21,8 @@ android {
         applicationId = "com.anicolasp.tarjetas_y_pagos"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        // local_auth, ML Kit and secure storage need API 23+.
+        // local_auth, ML Kit and secure storage need API 23+; Flutter's
+        // default (24 in Flutter 3.47) already satisfies it.
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         // Uses the version code from pubspec.yaml. When using split APKs, 1000 * ABI_VERSION

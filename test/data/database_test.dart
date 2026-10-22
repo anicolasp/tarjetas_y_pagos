@@ -106,6 +106,56 @@ void main() {
     expect(await db.query('cards'), isEmpty);
   });
 
+  test('an expense cannot use another user\'s card', () async {
+    final owner = await insertUser();
+    final other = await db.insert('users', {
+      'first_name': 'Otro',
+      'last_name': 'Usuario',
+      'email': 'otro@example.com',
+      'password_hash': 'h',
+      'salt': 's',
+      'created_at': DateTime(2026).toIso8601String(),
+    });
+    final cardId = await db.insert('cards', card(owner));
+    final category = (await db.query('categories', limit: 1)).single['id'];
+    Map<String, Object?> expense(int userId) => {
+      'user_id': userId,
+      'card_id': cardId,
+      'category_id': category,
+      'merchant': 'Comercio',
+      'amount_cents': 100,
+      'currency': 'DOP',
+      'date': '2026-10-01',
+      'created_at': DateTime(2026).toIso8601String(),
+    };
+
+    await db.insert('expenses', expense(owner));
+    expect(
+      () => db.insert('expenses', expense(other)),
+      throwsA(isA<DatabaseException>()),
+    );
+  });
+
+  test('category names are unique per owner', () async {
+    final userId = await insertUser();
+    Map<String, Object?> cat(int? owner, String name) => {
+      'user_id': owner,
+      'name': name,
+      'icon': 'pets',
+      'color': 1,
+    };
+
+    expect(
+      () => db.insert('categories', cat(null, 'supermercado')),
+      throwsA(isA<DatabaseException>()),
+    );
+    await db.insert('categories', cat(userId, 'Mascotas'));
+    expect(
+      () => db.insert('categories', cat(userId, 'MASCOTAS')),
+      throwsA(isA<DatabaseException>()),
+    );
+  });
+
   test('version matches the number of migrations', () async {
     expect(await db.getVersion(), AppDatabase.version);
   });

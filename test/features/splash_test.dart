@@ -36,6 +36,30 @@ void main() {
     await tester.pump();
 
     expect(find.byKey(const ValueKey('splash.error')), findsOneWidget);
+    expect(find.byKey(const ValueKey('splash.retry')), findsOneWidget);
+  });
+
+  testWidgets('retry reopens the database', (tester) async {
+    var attempts = 0;
+    final pending = Completer<AppDatabase>();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          appDatabaseProvider.overrideWith((ref) {
+            attempts++;
+            return attempts == 1 ? Future.error('boom') : pending.future;
+          }),
+        ],
+        child: const TarjetasApp(),
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.byKey(const ValueKey('splash.retry')));
+    await tester.pump();
+
+    expect(attempts, 2);
+    expect(find.byKey(const ValueKey('splash.loading')), findsOneWidget);
   });
 
   for (final c in responsiveCases) {

@@ -56,14 +56,23 @@ class SplashScreen extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 32),
-                  if (db.hasError)
+                  // While retrying, Riverpod keeps the previous error, so
+                  // only show it once loading has finished.
+                  if (db.hasError && !db.isLoading) ...[
                     Text(
                       'No se pudo abrir la base de datos',
                       key: const ValueKey('splash.error'),
                       textAlign: TextAlign.center,
                       style: text.bodyMedium?.copyWith(color: scheme.error),
-                    )
-                  else
+                    ),
+                    const SizedBox(height: 16),
+                    OutlinedButton.icon(
+                      key: const ValueKey('splash.retry'),
+                      onPressed: () => ref.invalidate(appDatabaseProvider),
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Reintentar'),
+                    ),
+                  ] else
                     const SizedBox.square(
                       dimension: 28,
                       child: CircularProgressIndicator(
