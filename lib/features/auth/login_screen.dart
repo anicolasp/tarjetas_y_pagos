@@ -56,6 +56,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           'Demasiados intentos. Intenta de nuevo en ${formatWait(e.remaining)}.',
         );
       }
+    } on Exception {
+      if (mounted) showErrorSnackBar(context, unexpectedErrorMessage);
     } finally {
       if (mounted) setState(() => _loading = false);
     }

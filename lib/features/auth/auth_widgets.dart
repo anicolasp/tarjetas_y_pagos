@@ -160,6 +160,8 @@ class LoadingButton extends StatelessWidget {
   }
 }
 
+const unexpectedErrorMessage = 'Ocurrió un error. Intenta de nuevo.';
+
 void showErrorSnackBar(BuildContext context, String message) {
   ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()

@@ -47,12 +47,41 @@ void main() {
   });
 
   test('lockout is capped at 15 min', () async {
+    // Keep attacking right after each lockout ends.
     for (var i = 0; i < 12; i++) {
       await fail(5);
-      now = now.add(const Duration(hours: 1));
+      now = now.add(throttle.lockedFor(email)! + const Duration(seconds: 1));
     }
     await fail(5);
     expect(throttle.lockedFor(email), LoginThrottle.maxLockout);
+  });
+
+  test('failures older than 15 min are forgotten', () async {
+    await fail(4);
+    now = now.add(const Duration(minutes: 16));
+    await fail(1);
+    expect(throttle.lockedFor(email), isNull);
+    await fail(3);
+    expect(throttle.lockedFor(email), isNull);
+    await fail(1);
+    expect(throttle.lockedFor(email), const Duration(seconds: 30));
+  });
+
+  test('a long pause after a lockout starts over at 30 s', () async {
+    await fail(5);
+    now = now.add(const Duration(hours: 1));
+    await fail(5);
+    expect(throttle.lockedFor(email), const Duration(seconds: 30));
+  });
+
+  test('never stores the email itself', () async {
+    await fail(5);
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getKeys(), isNotEmpty);
+    for (final k in prefs.getKeys()) {
+      expect(k, isNot(contains('ana')), reason: k);
+      expect(k, isNot(contains('example')), reason: k);
+    }
   });
 
   test('reset clears failures and lockout', () async {

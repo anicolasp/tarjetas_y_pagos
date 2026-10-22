@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
@@ -34,14 +36,25 @@ class FakeBiometricService implements BiometricService {
   bool succeeds;
   var prompts = 0;
 
+  /// When set, the prompt stays open until the test completes it.
+  Completer<bool>? pending;
+
   @override
   Future<bool> isAvailable() async => available;
 
   @override
   Future<bool> authenticate(String reason) async {
     prompts++;
+    if (pending != null) return pending!.future;
     return available && succeeds;
   }
+}
+
+/// Secure storage whose reads fail, like a reset Android keystore.
+class BrokenSecureStore extends InMemorySecureStore {
+  @override
+  Future<String?> read(String key) async =>
+      throw Exception('keystore unavailable');
 }
 
 /// Overrides every platform-backed provider with an in-memory fake.

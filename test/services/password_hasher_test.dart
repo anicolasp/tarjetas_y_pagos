@@ -46,9 +46,20 @@ void main() {
 
   test('malformed hashes never verify', () async {
     final salt = hasher.newSalt();
-    for (final bad in ['', 'plain', r'md5$1$abc', r'pbkdf2-sha256$x$abc']) {
+    for (final bad in [
+      '',
+      'plain',
+      r'md5$1$abc',
+      r'pbkdf2-sha256$x$abc',
+      r'pbkdf2-sha256$1000$!!!not-base64',
+    ]) {
       expect(await hasher.verify(password, salt, bad), isFalse, reason: bad);
     }
+  });
+
+  test('a corrupted salt never verifies (no exception)', () async {
+    final stored = await hasher.hash(password, hasher.newSalt());
+    expect(await hasher.verify(password, '%%%', stored), isFalse);
   });
 
   test('works in a background isolate', () async {

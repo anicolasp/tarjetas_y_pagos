@@ -46,9 +46,14 @@ class PasswordHasher {
     if (parts.length != 3 || parts[0] != _scheme) return false;
     final storedIterations = int.tryParse(parts[1]);
     if (storedIterations == null || storedIterations <= 0) return false;
-    final expected = base64Decode(parts[2]);
-    final actual = await _run(password, salt, storedIterations);
-    return _constantTimeEquals(expected, actual);
+    try {
+      final expected = base64Decode(parts[2]);
+      final actual = await _run(password, salt, storedIterations);
+      return _constantTimeEquals(expected, actual);
+    } on FormatException {
+      // Corrupted hash or salt (bad base64): treat as a wrong password.
+      return false;
+    }
   }
 
   bool needsRehash(String stored) {

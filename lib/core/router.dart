@@ -38,8 +38,8 @@ String? authRedirect({
 }) {
   String? goTo(String target) => location == target ? null : target;
 
-  if (auth is AuthLoading) return goTo(Routes.splash);
-  if (!onboardingSeen) return goTo(Routes.onboarding);
+  // Onboarding comes first, but only once we know the auth state.
+  if (!onboardingSeen && auth is! AuthLoading) return goTo(Routes.onboarding);
   return switch (auth) {
     AuthLoading() => goTo(Routes.splash),
     AuthNeedsUnlock() => goTo(Routes.unlock),

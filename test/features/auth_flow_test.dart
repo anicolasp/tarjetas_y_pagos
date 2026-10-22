@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tarjetas_y_pagos/data/database.dart';
@@ -225,5 +227,52 @@ void main() {
       await tester.pumpAndSettle();
       expect(key('login.biometric'), findsNothing);
     });
+
+    testWidgets('biometrics on but no fingerprints left: asks for password', (
+      tester,
+    ) async {
+      final bio = FakeBiometricService();
+      await start(tester, biometrics: bio);
+      await register(tester);
+      await enableBiometrics();
+
+      bio.available = false;
+      await tester.pumpWidget(const SizedBox());
+      await start(tester, biometrics: bio);
+
+      expect(key('login.root'), findsOneWidget);
+      expect(key('home.root'), findsNothing);
+      expect(secureStore.values['session_user_id'], isNull);
+    });
+
+    testWidgets('"Usar contraseña" wins over a late fingerprint', (
+      tester,
+    ) async {
+      final bio = FakeBiometricService();
+      await start(tester, biometrics: bio);
+      await register(tester);
+      await enableBiometrics();
+
+      bio.pending = Completer<bool>();
+      await tester.pumpWidget(const SizedBox());
+      await start(tester, biometrics: bio);
+      expect(key('unlock.root'), findsOneWidget);
+
+      await tester.tap(key('unlock.usePassword'));
+      await tester.pumpAndSettle();
+      bio.pending!.complete(true);
+      await tester.pumpAndSettle();
+
+      expect(key('login.root'), findsOneWidget);
+      expect(secureStore.values['session_user_id'], isNull);
+    });
+  });
+
+  testWidgets('unreadable secure storage goes to login, not a stuck splash', (
+    tester,
+  ) async {
+    secureStore = BrokenSecureStore();
+    await start(tester);
+    expect(key('login.root'), findsOneWidget);
   });
 }

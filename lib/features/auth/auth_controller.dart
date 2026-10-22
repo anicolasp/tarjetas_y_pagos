@@ -66,18 +66,36 @@ class AuthController extends Notifier<AuthState> {
       // The splash shows the database error and its retry button.
       return;
     }
+    try {
+      state = await _savedSessionState(repo);
+    } on Object {
+      // Unreadable secure storage (e.g. keystore reset after a backup
+      // restore): never get stuck on the splash, ask for the password.
+      try {
+        await ref.read(sessionServiceProvider).end();
+      } on Object {
+        // Nothing else to do; the login screen still works.
+      }
+      state = const AuthLoggedOut();
+    }
+  }
+
+  Future<AuthState> _savedSessionState(AuthRepository repo) async {
     final session = ref.read(sessionServiceProvider);
     final userId = await session.currentUserId();
     final user = userId == null ? null : await repo.getById(userId);
     if (user == null) {
       if (userId != null) await session.end();
-      state = await _loggedOut(repo);
-      return;
+      return _loggedOut(repo);
     }
-    final mustUnlock =
-        user.biometricEnabled &&
-        await ref.read(biometricServiceProvider).isAvailable();
-    state = mustUnlock ? AuthNeedsUnlock(user) : AuthLoggedIn(user);
+    if (!user.biometricEnabled) return AuthLoggedIn(user);
+    if (await ref.read(biometricServiceProvider).isAvailable()) {
+      return AuthNeedsUnlock(user);
+    }
+    // Biometrics were turned on but are gone (fingerprints removed): do not
+    // skip authentication, fall back to the password.
+    await session.end();
+    return const AuthLoggedOut();
   }
 
   /// Throws the [AuthRepository.login] exceptions.
@@ -106,11 +124,11 @@ class AuthController extends Notifier<AuthState> {
   Future<bool> unlock() async {
     final current = state;
     if (current is! AuthNeedsUnlock) return false;
-    if (!await ref
+    final ok = await ref
         .read(biometricServiceProvider)
-        .authenticate(biometricReason)) {
-      return false;
-    }
+        .authenticate(biometricReason);
+    // The user may have chosen "Usar contraseña" while the prompt was open.
+    if (!ok || !identical(state, current)) return false;
     state = AuthLoggedIn(current.user);
     return true;
   }
@@ -121,20 +139,19 @@ class AuthController extends Notifier<AuthState> {
     if (current is! AuthLoggedOut || current.biometricUser == null) {
       return false;
     }
-    if (!await ref
+    final ok = await ref
         .read(biometricServiceProvider)
-        .authenticate(biometricReason)) {
-      return false;
-    }
-    await _startSession(current.biometricUser!);
+        .authenticate(biometricReason);
+    if (!ok || !identical(state, current)) return false;
+    final user = current.biometricUser!;
+    // A verified fingerprint clears earlier password typos for this email.
+    await ref.read(loginThrottleProvider).reset(user.email);
+    await _startSession(user);
     return true;
   }
 
   /// From the unlock screen: drop the session and go to the password login.
-  Future<void> usePassword() async {
-    await ref.read(sessionServiceProvider).end();
-    state = await _loggedOut(await _repo);
-  }
+  Future<void> usePassword() => logout();
 
   Future<void> logout() async {
     await ref.read(sessionServiceProvider).end();

@@ -95,6 +95,8 @@ void main() {
     },
     'home': (tester) async {
       final id = await seedUser();
+      // Without biometrics the saved session opens home directly.
+      await db.db.update('users', {'biometric_enabled': 0});
       final store = InMemorySecureStore()..values['session_user_id'] = '$id';
       await tester.pumpWidget(
         testApp(

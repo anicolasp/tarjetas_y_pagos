@@ -19,7 +19,9 @@ class _UnlockScreenState extends ConsumerState<UnlockScreen> {
   void initState() {
     super.initState();
     // Open the system prompt right away; the button retries.
-    WidgetsBinding.instance.addPostFrameCallback((_) => _unlock());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _unlock();
+    });
   }
 
   Future<void> _unlock() async {

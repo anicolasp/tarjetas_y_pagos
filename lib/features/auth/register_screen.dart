@@ -50,6 +50,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       if (mounted) {
         setState(() => _emailError = 'Este correo ya está registrado');
       }
+    } on Exception {
+      if (mounted) showErrorSnackBar(context, unexpectedErrorMessage);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
