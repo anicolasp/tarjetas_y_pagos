@@ -6,8 +6,12 @@ import '../features/auth/auth_controller.dart';
 import '../features/auth/login_screen.dart';
 import '../features/auth/register_screen.dart';
 import '../features/auth/unlock_screen.dart';
-import '../features/home/home_placeholder_screen.dart';
+import '../features/cards/card_detail_screen.dart';
+import '../features/cards/card_form_screen.dart';
+import '../features/cards/cards_screen.dart';
+import '../features/home/home_screen.dart';
 import '../features/onboarding/onboarding_screen.dart';
+import '../features/profile/profile_placeholder_screen.dart';
 import '../features/splash/splash_screen.dart';
 import '../services/providers.dart';
 
@@ -18,6 +22,11 @@ abstract final class Routes {
   static const register = '/register';
   static const unlock = '/unlock';
   static const home = '/home';
+  static const profile = '/profile';
+  static const cards = '/cards';
+  static const cardNew = '/cards/new';
+  static String cardDetail(int id) => '/cards/$id';
+  static String cardEdit(int id) => '/cards/$id/edit';
 }
 
 const _publicRoutes = {
@@ -88,7 +97,34 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: Routes.home,
-        builder: (context, state) => const HomePlaceholderScreen(),
+        builder: (context, state) => const HomeScreen(),
+      ),
+      GoRoute(
+        path: Routes.profile,
+        builder: (context, state) => const ProfilePlaceholderScreen(),
+      ),
+      GoRoute(
+        path: Routes.cards,
+        builder: (context, state) => const CardsScreen(),
+        routes: [
+          // 'new' must come before ':id'.
+          GoRoute(
+            path: 'new',
+            builder: (context, state) => const CardFormScreen(),
+          ),
+          GoRoute(
+            path: ':id',
+            builder: (context, state) =>
+                CardDetailScreen(cardId: _cardId(state)),
+            routes: [
+              GoRoute(
+                path: 'edit',
+                builder: (context, state) =>
+                    CardFormScreen(cardId: _cardId(state)),
+              ),
+            ],
+          ),
+        ],
       ),
     ],
   );
@@ -98,3 +134,7 @@ final routerProvider = Provider<GoRouter>((ref) {
   });
   return router;
 });
+
+/// Card id from the path; an invalid id (-1) shows "Tarjeta no encontrada".
+int _cardId(GoRouterState state) =>
+    int.tryParse(state.pathParameters['id'] ?? '') ?? -1;
