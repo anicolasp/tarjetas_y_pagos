@@ -69,14 +69,16 @@ class Debt {
     Currency? currency,
     DateTime? dueDate,
     DebtStatus? status,
+    bool clearDescription = false,
+    bool clearDueDate = false,
   }) => Debt(
     id: id ?? this.id,
     userId: userId,
     creditor: creditor ?? this.creditor,
-    description: description ?? this.description,
+    description: clearDescription ? null : description ?? this.description,
     amountCents: amountCents ?? this.amountCents,
     currency: currency ?? this.currency,
-    dueDate: dueDate ?? this.dueDate,
+    dueDate: clearDueDate ? null : dueDate ?? this.dueDate,
     status: status ?? this.status,
     createdAt: createdAt,
   );

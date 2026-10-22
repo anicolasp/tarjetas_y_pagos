@@ -7,8 +7,10 @@ abstract final class Routes {
   static const splash = '/';
 }
 
+/// App router. Session and onboarding redirects are added with the auth
+/// flow (#2).
 final routerProvider = Provider<GoRouter>((ref) {
-  return GoRouter(
+  final router = GoRouter(
     initialLocation: Routes.splash,
     routes: [
       GoRoute(
@@ -16,7 +18,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const SplashScreen(),
       ),
     ],
-    // Session and onboarding redirects are added with the auth flow (#2).
-    redirect: (context, state) => null,
   );
+  ref.onDispose(router.dispose);
+  return router;
 });

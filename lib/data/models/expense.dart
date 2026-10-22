@@ -80,6 +80,7 @@ class Expense {
     DateTime? date,
     String? notes,
     ExpenseSource? source,
+    bool clearNotes = false,
   }) => Expense(
     id: id ?? this.id,
     userId: userId,
@@ -89,7 +90,7 @@ class Expense {
     amountCents: amountCents ?? this.amountCents,
     currency: currency ?? this.currency,
     date: date ?? this.date,
-    notes: notes ?? this.notes,
+    notes: clearNotes ? null : notes ?? this.notes,
     source: source ?? this.source,
     createdAt: createdAt,
   );

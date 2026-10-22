@@ -157,10 +157,23 @@ void main() {
     );
   });
 
-  test('dates are stored without time, timestamps in full', () {
+  test('dates are stored without time, timestamps in UTC', () {
     final map = expense.copyWith(date: DateTime(2026, 1, 5, 23, 59)).toMap();
     expect(map['date'], '2026-01-05');
-    expect(map['created_at'], '2026-10-21T14:30:05.000');
+    expect(map['created_at'], created.toUtc().toIso8601String());
+    expect(map['created_at'] as String, endsWith('Z'));
+    final loaded = Expense.fromMap(map).createdAt;
+    expect(loaded.isUtc, isFalse);
+    expect(loaded, created);
+  });
+
+  test('copyWith can clear nullable fields', () {
+    final d = debt.copyWith(clearDueDate: true, clearDescription: true);
+    expect(d.dueDate, isNull);
+    expect(d.description, isNull);
+    expect(debt.copyWith().dueDate, day);
+    expect(expense.copyWith(clearNotes: true).notes, isNull);
+    expect(expense.copyWith().notes, 'semana');
   });
 
   test('models persist and load through SQLite', () async {

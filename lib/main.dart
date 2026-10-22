@@ -16,5 +16,8 @@ Future<void> main() async {
   }
   Intl.defaultLocale = appLocale;
   await initializeDateFormatting(appLocale);
-  runApp(const ProviderScope(child: TarjetasApp()));
+  const app = ProviderScope(child: TarjetasApp());
+  // Lets Marionette override theme and text scale during visual checks.
+  // Same condition as MarionetteBinding above, so profile builds stay clean.
+  runApp(kDebugMode ? const MarionetteDeviceConfig(child: app) : app);
 }

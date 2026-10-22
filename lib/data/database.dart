@@ -96,7 +96,9 @@ Future<void> _v1(Database db) async {
       currency TEXT NOT NULL CHECK (currency IN ('DOP', 'USD')),
       color INTEGER NOT NULL,
       archived INTEGER NOT NULL DEFAULT 0,
-      created_at TEXT NOT NULL
+      created_at TEXT NOT NULL,
+      -- Target of the composite FK in expenses (card must belong to the user).
+      UNIQUE (id, user_id)
     )''');
   batch.execute('''
     CREATE TABLE categories (
@@ -110,7 +112,7 @@ Future<void> _v1(Database db) async {
     CREATE TABLE expenses (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      card_id INTEGER NOT NULL REFERENCES cards(id) ON DELETE CASCADE,
+      card_id INTEGER NOT NULL,
       category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE RESTRICT,
       merchant TEXT NOT NULL,
       amount_cents INTEGER NOT NULL CHECK (amount_cents > 0),
@@ -118,7 +120,9 @@ Future<void> _v1(Database db) async {
       date TEXT NOT NULL,
       notes TEXT,
       source TEXT NOT NULL DEFAULT 'manual' CHECK (source IN ('manual', 'ia')),
-      created_at TEXT NOT NULL
+      created_at TEXT NOT NULL,
+      FOREIGN KEY (card_id, user_id) REFERENCES cards(id, user_id)
+        ON DELETE CASCADE
     )''');
   batch.execute('''
     CREATE TABLE card_payments (
@@ -152,6 +156,11 @@ Future<void> _v1(Database db) async {
 
   batch.execute('CREATE INDEX idx_cards_user ON cards(user_id)');
   batch.execute('CREATE INDEX idx_categories_user ON categories(user_id)');
+  // One name per owner; base categories (NULL owner) are grouped as 0.
+  batch.execute(
+    'CREATE UNIQUE INDEX idx_categories_owner_name '
+    'ON categories(IFNULL(user_id, 0), name COLLATE NOCASE)',
+  );
   batch.execute(
     'CREATE INDEX idx_expenses_user_card_date ON expenses(user_id, card_id, date)',
   );
