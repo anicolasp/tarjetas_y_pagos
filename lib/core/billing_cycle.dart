@@ -4,6 +4,7 @@
 library;
 
 import '../data/models/credit_card.dart';
+import 'money.dart';
 
 /// Below this share of the limit left, a card is "low credit".
 const lowCreditRatio = 0.10;
@@ -54,7 +55,7 @@ class CardRecommendation {
     required this.nextCut,
     required this.dueDate,
     required this.financingDays,
-    required this.availableCents,
+    required this.available,
   });
 
   final CreditCard card;
@@ -62,19 +63,25 @@ class CardRecommendation {
   final DateTime dueDate;
   final int financingDays;
 
-  /// Null when the card has no limit registered (limit 0).
-  final int? availableCents;
+  /// Available credit per currency, only for currencies with a limit
+  /// registered (a dual card can have one per currency).
+  final Map<Currency, int> available;
 
-  bool get lowCredit =>
-      availableCents != null &&
-      availableCents! < card.creditLimitCents * lowCreditRatio;
+  /// Available credit in the card's main currency, or null without a limit.
+  int? get availableCents => available[card.currency];
+
+  /// Any limited currency has less than [lowCreditRatio] of its limit left.
+  bool get lowCredit => available.entries.any(
+    (e) => e.value < card.limitFor(e.key) * lowCreditRatio,
+  );
 }
 
 /// The cycle data of one card for [today], whether archived or not.
+/// [balances] is what the card owes per currency.
 CardRecommendation recommendationFor(
   CreditCard card,
   DateTime today, {
-  int balanceCents = 0,
+  Map<Currency, int> balances = const {},
 }) {
   final cut = nextCut(today, card.cutDay);
   final due = dueDate(cut, card.paymentDays);
@@ -83,28 +90,25 @@ CardRecommendation recommendationFor(
     nextCut: cut,
     dueDate: due,
     financingDays: due.difference(dateOnly(today)).inDays,
-    availableCents: card.creditLimitCents == 0
-        ? null
-        : card.creditLimitCents - balanceCents,
+    available: {
+      for (final c in card.currencies)
+        if (card.limitFor(c) > 0) c: card.limitFor(c) - (balances[c] ?? 0),
+    },
   );
 }
 
 /// Active cards from best to worst to use [today]: cards with enough credit
 /// first, then low-credit ones; each group by most financing days, then most
-/// available credit, then alias.
+/// available credit, then alias. [balances] is keyed by card id.
 List<CardRecommendation> rankCards(
   Iterable<CreditCard> cards,
   DateTime today, {
-  Map<int, int> balancesCents = const {},
+  Map<int, Map<Currency, int>> balances = const {},
 }) {
   final ranked = [
     for (final card in cards)
       if (!card.archived)
-        recommendationFor(
-          card,
-          today,
-          balanceCents: balancesCents[card.id] ?? 0,
-        ),
+        recommendationFor(card, today, balances: balances[card.id] ?? const {}),
   ];
   ranked.sort((a, b) {
     if (a.lowCredit != b.lowCredit) return a.lowCredit ? 1 : -1;

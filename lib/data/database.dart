@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
 
@@ -14,16 +15,19 @@ class AppDatabase {
 
   /// Opens (and creates or upgrades) the database. Tests pass
   /// `databaseFactoryFfi` and `inMemoryDatabasePath`.
+  ///
+  /// [targetVersion] opens an older schema; only for migration tests.
   static Future<AppDatabase> open({
     DatabaseFactory? factory,
     String? path,
+    @visibleForTesting int? targetVersion,
   }) async {
     final dbFactory = factory ?? databaseFactory;
     final dbPath = path ?? p.join(await dbFactory.getDatabasesPath(), fileName);
     final db = await dbFactory.openDatabase(
       dbPath,
       options: OpenDatabaseOptions(
-        version: version,
+        version: targetVersion ?? version,
         // SQLite ignores foreign keys unless enabled on every connection.
         onConfigure: (db) => db.execute('PRAGMA foreign_keys = ON'),
         onCreate: (db, version) => _migrate(db, 0, version),
@@ -44,7 +48,7 @@ class AppDatabase {
 
 typedef _Migration = Future<void> Function(Database db);
 
-final List<_Migration> _migrations = [_v1];
+final List<_Migration> _migrations = [_v1, _v2];
 
 /// Base categories available to every user (`user_id IS NULL`).
 /// `icon` is a key resolved to a Material icon by the UI layer.
@@ -183,5 +187,38 @@ Future<void> _v1(Database db) async {
       'color': c.color,
     });
   }
+  await batch.commit(noResult: true);
+}
+
+/// v2 (#5): dual-currency cards and currency conversion on expenses.
+Future<void> _v2(Database db) async {
+  final batch = db.batch();
+  // A dual card has balances in DOP (its `currency`) and USD; the USD limit
+  // is `secondary_limit_cents`.
+  batch.execute(
+    'ALTER TABLE cards ADD COLUMN dual_currency INTEGER NOT NULL DEFAULT 0',
+  );
+  batch.execute(
+    'ALTER TABLE cards ADD COLUMN secondary_limit_cents INTEGER NOT NULL '
+    'DEFAULT 0 CHECK (secondary_limit_cents >= 0)',
+  );
+  // Set only when an expense was converted to the card currency: what was
+  // typed and the rate used (rate x 1,000,000, from the original currency
+  // to the card currency).
+  batch.execute(
+    'ALTER TABLE expenses ADD COLUMN original_amount_cents INTEGER '
+    'CHECK (original_amount_cents IS NULL OR original_amount_cents > 0)',
+  );
+  batch.execute(
+    "ALTER TABLE expenses ADD COLUMN original_currency TEXT "
+    "CHECK (original_currency IS NULL OR original_currency IN ('DOP', 'USD'))",
+  );
+  batch.execute(
+    'ALTER TABLE expenses ADD COLUMN exchange_rate_micros INTEGER '
+    'CHECK (exchange_rate_micros IS NULL OR exchange_rate_micros > 0)',
+  );
+  batch.execute(
+    'CREATE INDEX idx_card_payments_card_date ON card_payments(card_id, date)',
+  );
   await batch.commit(noResult: true);
 }

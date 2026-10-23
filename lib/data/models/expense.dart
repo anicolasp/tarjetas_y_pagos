@@ -25,6 +25,9 @@ class Expense {
     required this.date,
     this.notes,
     this.source = ExpenseSource.manual,
+    this.originalAmountCents,
+    this.originalCurrency,
+    this.exchangeRateMicros,
     required this.createdAt,
   });
 
@@ -40,7 +43,15 @@ class Expense {
   final DateTime date;
   final String? notes;
   final ExpenseSource source;
+
+  /// Set only when the expense was converted to the card currency: the
+  /// amount and currency as paid, and the rate used (x 1,000,000).
+  final int? originalAmountCents;
+  final Currency? originalCurrency;
+  final int? exchangeRateMicros;
   final DateTime createdAt;
+
+  bool get wasConverted => originalCurrency != null;
 
   factory Expense.fromMap(Map<String, Object?> m) => Expense(
     id: m['id'] as int?,
@@ -53,6 +64,11 @@ class Expense {
     date: decodeDate(m['date'] as String),
     notes: m['notes'] as String?,
     source: ExpenseSource.fromDb(m['source'] as String),
+    originalAmountCents: m['original_amount_cents'] as int?,
+    originalCurrency: m['original_currency'] == null
+        ? null
+        : Currency.fromCode(m['original_currency'] as String),
+    exchangeRateMicros: m['exchange_rate_micros'] as int?,
     createdAt: decodeTimestamp(m['created_at'] as String),
   );
 
@@ -67,6 +83,9 @@ class Expense {
     'date': encodeDate(date),
     'notes': notes,
     'source': source.dbValue,
+    'original_amount_cents': originalAmountCents,
+    'original_currency': originalCurrency?.code,
+    'exchange_rate_micros': exchangeRateMicros,
     'created_at': encodeTimestamp(createdAt),
   };
 
@@ -80,7 +99,11 @@ class Expense {
     DateTime? date,
     String? notes,
     ExpenseSource? source,
+    int? originalAmountCents,
+    Currency? originalCurrency,
+    int? exchangeRateMicros,
     bool clearNotes = false,
+    bool clearConversion = false,
   }) => Expense(
     id: id ?? this.id,
     userId: userId,
@@ -92,6 +115,15 @@ class Expense {
     date: date ?? this.date,
     notes: clearNotes ? null : notes ?? this.notes,
     source: source ?? this.source,
+    originalAmountCents: clearConversion
+        ? null
+        : originalAmountCents ?? this.originalAmountCents,
+    originalCurrency: clearConversion
+        ? null
+        : originalCurrency ?? this.originalCurrency,
+    exchangeRateMicros: clearConversion
+        ? null
+        : exchangeRateMicros ?? this.exchangeRateMicros,
     createdAt: createdAt,
   );
 }
