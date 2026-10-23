@@ -1,10 +1,9 @@
-import 'dart:io';
-
 import 'package:flutter/services.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../core/card_detection.dart';
+import 'picked_photo.dart';
 
 export 'package:image_picker/image_picker.dart' show ImageSource;
 
@@ -58,18 +57,11 @@ class MlKitCardScanService implements CardScanService {
     Future<List<String>> Function()? lostPhotos,
   }) : _pick = pick ?? _pickWithImagePicker,
        _recognize = recognize ?? _recognizeWithMlKit,
-       _lostPhotos = lostPhotos ?? _lostWithImagePicker;
+       _lostPhotos = lostPhotos ?? lostPickedPhotos;
 
   final Future<String?> Function(ImageSource source) _pick;
   final Future<String> Function(String path) _recognize;
   final Future<List<String>> Function() _lostPhotos;
-
-  /// Android only; elsewhere there is nothing lost.
-  static Future<List<String>> _lostWithImagePicker() async {
-    if (!Platform.isAndroid) return const [];
-    final lost = await ImagePicker().retrieveLostData();
-    return [for (final f in lost.files ?? const <XFile>[]) f.path];
-  }
 
   /// No resizing on purpose: a scaled copy would leave the picker's
   /// original copy of a gallery photo behind in the cache.
@@ -99,9 +91,7 @@ class MlKitCardScanService implements CardScanService {
     try {
       path = await _pick(source);
     } on PlatformException catch (e) {
-      if (e.code == 'camera_access_denied' || e.code == 'photo_access_denied') {
-        return CardScanPermissionDenied(source);
-      }
+      if (isPhotoPermissionDenied(e)) return CardScanPermissionDenied(source);
       rethrow;
     }
     if (path == null) return const CardScanCancelled();
@@ -112,40 +102,12 @@ class MlKitCardScanService implements CardScanService {
           ? const CardScanNothing()
           : CardScanDetected(detection);
     } finally {
-      await _deletePhoto(path);
+      await deletePickedPhoto(path);
     }
   }
 
   @override
-  Future<void> discardLostPhotos() async {
-    try {
-      for (final path in await _lostPhotos()) {
-        await _deletePhoto(path);
-      }
-    } on Exception {
-      // Best effort: nothing to recover from.
-    }
-  }
-
-  /// image_picker copies a gallery photo into its own `cache/<uuid>/`
-  /// folder: delete the photo and that folder once empty.
-  static final _uuid = RegExp(
-    r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
-  );
-
-  static Future<void> _deletePhoto(String path) async {
-    final photo = File(path);
-    try {
-      await photo.delete();
-      final folder = photo.parent;
-      final name = folder.uri.pathSegments.lastWhere((s) => s.isNotEmpty);
-      if (_uuid.hasMatch(name) && await folder.list().isEmpty) {
-        await folder.delete();
-      }
-    } on FileSystemException {
-      // Already gone.
-    }
-  }
+  Future<void> discardLostPhotos() => discardLostPickedPhotos(_lostPhotos);
 
   /// Implemented in `MainActivity.kt`.
   static const _settings = MethodChannel('tarjetas_y_pagos/settings');

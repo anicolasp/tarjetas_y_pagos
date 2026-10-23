@@ -6,6 +6,7 @@ import 'biometric_service.dart';
 import 'card_scan_service.dart';
 import 'login_throttle.dart';
 import 'password_hasher.dart';
+import 'receipt_ai_service.dart';
 import 'session_service.dart';
 
 /// Loaded in `main()` before `runApp` and injected with `overrideWithValue`.
@@ -39,6 +40,16 @@ final biometricServiceProvider = Provider<BiometricService>(
 
 final cardScanServiceProvider = Provider<CardScanService>(
   (ref) => MlKitCardScanService(),
+);
+
+/// Passed at build time (`--dart-define-from-file`); empty hides the
+/// receipt scan. Never logged or shown.
+final anthropicApiKeyProvider = Provider<String>(
+  (ref) => const String.fromEnvironment('ANTHROPIC_API_KEY'),
+);
+
+final receiptAiServiceProvider = Provider<ReceiptAiService>(
+  (ref) => ClaudeReceiptService(ref.watch(anthropicApiKeyProvider)),
 );
 
 /// Whether the welcome slides were already shown on this device.
