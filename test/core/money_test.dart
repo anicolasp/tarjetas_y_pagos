@@ -25,17 +25,30 @@ void main() {
     });
   });
 
-  group('rateMicrosFor', () {
-    test('USD → DOP uses the rate, same currency is 1', () {
-      expect(rateMicrosFor(Currency.usd, Currency.dop, usdToDop), usdToDop);
-      expect(rateMicrosFor(Currency.dop, Currency.dop, usdToDop), rateScale);
+  group('convertBetween', () {
+    test('same currency keeps the amount', () {
+      expect(convertBetween(123, Currency.dop, Currency.dop, usdToDop), 123);
     });
 
-    test('DOP → USD uses the inverse', () {
-      final inverse = rateMicrosFor(Currency.dop, Currency.usd, usdToDop);
-      expect(inverse, 16284); // 1 / 61.409228 = 0.016284…
-      // RD$ 6,140.92 ≈ US$ 100.00
-      expect(convertCents(614092, inverse), 10000);
+    test('US\$ → RD\$ multiplies', () {
+      expect(
+        convertBetween(4000, Currency.usd, Currency.dop, usdToDop),
+        245637,
+      );
+    });
+
+    test('RD\$ → US\$ divides exactly', () {
+      // RD$ 6,140.92 / 61.409228 = US$ 100.00
+      expect(
+        convertBetween(614092, Currency.dop, Currency.usd, usdToDop),
+        10000,
+      );
+      // RD$ 1,000,000.00 → US$ 16,284.20 (an inverse rate in micros would
+      // give 16,284.00).
+      expect(
+        convertBetween(100000000, Currency.dop, Currency.usd, usdToDop),
+        1628420,
+      );
     });
   });
 

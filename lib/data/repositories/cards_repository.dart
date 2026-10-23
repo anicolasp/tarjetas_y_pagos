@@ -1,3 +1,4 @@
+import '../../core/money.dart';
 import '../database.dart';
 import '../models/credit_card.dart';
 import '../models/db_codec.dart';
@@ -83,7 +84,17 @@ class CardsRepository {
     if (card.paymentDays < 0 || card.paymentDays > 60) {
       throw ArgumentError('Los días para pagar van de 0 a 60');
     }
-    if (card.creditLimitCents < 0) throw ArgumentError('Límite no válido');
-    return card.copyWith(alias: alias, bank: bank);
+    if (card.creditLimitCents < 0 || card.secondaryLimitCents < 0) {
+      throw ArgumentError('Límite no válido');
+    }
+    if (card.dualCurrency && card.currency != Currency.dop) {
+      throw ArgumentError('Una tarjeta de doble balance es RD\$ y US\$');
+    }
+    return card.copyWith(
+      alias: alias,
+      bank: bank,
+      // Only dual cards have a second (US$) limit.
+      secondaryLimitCents: card.dualCurrency ? card.secondaryLimitCents : 0,
+    );
   }
 }

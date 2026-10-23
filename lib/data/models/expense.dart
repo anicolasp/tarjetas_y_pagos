@@ -45,7 +45,8 @@ class Expense {
   final ExpenseSource source;
 
   /// Set only when the expense was converted to the card currency: the
-  /// amount and currency as paid, and the rate used (x 1,000,000).
+  /// amount and currency as paid, and the rate used (RD$ per US$
+  /// x 1,000,000, whatever the direction).
   final int? originalAmountCents;
   final Currency? originalCurrency;
   final int? exchangeRateMicros;

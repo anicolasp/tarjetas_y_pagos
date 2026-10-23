@@ -329,7 +329,7 @@ void main() {
             secureStore: store,
             now: today,
           ),
-          userCardsProvider.overrideWith((ref) => Future.error('disco')),
+          financeProvider.overrideWith((ref) => Future.error('disco')),
         ]),
       );
       await tester.pumpAndSettle();

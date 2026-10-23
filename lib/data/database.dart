@@ -203,8 +203,7 @@ Future<void> _v2(Database db) async {
     'DEFAULT 0 CHECK (secondary_limit_cents >= 0)',
   );
   // Set only when an expense was converted to the card currency: what was
-  // typed and the rate used (rate x 1,000,000, from the original currency
-  // to the card currency).
+  // typed and the rate used, always as RD$ per US$ x 1,000,000.
   batch.execute(
     'ALTER TABLE expenses ADD COLUMN original_amount_cents INTEGER '
     'CHECK (original_amount_cents IS NULL OR original_amount_cents > 0)',

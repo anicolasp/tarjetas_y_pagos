@@ -62,7 +62,14 @@ class _CardFormState extends ConsumerState<_CardForm> {
       final cents => centsToInput(cents),
     },
   );
+  late final _limitUsd = TextEditingController(
+    text: switch (widget.card?.secondaryLimitCents) {
+      null || 0 => '',
+      final cents => centsToInput(cents),
+    },
+  );
   late var _brand = widget.card?.brand ?? CardBrand.visa;
+  late var _dual = widget.card?.dualCurrency ?? false;
   late var _currency =
       widget.card?.currency ??
       ref.read(currentUserProvider)?.defaultCurrency ??
@@ -74,7 +81,15 @@ class _CardFormState extends ConsumerState<_CardForm> {
 
   @override
   void dispose() {
-    for (final c in [_alias, _bank, _last4, _cutDay, _paymentDays, _limit]) {
+    for (final c in [
+      _alias,
+      _bank,
+      _last4,
+      _cutDay,
+      _paymentDays,
+      _limit,
+      _limitUsd,
+    ]) {
       c.dispose();
     }
     super.dispose();
@@ -95,18 +110,21 @@ class _CardFormState extends ConsumerState<_CardForm> {
       cutDay: int.parse(_cutDay.text),
       paymentDays: int.parse(_paymentDays.text),
       creditLimitCents: parseMoneyToCents(_limit.text) ?? 0,
-      currency: _currency,
+      // A dual card keeps RD$ as its main currency and a US$ limit.
+      currency: _dual ? Currency.dop : _currency,
+      dualCurrency: _dual,
+      secondaryLimitCents: _dual ? parseMoneyToCents(_limitUsd.text) ?? 0 : 0,
       color: _color,
       createdAt: widget.card?.createdAt ?? ref.read(clockProvider)(),
     );
     try {
-      final repo = await ref.read(cardsRepositoryProvider.future);
+      final repo = (await ref.read(reposProvider.future)).cards;
       if (_editing) {
         await repo.update(card);
       } else {
         await repo.create(card);
       }
-      refreshCards(ref);
+      refreshFinance(ref);
       if (mounted) context.pop();
     } catch (_) {
       // Repository errors (StateError/ArgumentError) and I/O failures.
@@ -141,9 +159,9 @@ class _CardFormState extends ConsumerState<_CardForm> {
     if (confirmed != true || !mounted) return;
     final card = widget.card!;
     try {
-      final repo = await ref.read(cardsRepositoryProvider.future);
+      final repo = (await ref.read(reposProvider.future)).cards;
       await repo.archive(card.userId, card.id!);
-      refreshCards(ref);
+      refreshFinance(ref);
       if (mounted) context.go(Routes.cards);
     } catch (_) {
       // Repository errors (StateError/ArgumentError) and I/O failures.
@@ -266,10 +284,31 @@ class _CardFormState extends ConsumerState<_CardForm> {
                         ChoiceChip(
                           key: ValueKey('cardForm.currency.${c.code}'),
                           label: Text('${c.symbol} ${c.code}'),
-                          selected: _currency == c,
-                          onSelected: (_) => setState(() => _currency = c),
+                          selected: !_dual && _currency == c,
+                          onSelected: (_) => setState(() {
+                            _currency = c;
+                            _dual = false;
+                          }),
                         ),
+                      ChoiceChip(
+                        key: const ValueKey('cardForm.currency.DUAL'),
+                        label: const Text('RD\$ y US\$ (doble balance)'),
+                        selected: _dual,
+                        onSelected: (_) => setState(() {
+                          _dual = true;
+                          _currency = Currency.dop;
+                        }),
+                      ),
                     ],
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 12, top: 6),
+                    child: Text(
+                      _dual
+                          ? 'Cada gasto queda en su moneda, con un límite por moneda.'
+                          : 'Los gastos en otra moneda se convierten a esta.',
+                      style: text.bodySmall,
+                    ),
                   ),
                   gap,
                   TextFormField(
@@ -288,11 +327,35 @@ class _CardFormState extends ConsumerState<_CardForm> {
                           : 'Monto no válido (ej. 50000 o 50,000.00)';
                     },
                     decoration: InputDecoration(
-                      labelText: 'Límite de crédito (opcional)',
+                      labelText: _dual
+                          ? 'Límite en RD\$ (opcional)'
+                          : 'Límite de crédito (opcional)',
                       prefixText: '${_currency.symbol} ',
                       prefixIcon: const Icon(Icons.account_balance_wallet),
                     ),
                   ),
+                  if (_dual) ...[
+                    gap,
+                    TextFormField(
+                      key: const ValueKey('cardForm.limitUsd'),
+                      controller: _limitUsd,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      validator: (v) {
+                        if ((v ?? '').trim().isEmpty) return null;
+                        final cents = parseMoneyToCents(v!);
+                        return cents != null && cents > 0
+                            ? null
+                            : 'Monto no válido (ej. 50000 o 50,000.00)';
+                      },
+                      decoration: const InputDecoration(
+                        labelText: 'Límite en US\$ (opcional)',
+                        prefixText: 'US\$ ',
+                        prefixIcon: Icon(Icons.account_balance_wallet),
+                      ),
+                    ),
+                  ],
                   gap,
                   Text('Color', style: text.labelLarge),
                   const SizedBox(height: 6),

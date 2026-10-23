@@ -23,12 +23,13 @@ const rateScale = 1000000;
 int convertCents(int cents, int rateMicros) =>
     (cents * rateMicros + rateScale ~/ 2) ~/ rateScale;
 
-/// Rate to convert [from] into [to] given the USD→DOP rate.
-int rateMicrosFor(Currency from, Currency to, int usdToDopMicros) {
-  if (from == to) return rateScale;
-  return from == Currency.usd
-      ? usdToDopMicros
-      : (rateScale * rateScale + usdToDopMicros ~/ 2) ~/ usdToDopMicros;
+/// Converts [cents] from [from] to [to] with the RD$-per-US$ rate. US$→RD$
+/// multiplies; RD$→US$ divides (exact, instead of an imprecise inverse
+/// rate). Rounds half up to the cent.
+int convertBetween(int cents, Currency from, Currency to, int usdToDopMicros) {
+  if (from == to) return cents;
+  if (from == Currency.usd) return convertCents(cents, usdToDopMicros);
+  return (cents * rateScale + usdToDopMicros ~/ 2) ~/ usdToDopMicros;
 }
 
 /// "61.409228" → 61409228, or null if not a positive number with up to 6

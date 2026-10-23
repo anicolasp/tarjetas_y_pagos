@@ -9,6 +9,7 @@ import '../../core/greeting.dart';
 import '../../core/money.dart';
 import '../../core/responsive.dart';
 import '../../core/router.dart';
+import '../../data/finance_snapshot.dart';
 import '../../data/models/app_user.dart';
 import '../auth/auth_widgets.dart';
 import '../cards/cards_providers.dart';
@@ -33,7 +34,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // the user comes back.
     _lifecycle = AppLifecycleListener(
       onResume: () {
-        ref.invalidate(cardRankingProvider);
+        ref.invalidate(financeProvider);
         if (mounted) setState(() {});
       },
     );
@@ -49,13 +50,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     final user = ref.watch(currentUserProvider);
     final now = ref.watch(clockProvider)();
-    final ranking = ref.watch(cardRankingProvider);
-    final cards = ref.watch(userCardsProvider).value ?? const [];
+    final finance = ref.watch(financeProvider);
     if (user == null) return const SizedBox.shrink();
 
-    final ranked = ranking.value ?? const <CardRecommendation>[];
+    final snapshot = finance.value ?? FinanceSnapshot.empty;
+    final ranked = snapshot.ranking(now);
     // A failed load must not look like "no cards" (and invite duplicates).
-    final failed = ranking.hasError;
+    final failed = finance.hasError;
     const gap = SizedBox(height: 20);
 
     return Scaffold(
@@ -70,7 +71,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 children: [
                   _Header(user: user, now: now),
                   gap,
-                  _MonthSummary(user: user, now: now, ranked: ranked),
+                  _MonthSummary(user: user, now: now, snapshot: snapshot),
                   gap,
                   if (failed)
                     const _LoadError()
@@ -99,7 +100,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            if (!failed) _Carousel(cards: inAddedOrder(cards, ranked)),
+            if (!failed) _Carousel(cards: snapshot.inAddedOrder(now)),
           ],
         ),
       ),
@@ -129,7 +130,7 @@ class _LoadError extends ConsumerWidget {
             const SizedBox(height: 8),
             TextButton.icon(
               key: const ValueKey('home.retry'),
-              onPressed: () => refreshCards(ref),
+              onPressed: () => refreshFinance(ref),
               icon: const Icon(Icons.refresh),
               label: const Text('Reintentar'),
             ),
@@ -189,19 +190,24 @@ class _MonthSummary extends StatelessWidget {
   const _MonthSummary({
     required this.user,
     required this.now,
-    required this.ranked,
+    required this.snapshot,
   });
 
   final AppUser user;
   final DateTime now;
-  final List<CardRecommendation> ranked;
+  final FinanceSnapshot snapshot;
 
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
-    // Show the currencies the cards use, or the default one.
-    final currencies = {for (final r in ranked) r.card.currency}.toList()
-      ..sort((a, b) => a.index.compareTo(b.index));
+    final spent = snapshot.spentThisMonth(now);
+    final debt = snapshot.debt(now);
+    // Currencies of the cards and of any movement, or the default one.
+    final currencies = {
+      for (final c in snapshot.cards) ...c.currencies,
+      ...spent.keys,
+      ...debt.keys,
+    }.toList()..sort((a, b) => a.index.compareTo(b.index));
     if (currencies.isEmpty) currencies.add(user.defaultCurrency);
 
     return Card(
@@ -215,10 +221,20 @@ class _MonthSummary extends StatelessWidget {
           children: [
             Text('Resumen de ${formatMonthName(now)}', style: text.titleMedium),
             const SizedBox(height: 12),
-            for (final c in currencies) ...[
-              _SummaryRow(label: 'Gastado este mes', cents: 0, currency: c),
-              _SummaryRow(label: 'Deuda total', cents: 0, currency: c),
-            ],
+            for (final c in currencies)
+              _SummaryRow(
+                key: ValueKey('home.spent.${c.code}'),
+                label: 'Gastado este mes',
+                cents: spent[c] ?? 0,
+                currency: c,
+              ),
+            for (final c in currencies)
+              _SummaryRow(
+                key: ValueKey('home.debt.${c.code}'),
+                label: 'Deuda en tarjetas',
+                cents: debt[c] ?? 0,
+                currency: c,
+              ),
           ],
         ),
       ),
@@ -228,6 +244,7 @@ class _MonthSummary extends StatelessWidget {
 
 class _SummaryRow extends StatelessWidget {
   const _SummaryRow({
+    super.key,
     required this.label,
     required this.cents,
     required this.currency,
@@ -403,7 +420,7 @@ class _QuickAccess extends StatelessWidget {
         key: 'home.quick.expense',
         icon: Icons.add_card,
         label: 'Nuevo gasto',
-        onTap: soon,
+        onTap: () => context.push(Routes.expenseNew()),
       ),
       (
         key: 'home.quick.reports',
