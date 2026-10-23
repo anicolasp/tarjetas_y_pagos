@@ -71,4 +71,19 @@ void main() {
       expect(formatRate(60000000), '60.00');
     });
   });
+
+  test('huge amounts convert without 64-bit overflow', () {
+    // RD$ 9,999,999,999.99 → US$ at 61.409228, both directions.
+    final usd = convertBetween(
+      999999999999,
+      Currency.dop,
+      Currency.usd,
+      usdToDop,
+    );
+    expect(usd, 16284197548); // checked with Python Decimal
+    expect(
+      convertBetween(usd, Currency.usd, Currency.dop, usdToDop),
+      1000000000022,
+    );
+  });
 }

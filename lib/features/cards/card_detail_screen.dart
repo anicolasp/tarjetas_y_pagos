@@ -134,13 +134,16 @@ class _Body extends ConsumerWidget {
     // Without filters: every expense and payment. With filters: the SQL
     // query (expenses only).
     final List<Object> movements;
+    AsyncValue<List<Expense>>? filtered;
     if (filter.isEmpty) {
       movements = [
         ...snapshot.expensesOf(card.id!),
         ...snapshot.paymentsOf(card.id!),
       ];
     } else {
-      movements = [...?ref.watch(filteredExpensesProvider(filter)).value];
+      final query = ref.watch(filteredExpensesProvider(filter));
+      filtered = query;
+      movements = [...?query.value];
     }
     final groups = _groupByDay(movements);
 
@@ -175,7 +178,30 @@ class _Body extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 8),
-              if (groups.isEmpty)
+              // A filtered query still running or failed is not "no results".
+              if (filtered != null && filtered.hasError)
+                Column(
+                  key: const ValueKey('cardDetail.filterError'),
+                  children: [
+                    const Text('No se pudieron filtrar los gastos'),
+                    TextButton.icon(
+                      onPressed: () =>
+                          ref.invalidate(filteredExpensesProvider(filter)),
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Reintentar'),
+                    ),
+                  ],
+                )
+              else if (filtered != null && !filtered.hasValue)
+                const Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      key: ValueKey('cardDetail.filterLoading'),
+                    ),
+                  ),
+                )
+              else if (groups.isEmpty)
                 _EmptyMovements(filtered: !filter.isEmpty)
               else
                 for (final (day, items) in groups) ...[
@@ -269,6 +295,7 @@ class _StatementCard extends StatelessWidget {
                 card: card,
                 s: statement.byCurrency[c]!,
                 dueDate: statement.dueDate,
+                today: today,
               ),
               const SizedBox(height: 12),
             ],
@@ -305,11 +332,13 @@ class _CurrencyBlock extends StatelessWidget {
     required this.card,
     required this.s,
     required this.dueDate,
+    required this.today,
   });
 
   final CreditCard card;
   final CurrencyStatement s;
   final DateTime dueDate;
+  final DateTime today;
 
   @override
   Widget build(BuildContext context) {
@@ -355,14 +384,22 @@ class _CurrencyBlock extends StatelessWidget {
           formatMoney(s.dueCents, c),
           valueKey: 'cardDetail.due.${c.code}',
         ),
-        if (s.dueCents > 0)
+        if (s.dueCents > 0 && dueDate.isAfter(dateOnly(today)))
           Text(
-            s.overdue
-                ? 'Vencido desde el ${formatDate(dueDate)}'
-                : 'Paga antes del ${formatDate(dueDate)}',
-            style: text.bodySmall?.copyWith(
-              color: s.overdue ? scheme.error : scheme.onSurfaceVariant,
-              fontWeight: s.overdue ? FontWeight.w700 : null,
+            'Paga antes del ${formatDate(dueDate)}',
+            style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+          ),
+        if (s.overdue)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              'Vencido: ${formatMoney(s.overdueCents, c)} desde el '
+              '${formatDate(s.overdueSince!)}',
+              key: ValueKey('cardDetail.overdue.${c.code}'),
+              style: text.bodySmall?.copyWith(
+                color: scheme.error,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
       ],

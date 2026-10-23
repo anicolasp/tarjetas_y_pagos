@@ -1,9 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:tarjetas_y_pagos/core/formatters.dart';
 import 'package:tarjetas_y_pagos/core/money.dart';
 import 'package:tarjetas_y_pagos/data/database.dart';
+import 'package:tarjetas_y_pagos/features/cards/cards_providers.dart';
 
 import '../helpers/fakes.dart';
 import '../helpers/seed.dart';
@@ -293,7 +298,10 @@ void main() {
     );
     await tester.pumpAndSettle();
     await tapVisible(tester, 'home.carousel.$cardA');
-    expect(find.textContaining('Vencido desde el 25 oct'), findsOneWidget);
+    expect(
+      find.text('Vencido: RD\$ 1,000.00 desde el 25 oct 2026'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('step 6: edit the amount, balance updates, then delete', (
@@ -527,4 +535,86 @@ void main() {
     );
     expect(key('home.lowCredit.$cardA'), findsOneWidget);
   });
+
+  group('code review regressions', () {
+    testWidgets('card selection survives a data reload', (tester) async {
+      await start(tester);
+      await tapVisible(tester, 'home.carousel.$cardA');
+      await tester.tap(key('cardDetail.addExpense'));
+      await tester.pumpAndSettle();
+      // Coming back from the background reloads the finance snapshot.
+      final container = ProviderScope.containerOf(
+        tester.element(key('expenseForm.root')),
+      );
+      container.invalidate(financeProvider);
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.text('A •••• 1111'), findsOneWidget);
+    });
+
+    testWidgets('an expense of an archived card is read-only', (tester) async {
+      final e = await seedExpense(db, userId, cardA, 'Supermercado', 'Jumbo');
+      await db.db.update(
+        'cards',
+        {'archived': 1},
+        where: 'id = ?',
+        whereArgs: [cardA],
+      );
+      await start(tester);
+      GoRouter.of(tester.element(find.byType(Navigator).first))
+          .push('/home/expenses/${e.id}');
+      await tester.pumpAndSettle();
+      expect(key('expenseForm.archivedCard'), findsOneWidget);
+      expect(key('expenseForm.save'), findsNothing);
+      expect(key('expenseForm.delete'), findsOneWidget);
+      // It never moves to card B.
+      expect(find.text('B •••• 2222'), findsNothing);
+    });
+
+    testWidgets('a late online rate does not replace a typed one', (
+      tester,
+    ) async {
+      final slow = SlowRateSource();
+      await start(tester, rates: slow);
+      await tapVisible(tester, 'home.carousel.$cardA');
+      await tester.tap(key('cardDetail.addExpense'));
+      await tester.pumpAndSettle();
+      // The rate spinner keeps animating while the answer is pending, so
+      // pump frames instead of waiting to settle.
+      await tester.ensureVisible(key('expenseForm.currency.USD'));
+      await tester.tap(key('expenseForm.currency.USD'));
+      await tester.pump();
+      await tester.enterText(key('expenseForm.rate'), '60.10');
+      await tester.pump();
+      slow.answer.complete(61409228);
+      await tester.pumpAndSettle();
+      expect(find.text('60.10'), findsOneWidget);
+    });
+
+    testWidgets('editing an old expense opens the date picker', (tester) async {
+      final e = await seedExpense(
+        db,
+        userId,
+        cardA,
+        'Supermercado',
+        'Vieja',
+        date: DateTime(2019, 3, 1),
+      );
+      await start(tester);
+      GoRouter.of(tester.element(find.byType(Navigator).first))
+          .push('/home/expenses/${e.id}');
+      await tester.pumpAndSettle();
+      await tapVisible(tester, 'expenseForm.date');
+      expect(tester.takeException(), isNull);
+      expect(find.byType(DatePickerDialog), findsOneWidget);
+    });
+  });
+}
+
+/// A rate source that answers only when the test completes [answer].
+class SlowRateSource extends FakeRateSource {
+  final answer = Completer<int>();
+
+  @override
+  Future<int> fetchUsdToDopMicros() => answer.future;
 }

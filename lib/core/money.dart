@@ -21,7 +21,10 @@ const rateScale = 1000000;
 /// Converts [cents] with [rateMicros] (units of the target currency per unit
 /// of the source currency), rounding half up to the cent. Integer math only.
 int convertCents(int cents, int rateMicros) =>
-    (cents * rateMicros + rateScale ~/ 2) ~/ rateScale;
+    _div(BigInt.from(cents) * BigInt.from(rateMicros), BigInt.from(rateScale));
+
+/// Half-up integer division in BigInt: no 64-bit overflow on huge amounts.
+int _div(BigInt n, BigInt d) => ((n + d ~/ BigInt.two) ~/ d).toInt();
 
 /// Converts [cents] from [from] to [to] with the RD$-per-US$ rate. US$→RD$
 /// multiplies; RD$→US$ divides (exact, instead of an imprecise inverse
@@ -29,7 +32,10 @@ int convertCents(int cents, int rateMicros) =>
 int convertBetween(int cents, Currency from, Currency to, int usdToDopMicros) {
   if (from == to) return cents;
   if (from == Currency.usd) return convertCents(cents, usdToDopMicros);
-  return (cents * rateScale + usdToDopMicros ~/ 2) ~/ usdToDopMicros;
+  return _div(
+    BigInt.from(cents) * BigInt.from(rateScale),
+    BigInt.from(usdToDopMicros),
+  );
 }
 
 /// "61.409228" → 61409228, or null if not a positive number with up to 6

@@ -16,8 +16,9 @@ String formatMoney(int cents, Currency currency) {
 
 /// Plain digits ("15000.5") or well-formed thousands groups ("15,000.50").
 /// A comma used as the decimal separator ("1500,50") is rejected instead of
-/// being read as 150050. Up to 13 integer digits so the cents fit an int.
-final _moneyInput = RegExp(r'^(\d{1,13}|\d{1,3}(,\d{3}){1,4})(\.\d{1,2})?$');
+/// being read as 150050. Up to 10 integer digits (9,999,999,999.99): far
+/// beyond any card, and safe for cents x rate math.
+final _moneyInput = RegExp(r'^(\d{1,10}|\d{1,3}(,\d{3}){1,3})(\.\d{1,2})?$');
 
 /// Parses a typed amount ("15000", "15,000.50", " 0.5 ") into cents, or null
 /// if it is not a valid non-negative amount. Uses integer math, no doubles.

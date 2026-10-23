@@ -47,6 +47,26 @@ class CardsRepository {
   /// does not exist for that user.
   Future<void> update(CreditCard card) async {
     final clean = _validated(card);
+    // A currency with expenses or payments cannot be dropped (changing the
+    // currency, or turning dual off): that balance could never be paid.
+    final used = await _db.db.rawQuery(
+      'SELECT currency FROM expenses WHERE card_id = ? '
+      'UNION SELECT currency FROM card_payments WHERE card_id = ?',
+      [card.id, card.id],
+    );
+    final dropped = [
+      for (final row in used)
+        if (!clean.currencies.contains(
+          Currency.fromCode(row['currency'] as String),
+        ))
+          row['currency'] as String,
+    ];
+    if (dropped.isNotEmpty) {
+      throw ArgumentError(
+        'Esta tarjeta tiene movimientos en ${dropped.join(' y ')}; '
+        'no puedes quitar esa moneda',
+      );
+    }
     final count = await _db.db.update(
       'cards',
       clean.toMap()

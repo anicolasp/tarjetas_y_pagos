@@ -50,7 +50,7 @@ final financeProvider = FutureProvider<FinanceSnapshot>((ref) async {
 
 /// One active card of the current user, or null if it does not exist, is
 /// not theirs, or is archived (archived cards cannot be opened or edited).
-final cardByIdProvider = FutureProvider.family<CreditCard?, int>((
+final cardByIdProvider = FutureProvider.autoDispose.family<CreditCard?, int>((
   ref,
   id,
 ) async {
@@ -62,15 +62,15 @@ final cardByIdProvider = FutureProvider.family<CreditCard?, int>((
 }, retry: (retryCount, error) => null);
 
 /// Expenses matching [filter] (SQL side), newest first.
-final filteredExpensesProvider =
-    FutureProvider.family<List<Expense>, ExpenseFilter>((ref, filter) async {
+final filteredExpensesProvider = FutureProvider.autoDispose
+    .family<List<Expense>, ExpenseFilter>((ref, filter) async {
       final user = ref.watch(currentUserProvider);
       if (user == null) return const [];
       final repos = await ref.watch(reposProvider.future);
       return repos.expenses.list(user.id!, filter);
     }, retry: (retryCount, error) => null);
 
-final expenseByIdProvider = FutureProvider.family<Expense?, int>((
+final expenseByIdProvider = FutureProvider.autoDispose.family<Expense?, int>((
   ref,
   id,
 ) async {

@@ -48,8 +48,20 @@ class FinanceSnapshot {
       if (p.cardId == cardId) p,
   ];
 
+  /// Statements are computed once per card and day: a screen asks for the
+  /// same ones several times per build (ranking, list, debt).
+  final _statements = <(int, DateTime), CardStatement>{};
+
   CardStatement statementOf(CreditCard card, DateTime today) =>
-      statementFor(card, expensesOf(card.id!), paymentsOf(card.id!), today);
+      _statements.putIfAbsent(
+        (card.id!, dateOnly(today)),
+        () => statementFor(
+          card,
+          expensesOf(card.id!),
+          paymentsOf(card.id!),
+          today,
+        ),
+      );
 
   /// "Mejor tarjeta hoy", with real balances.
   List<CardRecommendation> ranking(DateTime today) => rankCards(

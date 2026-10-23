@@ -207,4 +207,57 @@ void main() {
       expect(r.lowCredit, isFalse);
     });
   });
+
+  test('an unpaid statement stays overdue after the next cut', () {
+    // Cut 15, 20 days to pay. The 15 Sep statement is due 5 Oct.
+    final c = CreditCard(
+      id: 1,
+      userId: 1,
+      alias: 'A',
+      bank: 'B',
+      brand: CardBrand.visa,
+      last4: '1234',
+      cutDay: 15,
+      paymentDays: 20,
+      currency: Currency.dop,
+      color: 0,
+      createdAt: DateTime(2026),
+    );
+    final expenses = [spent(100000, DateTime(2026, 9, 10))];
+
+    // 10 Oct: late since 5 Oct.
+    var s = statementFor(c, expenses, [], DateTime(2026, 10, 10));
+    expect(s.byCurrency[Currency.dop]!.overdueCents, 100000);
+    expect(s.byCurrency[Currency.dop]!.overdueSince, DateTime.utc(2026, 10, 5));
+
+    // 16 Oct: the 15 Oct cut (due 4 Nov) is the new statement, but the
+    // September money is still late.
+    s = statementFor(c, expenses, [], DateTime(2026, 10, 16));
+    expect(s.dueDate, DateTime.utc(2026, 11, 4));
+    expect(s.byCurrency[Currency.dop]!.dueCents, 100000);
+    expect(s.byCurrency[Currency.dop]!.overdueCents, 100000);
+    expect(s.byCurrency[Currency.dop]!.overdueSince, DateTime.utc(2026, 10, 5));
+
+    // Paying it clears the overdue amount.
+    s = statementFor(c, expenses, [
+      paid(100000, DateTime(2026, 10, 16)),
+    ], DateTime(2026, 10, 16));
+    expect(s.byCurrency[Currency.dop]!.overdue, isFalse);
+  });
+
+  test('long payment terms look back to the latest past due date', () {
+    // Cut 5, 40 days to pay: on 22 Oct the 5 Oct cut is due 14 Nov (not
+    // yet), so the late check uses the 5 Sep cut (due 15 Oct).
+    final c = card().copyWith(paymentDays: 40);
+    final s = statementFor(
+      c,
+      [spent(100000, DateTime(2026, 8, 20))],
+      [],
+      today,
+    );
+    expect(
+      s.byCurrency[Currency.dop]!.overdueSince,
+      DateTime.utc(2026, 10, 15),
+    );
+  });
 }

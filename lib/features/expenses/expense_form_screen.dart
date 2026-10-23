@@ -130,7 +130,23 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
         : formatRate(_e!.exchangeRateMicros!),
   );
 
-  late CreditCard? _card = _initialCard();
+  /// Selected card by id: [widget.cards] holds fresh objects after every
+  /// reload, so the selection must not depend on object identity.
+  late int? _cardId = _initialCardId();
+  CreditCard? get _card {
+    for (final c in widget.cards) {
+      if (c.id == _cardId) return c;
+    }
+    return null;
+  }
+
+  /// Editing an expense whose card is archived: it can be deleted, but not
+  /// edited (moving it to another card would change both balances).
+  late final bool _cardArchived =
+      _e != null && !widget.cards.any((c) => c.id == _e.cardId);
+
+  /// The user typed a rate: a late online answer must not replace it.
+  var _rateTouched = false;
   late int? _categoryId = _e?.categoryId;
   late Currency _currency =
       _e?.originalCurrency ?? _e?.currency ?? _card?.currency ?? Currency.dop;
@@ -141,14 +157,14 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
 
   bool get _editing => _e != null;
 
-  CreditCard? _initialCard() {
+  int? _initialCardId() {
     final id = _e?.cardId ?? widget.initialCardId;
-    for (final c in widget.cards) {
-      if (c.id == id) return c;
-    }
+    if (widget.cards.any((c) => c.id == id)) return id;
+    // Never fall back to another card when editing (archived card).
+    if (_e != null) return null;
     // A preselected card from the detail; otherwise the user picks one,
     // unless there is only one.
-    return widget.cards.length == 1 ? widget.cards.single : null;
+    return widget.cards.length == 1 ? widget.cards.single.id : null;
   }
 
   /// The card holds a single currency different from the typed one.
@@ -169,11 +185,18 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
     super.dispose();
   }
 
-  Future<void> _loadRate() async {
+  /// [force]: the user asked for today's rate (refresh button), replacing
+  /// whatever is typed.
+  Future<void> _loadRate({bool force = false}) async {
+    if (force) _rateTouched = false;
     setState(() => _rateStatus = _RateStatus.loading);
     final quote = await ref.read(exchangeRateServiceProvider).usdToDop();
     if (!mounted) return;
     setState(() {
+      if (_rateTouched) {
+        _rateStatus = _RateStatus.idle;
+        return;
+      }
       if (quote == null) {
         _rateStatus = _RateStatus.unavailable;
         return;
@@ -183,9 +206,10 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
     });
   }
 
-  void _selectCard(CreditCard? card) {
+  void _selectCard(int? id) {
     setState(() {
-      _card = card;
+      _cardId = id;
+      final card = _card;
       // Default to the card's (main) currency when switching cards.
       if (card != null && !card.currencies.contains(_currency)) {
         _currency = card.currency;
@@ -210,10 +234,12 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
 
   Future<void> _pickDate() async {
     final today = ref.read(clockProvider)();
+    final fiveYearsAgo = DateTime(today.year - 5);
     final picked = await showDatePicker(
       context: context,
       initialDate: _date,
-      firstDate: DateTime(today.year - 5),
+      // An older expense being edited must still open the picker.
+      firstDate: _date.isBefore(fiveYearsAgo) ? _date : fiveYearsAgo,
       lastDate: today, // no future expenses
     );
     if (picked != null) setState(() => _date = picked);
@@ -365,11 +391,21 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
                       ),
                     ),
                   gap,
-                  DropdownButtonFormField<CreditCard>(
+                  if (_cardArchived)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Text(
+                        'La tarjeta de este gasto está archivada: puedes '
+                        'eliminarlo, pero no editarlo.',
+                        key: const ValueKey('expenseForm.archivedCard'),
+                        style: text.bodyMedium?.copyWith(color: scheme.error),
+                      ),
+                    ),
+                  DropdownButtonFormField<int>(
                     key: const ValueKey('expenseForm.card'),
-                    initialValue: _card,
+                    initialValue: _cardId,
                     isExpanded: true,
-                    validator: (c) => c == null ? 'Elige una tarjeta' : null,
+                    validator: (id) => id == null ? 'Elige una tarjeta' : null,
                     decoration: const InputDecoration(
                       labelText: 'Tarjeta',
                       prefixIcon: Icon(Icons.credit_card),
@@ -378,14 +414,14 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
                       for (final c in widget.cards)
                         DropdownMenuItem(
                           key: ValueKey('expenseForm.cardOption.${c.id}'),
-                          value: c,
+                          value: c.id,
                           child: Text(
                             '${c.alias} •••• ${c.last4}',
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
                     ],
-                    onChanged: _selectCard,
+                    onChanged: _cardArchived ? null : _selectCard,
                   ),
                   gap,
                   Text('Moneda del gasto', style: text.labelLarge),
@@ -429,8 +465,8 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
                     _RateField(
                       controller: _rate,
                       status: _rateStatus,
-                      onChanged: () => setState(() {}),
-                      onRetry: _loadRate,
+                      onChanged: () => setState(() => _rateTouched = true),
+                      onRetry: () => _loadRate(force: true),
                     ),
                     if (_cardAmountCents case final cents?)
                       Padding(
@@ -472,12 +508,13 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  LoadingButton(
-                    key: const ValueKey('expenseForm.save'),
-                    label: _editing ? 'Guardar cambios' : 'Guardar gasto',
-                    loading: _saving,
-                    onPressed: _save,
-                  ),
+                  if (!_cardArchived)
+                    LoadingButton(
+                      key: const ValueKey('expenseForm.save'),
+                      label: _editing ? 'Guardar cambios' : 'Guardar gasto',
+                      loading: _saving,
+                      onPressed: _save,
+                    ),
                   if (_editing) ...[
                     const SizedBox(height: 12),
                     OutlinedButton.icon(

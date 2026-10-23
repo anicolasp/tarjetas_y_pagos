@@ -126,8 +126,11 @@ class _CardFormState extends ConsumerState<_CardForm> {
       }
       refreshFinance(ref);
       if (mounted) context.pop();
+    } on ArgumentError catch (e) {
+      // Business rule from the repository: show why.
+      if (mounted) showErrorSnackBar(context, '${e.message}');
     } catch (_) {
-      // Repository errors (StateError/ArgumentError) and I/O failures.
+      // StateError and I/O failures.
       if (mounted) showErrorSnackBar(context, unexpectedErrorMessage);
     } finally {
       if (mounted) setState(() => _saving = false);

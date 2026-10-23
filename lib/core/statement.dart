@@ -14,7 +14,8 @@ class CurrencyStatement {
     required this.currency,
     required this.balanceCents,
     required this.dueCents,
-    required this.overdue,
+    required this.overdueCents,
+    required this.overdueSince,
   });
 
   final Currency currency;
@@ -26,8 +27,14 @@ class CurrencyStatement {
   /// it, never below 0.
   final int dueCents;
 
-  /// The due date of the last cut passed and [dueCents] is still owed.
-  final bool overdue;
+  /// Still owed from the most recent statement whose due date already
+  /// passed (it may be older than the last cut). 0 when nothing is late.
+  final int overdueCents;
+
+  /// Due date of that late statement, or null when nothing is late.
+  final DateTime? overdueSince;
+
+  bool get overdue => overdueCents > 0;
 }
 
 class CardStatement {
@@ -60,49 +67,65 @@ CardStatement statementFor(
   Iterable<CardPayment> payments,
   DateTime today,
 ) {
+  final day = dateOnly(today);
   final cut = lastCut(today, card.cutDay);
   final due = dueDate(cut, card.paymentDays);
+
+  // The latest statement whose due date already passed: the last cut, or
+  // an earlier one when its due date is still ahead (long payment terms).
+  var lateCut = cut;
+  while (!day.isAfter(dueDate(lateCut, card.paymentDays))) {
+    lateCut = cutInMonth(lateCut.year, lateCut.month - 1, card.cutDay);
+  }
+  final lateDue = dueDate(lateCut, card.paymentDays);
+
   final currencies = {
     ...card.currencies,
     for (final e in expenses) e.currency,
     for (final p in payments) p.currency,
   };
 
-  bool onOrBeforeCut(DateTime d) => !dateOnly(d).isAfter(cut);
+  CurrencyStatement forCurrency(Currency c) {
+    final spent = [
+      for (final e in expenses)
+        if (e.currency == c) e,
+    ];
+    final paid = [
+      for (final p in payments)
+        if (p.currency == c) p,
+    ];
+
+    /// Owed for the statement that closed on [closing]: its balance at that
+    /// day minus everything paid afterwards, never below 0.
+    int owedFor(DateTime closing) {
+      bool onOrBefore(DateTime d) => !dateOnly(d).isAfter(closing);
+      var owed = 0;
+      for (final e in spent) {
+        if (onOrBefore(e.date)) owed += e.amountCents;
+      }
+      for (final p in paid) {
+        owed -= p.amountCents; // before: lowers the balance; after: pays it
+      }
+      return owed > 0 ? owed : 0;
+    }
+
+    final balance =
+        spent.fold<int>(0, (s, e) => s + e.amountCents) -
+        paid.fold<int>(0, (s, p) => s + p.amountCents);
+    final late = owedFor(lateCut);
+    return CurrencyStatement(
+      currency: c,
+      balanceCents: balance,
+      dueCents: owedFor(cut),
+      overdueCents: late,
+      overdueSince: late > 0 ? lateDue : null,
+    );
+  }
 
   return CardStatement(
     lastCut: cut,
     dueDate: due,
-    byCurrency: {
-      for (final c in currencies)
-        c: () {
-          final spent = [
-            for (final e in expenses)
-              if (e.currency == c) e,
-          ];
-          final paid = [
-            for (final p in payments)
-              if (p.currency == c) p,
-          ];
-          int sumE(Iterable<Expense> xs) =>
-              xs.fold(0, (s, e) => s + e.amountCents);
-          int sumP(Iterable<CardPayment> xs) =>
-              xs.fold(0, (s, p) => s + p.amountCents);
-
-          final atCut =
-              sumE(spent.where((e) => onOrBeforeCut(e.date))) -
-              sumP(paid.where((p) => onOrBeforeCut(p.date)));
-          final paidAfter = sumP(paid.where((p) => !onOrBeforeCut(p.date)));
-          final dueNow = atCut - paidAfter;
-          final owed = dueNow > 0 ? dueNow : 0;
-          return CurrencyStatement(
-            currency: c,
-            balanceCents: sumE(spent) - sumP(paid),
-            dueCents: owed,
-            overdue: owed > 0 && dateOnly(today).isAfter(due),
-          );
-        }(),
-    },
+    byCurrency: {for (final c in currencies) c: forCurrency(c)},
   );
 }
 
