@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -94,6 +96,10 @@ class _CardFormState extends ConsumerState<_CardForm> {
   @override
   void initState() {
     super.initState();
+    if (!_editing) {
+      // A photo from a scan interrupted by Android must not stay on disk.
+      unawaited(ref.read(cardScanServiceProvider).discardLostPhotos());
+    }
     _last4.addListener(_onScannedFieldEdited);
     _bank.addListener(_onScannedFieldEdited);
   }
@@ -119,6 +125,9 @@ class _CardFormState extends ConsumerState<_CardForm> {
   }
 
   Future<void> _scan() async {
+    // Busy from the first tap, so a double tap cannot start two scans.
+    if (_scanBusy) return;
+    setState(() => _scanBusy = true);
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
       showDragHandle: true,
@@ -142,9 +151,11 @@ class _CardFormState extends ConsumerState<_CardForm> {
         ),
       ),
     );
-    if (source == null || !mounted) return;
+    if (source == null || !mounted) {
+      if (mounted) setState(() => _scanBusy = false);
+      return;
+    }
     final service = ref.read(cardScanServiceProvider);
-    setState(() => _scanBusy = true);
     final CardScanResult result;
     try {
       result = await service.scan(
@@ -182,25 +193,38 @@ class _CardFormState extends ConsumerState<_CardForm> {
           context,
           'No pudimos leer la tarjeta, completa los datos manualmente',
         );
-      case CardScanPermissionDenied():
-        await _explainCameraPermission(service);
+      case CardScanPermissionDenied(:final source):
+        await _explainPermission(service, source);
       case CardScanCancelled():
         break;
     }
   }
 
-  Future<void> _explainCameraPermission(CardScanService service) async {
+  Future<void> _explainPermission(
+    CardScanService service,
+    ImageSource source,
+  ) async {
+    final camera = source == ImageSource.camera;
+    final alternative = camera
+        ? 'Puedes activarla en los ajustes o elegir una foto de la galería.'
+        : 'Puedes activarlo en los ajustes o tomar una foto con la cámara.';
     final openSettings = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         key: const ValueKey('cardForm.permissionDialog'),
         scrollable: true,
-        icon: const Icon(Icons.no_photography_outlined),
-        title: const Text('Permite el uso de la cámara'),
-        content: const Text(
-          'La usamos solo para leer la tarjeta en tu teléfono. La foto no se '
+        icon: Icon(
+          camera ? Icons.no_photography_outlined : Icons.hide_image_outlined,
+        ),
+        title: Text(
+          camera
+              ? 'Permite el uso de la cámara'
+              : 'Permite el acceso a tus fotos',
+        ),
+        content: Text(
+          'Lo usamos solo para leer la tarjeta en tu teléfono. La foto no se '
           'guarda ni se envía, y solo conservamos los últimos 4 dígitos. '
-          'Puedes activarla en los ajustes o elegir una foto de la galería.',
+          '$alternative',
         ),
         actions: [
           TextButton(
@@ -215,7 +239,18 @@ class _CardFormState extends ConsumerState<_CardForm> {
         ],
       ),
     );
-    if (openSettings == true) await service.openSettings();
+    if (openSettings != true) return;
+    try {
+      await service.openSettings();
+    } catch (_) {
+      // No settings channel on this platform.
+      if (mounted) {
+        showErrorSnackBar(
+          context,
+          'Abre los ajustes del teléfono para permitirlo',
+        );
+      }
+    }
   }
 
   bool _isDetected(String field, Object current) => _detected[field] == current;

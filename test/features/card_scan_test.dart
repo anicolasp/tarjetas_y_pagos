@@ -177,7 +177,7 @@ void main() {
   testWidgets('camera denied explains why and opens the settings', (
     tester,
   ) async {
-    scanner.result = const CardScanPermissionDenied();
+    scanner.result = const CardScanPermissionDenied(ImageSource.camera);
     await open(tester);
     await scanFrom(tester, 'camera');
 
@@ -191,7 +191,7 @@ void main() {
   testWidgets('"Ahora no" closes the dialog without opening the settings', (
     tester,
   ) async {
-    scanner.result = const CardScanPermissionDenied();
+    scanner.result = const CardScanPermissionDenied(ImageSource.camera);
     await open(tester);
     await scanFrom(tester, 'camera');
     await tester.tap(find.text('Ahora no'));
@@ -224,7 +224,7 @@ void main() {
     tester,
   ) async {
     scanner
-      ..result = const CardScanPermissionDenied()
+      ..result = const CardScanPermissionDenied(ImageSource.camera)
       ..gate = Completer<void>();
     await open(tester);
     await tester.tap(key('cardForm.scan'));
@@ -240,6 +240,69 @@ void main() {
     scanner.gate!.complete();
     await tester.pumpAndSettle();
     expect(key('cardForm.permissionDialog'), findsOneWidget);
+  });
+
+  testWidgets('denied gallery access asks for the photos, not the camera', (
+    tester,
+  ) async {
+    scanner.result = const CardScanPermissionDenied(ImageSource.gallery);
+    await open(tester);
+    await scanFrom(tester, 'gallery');
+    expect(find.text('Permite el acceso a tus fotos'), findsOneWidget);
+    expect(find.textContaining('tomar una foto con la cámara'), findsOneWidget);
+  });
+
+  testWidgets('settings that cannot open show a hint instead of failing', (
+    tester,
+  ) async {
+    scanner
+      ..result = const CardScanPermissionDenied(ImageSource.camera)
+      ..settingsError = Exception('MissingPluginException');
+    await open(tester);
+    await scanFrom(tester, 'camera');
+    await tester.tap(key('cardForm.openSettings'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(
+      find.text('Abre los ajustes del teléfono para permitirlo'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('a double tap opens a single source sheet', (tester) async {
+    await open(tester);
+    // Both taps land before the next frame. (The navigator already absorbs
+    // the second one; _scan also guards against re-entry.)
+    await tester.tap(key('cardForm.scan'));
+    await tester.tap(key('cardForm.scan'));
+    await tester.pumpAndSettle();
+    expect(key('cardForm.scan.gallery'), findsOneWidget);
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
+    // Closing the sheet re-enables the button.
+    expect(
+      tester.widget<OutlinedButton>(key('cardForm.scan')).onPressed,
+      isNotNull,
+    );
+  });
+
+  testWidgets('opening a new card form discards lost photos', (tester) async {
+    await open(tester);
+    expect(scanner.lostDiscarded, 1);
+  });
+
+  testWidgets('a detected card without a known brand keeps the chosen one', (
+    tester,
+  ) async {
+    scanner.result = const CardScanDetected(CardDetection(last4: '1117'));
+    await open(tester);
+    await tester.ensureVisible(key('cardForm.brand.amex'));
+    await tester.tap(key('cardForm.brand.amex'));
+    await tester.pump();
+    await tester.ensureVisible(key('cardForm.scan'));
+    await scanFrom(tester, 'gallery');
+    expect(brandSelected(tester, CardBrand.amex), isTrue);
+    expect(key('cardForm.detected.brand'), findsNothing);
   });
 
   testWidgets('an unexpected error shows the generic message', (tester) async {
@@ -291,7 +354,7 @@ void main() {
 
       testWidgets('permission dialog: ${c.name}', (tester) async {
         setScreen(tester, c.size, c.textScale);
-        scanner.result = const CardScanPermissionDenied();
+        scanner.result = const CardScanPermissionDenied(ImageSource.camera);
         await open(tester);
         await scanFrom(tester, 'camera');
         expect(tester.takeException(), isNull);

@@ -76,6 +76,10 @@ class FakeCardScanService implements CardScanService {
   CardScanResult result;
   final sources = <ImageSource>[];
   var settingsOpened = 0;
+  var lostDiscarded = 0;
+
+  /// Thrown by [openSettings] when set.
+  Object? settingsError;
 
   /// Completes the scan when set; lets a test see the loading overlay.
   Completer<void>? gate;
@@ -98,7 +102,13 @@ class FakeCardScanService implements CardScanService {
   }
 
   @override
-  Future<void> openSettings() async => settingsOpened++;
+  Future<void> openSettings() async {
+    if (settingsError case final e?) throw e;
+    settingsOpened++;
+  }
+
+  @override
+  Future<void> discardLostPhotos() async => lostDiscarded++;
 }
 
 /// Secure storage whose reads fail, like a reset Android keystore.

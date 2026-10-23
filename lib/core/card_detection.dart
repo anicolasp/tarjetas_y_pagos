@@ -76,24 +76,30 @@ String? bankIn(String text) {
   return best;
 }
 
-/// Digits with optional single spaces or dashes between them.
-final _digitRun = RegExp(r'\d+(?:[ -]\d+)*');
+/// Digits with optional single spaces, dashes or line breaks between them
+/// (ML Kit often returns embossed 4-4-4-4 groups on separate lines).
+final _digitRun = RegExp(r'\d+(?:(?:[ \t-]|\r?\n)\d+)*');
+
+/// Real card lengths first, so stray digits next to a 16-digit number
+/// (a code, part of a date) are not glued on just because Luhn passes.
+const _lengthPreference = [16, 15, 19, 14, 13, 17, 18];
 
 /// The first card number in [text]: 13–19 digits passing Luhn, made of
-/// whole printed groups (so nearby digits like a date are not glued on).
+/// whole printed groups, preferring common lengths and earlier groups.
 String? _cardNumberIn(String text) {
   for (final run in _digitRun.allMatches(text)) {
-    final groups = run.group(0)!.split(RegExp('[ -]'));
+    final groups = run.group(0)!.split(RegExp(r'[ \t-]|\r?\n'));
     String? best;
+    var bestRank = _lengthPreference.length;
     for (var start = 0; start < groups.length; start++) {
       var digits = '';
       for (var end = start; end < groups.length; end++) {
         digits += groups[end];
         if (digits.length > 19) break;
-        if (digits.length >= 13 &&
-            (best == null || digits.length > best.length) &&
-            luhnValid(digits)) {
+        final rank = _lengthPreference.indexOf(digits.length);
+        if (rank >= 0 && rank < bestRank && luhnValid(digits)) {
           best = digits;
+          bestRank = rank;
         }
       }
     }
@@ -107,7 +113,12 @@ CardDetection detectCard(String text) {
   final number = _cardNumberIn(text);
   return CardDetection(
     last4: number?.substring(number.length - 4),
-    brand: number == null ? null : brandFor(number),
+    // An unknown BIN says nothing: keep whatever brand the user chose.
+    brand: switch (number) {
+      null => null,
+      _ when brandFor(number) == CardBrand.other => null,
+      _ => brandFor(number),
+    },
     bank: bankIn(text),
   );
 }

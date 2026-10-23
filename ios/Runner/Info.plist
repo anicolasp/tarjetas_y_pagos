@@ -2,6 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Usamos la cámara solo para leer tu tarjeta en el teléfono. La foto no se guarda ni se envía.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Usamos la foto que elijas solo para leer tu tarjeta en el teléfono. No se guarda ni se envía.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>

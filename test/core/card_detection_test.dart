@@ -59,6 +59,13 @@ void main() {
       expect(bankIn('Asociación Popular de Ahorros y Préstamos'), 'APAP');
     });
 
+    test('generic words alone do not name a bank', () {
+      expect(bankIn('Hotel Caribe'), isNull);
+      expect(bankIn('Santiago, Cibao'), isNull);
+      expect(bankIn('Reservas aéreas'), isNull);
+      expect(bankIn('Banco Caribe'), 'Banco Caribe');
+    });
+
     test('whole words only', () {
       expect(bankIn('BDIX'), isNull);
       expect(bankIn('populares'), isNull);
@@ -101,6 +108,25 @@ void main() {
       expect(d.brand, isNull);
       expect(d.bank, 'BHD');
       expect(d.isEmpty, isFalse);
+    });
+
+    test('common lengths win over a longer Luhn-valid glue', () {
+      // 4111…1111 + "04" is 18 digits; whatever Luhn says, 16 wins.
+      for (final tail in ['04', '00', '12', '7']) {
+        expect(detectCard('4111 1111 1111 1111 $tail').last4, '1111');
+      }
+    });
+
+    test('groups split across lines are joined', () {
+      final d = detectCard('BHD\n5555 5555\n5555 4444\nVALID THRU 12/30');
+      expect(d.last4, '4444');
+      expect(d.brand, CardBrand.mastercard);
+    });
+
+    test('an unknown BIN leaves the brand to the user', () {
+      final d = detectCard('6011 1111 1111 1117');
+      expect(d.last4, '1117');
+      expect(d.brand, isNull);
     });
 
     test('nothing usable', () {

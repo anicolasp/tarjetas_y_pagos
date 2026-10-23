@@ -121,6 +121,43 @@ void main() {
     expect(reading, 0);
   });
 
+  test('photos lost when Android closed the app are deleted first', () async {
+    final lost = await File('${tmp.path}/lost.jpg').writeAsBytes([1]);
+    final events = <String>[];
+    await MlKitCardScanService(
+      lostPhotos: () async {
+        events.add('lost');
+        return [lost.path];
+      },
+      pick: (_) async {
+        events.add('pick');
+        return null;
+      },
+      recognize: (_) async => fail('must not read'),
+    ).scan(ImageSource.camera);
+    expect(events, ['lost', 'pick']);
+    expect(lost.existsSync(), isFalse);
+  });
+
+  test('a failing lost-data lookup does not block the scan', () async {
+    final s = MlKitCardScanService(
+      lostPhotos: () async => throw Exception('no plugin'),
+      pick: (_) async => photo.path,
+      recognize: (_) async => '4111 1111 1111 1111',
+    );
+    expect(await s.scan(ImageSource.gallery), isA<CardScanDetected>());
+  });
+
+  test('denied gallery access reports the gallery', () async {
+    final s = MlKitCardScanService(
+      lostPhotos: () async => const [],
+      pick: (_) async => throw PlatformException(code: 'photo_access_denied'),
+      recognize: (_) async => fail('must not read'),
+    );
+    final result = await s.scan(ImageSource.gallery);
+    expect((result as CardScanPermissionDenied).source, ImageSource.gallery);
+  });
+
   test('closing the picker is a cancel', () async {
     final s = MlKitCardScanService(
       pick: (_) async => null,

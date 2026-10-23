@@ -29,17 +29,24 @@ class CardScanCancelled extends CardScanResult {
   const CardScanCancelled();
 }
 
-/// Camera permission was denied.
+/// Access to the camera (or to the photos) was denied.
 class CardScanPermissionDenied extends CardScanResult {
-  const CardScanPermissionDenied();
+  const CardScanPermissionDenied(this.source);
+
+  final ImageSource source;
 }
 
 abstract interface class CardScanService {
   /// [onReading] runs once a photo was chosen, right before the OCR.
   Future<CardScanResult> scan(ImageSource source, {void Function()? onReading});
 
-  /// Opens the system settings of the app (to grant the camera).
+  /// Opens the system settings of the app (to grant the camera). Throws
+  /// when the platform cannot open them.
   Future<void> openSettings();
+
+  /// Deletes photos left behind when Android closed the app while the
+  /// camera or the gallery was open (they are never read).
+  Future<void> discardLostPhotos();
 }
 
 /// Photo with `image_picker`, text with ML Kit on the device. The photo is
@@ -48,11 +55,21 @@ class MlKitCardScanService implements CardScanService {
   MlKitCardScanService({
     Future<String?> Function(ImageSource source)? pick,
     Future<String> Function(String path)? recognize,
+    Future<List<String>> Function()? lostPhotos,
   }) : _pick = pick ?? _pickWithImagePicker,
-       _recognize = recognize ?? _recognizeWithMlKit;
+       _recognize = recognize ?? _recognizeWithMlKit,
+       _lostPhotos = lostPhotos ?? _lostWithImagePicker;
 
   final Future<String?> Function(ImageSource source) _pick;
   final Future<String> Function(String path) _recognize;
+  final Future<List<String>> Function() _lostPhotos;
+
+  /// Android only; elsewhere there is nothing lost.
+  static Future<List<String>> _lostWithImagePicker() async {
+    if (!Platform.isAndroid) return const [];
+    final lost = await ImagePicker().retrieveLostData();
+    return [for (final f in lost.files ?? const <XFile>[]) f.path];
+  }
 
   /// No resizing on purpose: a scaled copy would leave the picker's
   /// original copy of a gallery photo behind in the cache.
@@ -77,12 +94,13 @@ class MlKitCardScanService implements CardScanService {
     ImageSource source, {
     void Function()? onReading,
   }) async {
+    await discardLostPhotos();
     final String? path;
     try {
       path = await _pick(source);
     } on PlatformException catch (e) {
       if (e.code == 'camera_access_denied' || e.code == 'photo_access_denied') {
-        return const CardScanPermissionDenied();
+        return CardScanPermissionDenied(source);
       }
       rethrow;
     }
@@ -95,6 +113,17 @@ class MlKitCardScanService implements CardScanService {
           : CardScanDetected(detection);
     } finally {
       await _deletePhoto(path);
+    }
+  }
+
+  @override
+  Future<void> discardLostPhotos() async {
+    try {
+      for (final path in await _lostPhotos()) {
+        await _deletePhoto(path);
+      }
+    } on Exception {
+      // Best effort: nothing to recover from.
     }
   }
 
