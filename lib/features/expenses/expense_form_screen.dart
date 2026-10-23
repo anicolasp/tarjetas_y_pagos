@@ -339,6 +339,9 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
                       for (final c in widget.categories)
                         ChoiceChip(
                           key: ValueKey('expenseForm.category.${c.name}'),
+                          // The tinted background marks the selection; a
+                          // checkmark would cover the category icon.
+                          showCheckmark: false,
                           avatar: Icon(
                             categoryIcon(c.icon),
                             size: 18,

@@ -122,6 +122,7 @@ class _FilterSheetState extends State<_FilterSheet> {
                       for (final c in widget.categories)
                         FilterChip(
                           key: ValueKey('expenseFilter.category.${c.name}'),
+                          showCheckmark: false,
                           avatar: Icon(categoryIcon(c.icon), size: 18),
                           label: Text(c.name),
                           selected: _categories.contains(c.id),
