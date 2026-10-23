@@ -109,10 +109,6 @@ class MlKitCardScanService implements CardScanService {
   @override
   Future<void> discardLostPhotos() => discardLostPickedPhotos(_lostPhotos);
 
-  /// Implemented in `MainActivity.kt`.
-  static const _settings = MethodChannel('tarjetas_y_pagos/settings');
-
   @override
-  Future<void> openSettings() =>
-      _settings.invokeMethod<void>('openAppSettings');
+  Future<void> openSettings() => openAppSettings();
 }

@@ -7,6 +7,14 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 
+/// Implemented in `MainActivity.kt`.
+const _settings = MethodChannel('tarjetas_y_pagos/settings');
+
+/// Opens this app's system settings (to grant the camera or the photos).
+/// Throws where the platform has no such channel.
+Future<void> openAppSettings() =>
+    _settings.invokeMethod<void>('openAppSettings');
+
 /// The user denied the camera or the photos.
 bool isPhotoPermissionDenied(PlatformException e) =>
     e.code == 'camera_access_denied' || e.code == 'photo_access_denied';

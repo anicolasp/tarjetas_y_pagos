@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -12,8 +14,11 @@ import '../../data/models/category.dart';
 import '../../data/models/credit_card.dart';
 import '../../data/models/expense.dart';
 import '../../data/repositories/expenses_repository.dart';
+import '../../services/providers.dart';
+import '../../services/receipt_ai_service.dart';
 import '../auth/auth_widgets.dart';
 import '../cards/cards_providers.dart';
+import '../scan/scan_widgets.dart';
 
 /// New expense ([expenseId] null; [initialCardId] preselects the card) or
 /// edit/delete an existing one.
@@ -155,7 +160,23 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
   var _saving = false;
   String? _categoryError;
 
+  /// From the first tap on "Escanear factura" until the result.
+  var _scanBusy = false;
+
+  /// Only while Claude reads the photo: the loading overlay.
+  var _scanning = false;
+
+  /// What the receipt scan filled in. A field shows the "IA" chip while it
+  /// still holds that value.
+  var _fromAi = <String, Object>{};
+
+  /// A receipt scan filled the form: the expense is saved as `ia`.
+  var _scanned = false;
+
   bool get _editing => _e != null;
+
+  bool get _canScanReceipt =>
+      !_editing && ref.watch(anthropicApiKeyProvider).isNotEmpty;
 
   int? _initialCardId() {
     final id = _e?.cardId ?? widget.initialCardId;
@@ -175,6 +196,95 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
   void initState() {
     super.initState();
     if (_needsConversion && _rate.text.isEmpty) _loadRate();
+    if (!_editing && ref.read(anthropicApiKeyProvider).isNotEmpty) {
+      // A receipt photo from a scan interrupted by Android must not stay.
+      unawaited(ref.read(receiptAiServiceProvider).discardLostPhotos());
+    }
+    _merchant.addListener(_onAiFieldEdited);
+    _amount.addListener(_onAiFieldEdited);
+  }
+
+  void _onAiFieldEdited() {
+    if (_fromAi.isNotEmpty && mounted) setState(() {});
+  }
+
+  bool _isFromAi(String field, Object current) => _fromAi[field] == current;
+
+  Future<void> _scanReceipt() async {
+    // Busy from the first tap, so a double tap cannot start two scans.
+    if (_scanBusy) return;
+    setState(() => _scanBusy = true);
+    try {
+      final source = await showPhotoSourceSheet(
+        context,
+        keyPrefix: 'expenseForm.scanReceipt',
+      );
+      if (source == null || !mounted) return;
+      final service = ref.read(receiptAiServiceProvider);
+      final result = await service.scan(
+        source,
+        categories: widget.categories,
+        today: ref.read(clockProvider)(),
+        onReading: () {
+          if (mounted) setState(() => _scanning = true);
+        },
+      );
+      if (!mounted) return;
+      setState(() => _scanning = false);
+      switch (result) {
+        case ReceiptScanRead(:final data):
+          _applyReceipt(data);
+        case ReceiptScanFailed(:final error):
+          showErrorSnackBar(context, error.message);
+        case ReceiptScanPermissionDenied(:final source):
+          await explainPhotoPermission(
+            context,
+            source: source,
+            keyPrefix: 'expenseForm',
+            purpose:
+                'leer la factura con la IA. La foto se envía una sola vez '
+                'para leerla y no se guarda.',
+            openSettings: service.openSettings,
+          );
+        case ReceiptScanCancelled():
+          break;
+      }
+    } catch (_) {
+      if (mounted) showErrorSnackBar(context, unexpectedErrorMessage);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _scanBusy = false;
+          _scanning = false;
+        });
+      }
+    }
+  }
+
+  /// Fills only what was read; the user reviews and saves.
+  void _applyReceipt(ReceiptData d) {
+    final amountText = switch (d.amountCents) {
+      final cents? => centsToInput(cents),
+      null => null,
+    };
+    setState(() {
+      _scanned = true;
+      _fromAi = {
+        'merchant': ?d.merchant,
+        'amount': ?amountText,
+        'currency': ?d.currency,
+        'date': ?d.date,
+        'category': ?d.categoryId,
+      };
+      if (d.merchant case final m?) _merchant.text = m;
+      if (amountText case final a?) _amount.text = a;
+      if (d.date case final date?) _date = date;
+      if (d.categoryId case final id?) {
+        _categoryId = id;
+        _categoryError = null;
+      }
+    });
+    if (d.currency case final c?) _selectCurrency(c);
   }
 
   @override
@@ -267,7 +377,8 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
       currency: converted ? _card!.currency : _currency,
       date: _date,
       notes: _notes.text,
-      source: _e?.source ?? ExpenseSource.manual,
+      source:
+          _e?.source ?? (_scanned ? ExpenseSource.ai : ExpenseSource.manual),
       originalAmountCents: converted ? typed : null,
       originalCurrency: converted ? _currency : null,
       exchangeRateMicros: converted ? parseRateMicros(_rate.text) : null,
@@ -331,211 +442,274 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
     return Scaffold(
       key: const ValueKey('expenseForm.root'),
       appBar: AppBar(title: Text(_editing ? 'Editar gasto' : 'Nuevo gasto')),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          child: ResponsiveCenter(
-            maxWidth: ContentWidth.form,
-            child: Form(
-              key: _form,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  TextFormField(
-                    key: const ValueKey('expenseForm.merchant'),
-                    controller: _merchant,
-                    textCapitalization: TextCapitalization.words,
-                    textInputAction: TextInputAction.next,
-                    maxLength: merchantMaxLength,
-                    validator: (v) =>
-                        (v ?? '').trim().isEmpty ? 'Escribe el comercio' : null,
-                    decoration: const InputDecoration(
-                      labelText: 'Comercio',
-                      prefixIcon: Icon(Icons.storefront_outlined),
-                      counterText: '',
-                    ),
-                  ),
-                  gap,
-                  Text('Categoría', style: text.labelLarge),
-                  const SizedBox(height: 6),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: ResponsiveCenter(
+                maxWidth: ContentWidth.form,
+                child: Form(
+                  key: _form,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      for (final c in widget.categories)
-                        ChoiceChip(
-                          key: ValueKey('expenseForm.category.${c.name}'),
-                          // The tinted background marks the selection; a
-                          // checkmark would cover the category icon.
-                          showCheckmark: false,
-                          avatar: Icon(
-                            categoryIcon(c.icon),
-                            size: 18,
-                            color: Color(c.color),
+                      if (_canScanReceipt) ...[
+                        OutlinedButton.icon(
+                          key: const ValueKey('expenseForm.scanReceipt'),
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size.fromHeight(52),
                           ),
-                          label: Text(c.name),
-                          selected: _categoryId == c.id,
-                          onSelected: (_) => setState(() {
-                            _categoryId = c.id;
-                            _categoryError = null;
-                          }),
+                          onPressed: _scanBusy || _saving ? null : _scanReceipt,
+                          icon: const Icon(Icons.auto_awesome_outlined),
+                          label: const Text('Escanear factura (IA)'),
                         ),
-                    ],
-                  ),
-                  if (_categoryError != null)
-                    Padding(
-                      padding: const EdgeInsets.only(left: 12, top: 6),
-                      child: Text(
-                        _categoryError!,
-                        style: text.bodySmall?.copyWith(color: scheme.error),
-                      ),
-                    ),
-                  gap,
-                  if (_cardArchived)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Text(
-                        'La tarjeta de este gasto está archivada: puedes '
-                        'eliminarlo, pero no editarlo.',
-                        key: const ValueKey('expenseForm.archivedCard'),
-                        style: text.bodyMedium?.copyWith(color: scheme.error),
-                      ),
-                    ),
-                  DropdownButtonFormField<int>(
-                    key: const ValueKey('expenseForm.card'),
-                    initialValue: _cardId,
-                    isExpanded: true,
-                    validator: (id) => id == null ? 'Elige una tarjeta' : null,
-                    decoration: const InputDecoration(
-                      labelText: 'Tarjeta',
-                      prefixIcon: Icon(Icons.credit_card),
-                    ),
-                    items: [
-                      for (final c in widget.cards)
-                        DropdownMenuItem(
-                          key: ValueKey('expenseForm.cardOption.${c.id}'),
-                          value: c.id,
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
                           child: Text(
-                            '${c.alias} •••• ${c.last4}',
-                            overflow: TextOverflow.ellipsis,
+                            'La IA lee la foto y propone los datos; tú los '
+                            'revisas antes de guardar. La foto no se guarda.',
+                            style: text.bodySmall,
                           ),
                         ),
-                    ],
-                    onChanged: _cardArchived ? null : _selectCard,
-                  ),
-                  gap,
-                  Text('Moneda del gasto', style: text.labelLarge),
-                  const SizedBox(height: 6),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      for (final c in Currency.values)
-                        ChoiceChip(
-                          key: ValueKey('expenseForm.currency.${c.code}'),
-                          label: Text('${c.symbol} ${c.code}'),
-                          selected: _currency == c,
-                          onSelected: (_) => _selectCurrency(c),
+                        const SizedBox(height: 20),
+                      ],
+                      TextFormField(
+                        key: const ValueKey('expenseForm.merchant'),
+                        controller: _merchant,
+                        textCapitalization: TextCapitalization.words,
+                        textInputAction: TextInputAction.next,
+                        maxLength: merchantMaxLength,
+                        validator: (v) => (v ?? '').trim().isEmpty
+                            ? 'Escribe el comercio'
+                            : null,
+                        decoration: const InputDecoration(
+                          labelText: 'Comercio',
+                          prefixIcon: Icon(Icons.storefront_outlined),
+                          counterText: '',
                         ),
-                    ],
-                  ),
-                  gap,
-                  TextFormField(
-                    key: const ValueKey('expenseForm.amount'),
-                    controller: _amount,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    textInputAction: TextInputAction.next,
-                    onChanged: (_) => setState(() {}),
-                    validator: (v) {
-                      final cents = parseMoneyToCents(v ?? '');
-                      return cents != null && cents > 0
-                          ? null
-                          : 'Escribe un monto mayor que 0';
-                    },
-                    decoration: InputDecoration(
-                      labelText: 'Monto',
-                      prefixText: '${_currency.symbol} ',
-                      prefixIcon: const Icon(Icons.payments_outlined),
-                    ),
-                  ),
-                  if (_needsConversion) ...[
-                    gap,
-                    _RateField(
-                      controller: _rate,
-                      status: _rateStatus,
-                      onChanged: () => setState(() => _rateTouched = true),
-                      onRetry: () => _loadRate(force: true),
-                    ),
-                    if (_cardAmountCents case final cents?)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 12, top: 8),
-                        child: Text(
-                          'Se registra en la tarjeta como '
-                          '${formatMoney(cents, _card!.currency)}',
-                          key: const ValueKey('expenseForm.convertedPreview'),
-                          style: text.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
+                      ),
+                      if (_isFromAi('merchant', _merchant.text))
+                        const _AiChip(field: 'merchant'),
+                      gap,
+                      Text('Categoría', style: text.labelLarge),
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          for (final c in widget.categories)
+                            ChoiceChip(
+                              key: ValueKey('expenseForm.category.${c.name}'),
+                              // The tinted background marks the selection; a
+                              // checkmark would cover the category icon.
+                              showCheckmark: false,
+                              avatar: Icon(
+                                categoryIcon(c.icon),
+                                size: 18,
+                                color: Color(c.color),
+                              ),
+                              label: Text(c.name),
+                              selected: _categoryId == c.id,
+                              onSelected: (_) => setState(() {
+                                _categoryId = c.id;
+                                _categoryError = null;
+                              }),
+                            ),
+                        ],
+                      ),
+                      if (_categoryId case final id?
+                          when _isFromAi('category', id))
+                        const _AiChip(field: 'category'),
+                      if (_categoryError != null)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 12, top: 6),
+                          child: Text(
+                            _categoryError!,
+                            style: text.bodySmall?.copyWith(
+                              color: scheme.error,
+                            ),
                           ),
                         ),
+                      gap,
+                      if (_cardArchived)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Text(
+                            'La tarjeta de este gasto está archivada: puedes '
+                            'eliminarlo, pero no editarlo.',
+                            key: const ValueKey('expenseForm.archivedCard'),
+                            style: text.bodyMedium?.copyWith(
+                              color: scheme.error,
+                            ),
+                          ),
+                        ),
+                      DropdownButtonFormField<int>(
+                        key: const ValueKey('expenseForm.card'),
+                        initialValue: _cardId,
+                        isExpanded: true,
+                        validator: (id) =>
+                            id == null ? 'Elige una tarjeta' : null,
+                        decoration: const InputDecoration(
+                          labelText: 'Tarjeta',
+                          prefixIcon: Icon(Icons.credit_card),
+                        ),
+                        items: [
+                          for (final c in widget.cards)
+                            DropdownMenuItem(
+                              key: ValueKey('expenseForm.cardOption.${c.id}'),
+                              value: c.id,
+                              child: Text(
+                                '${c.alias} •••• ${c.last4}',
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                        ],
+                        onChanged: _cardArchived ? null : _selectCard,
                       ),
-                  ],
-                  gap,
-                  InkWell(
-                    key: const ValueKey('expenseForm.date'),
-                    borderRadius: BorderRadius.circular(12),
-                    onTap: _pickDate,
-                    child: InputDecorator(
-                      decoration: const InputDecoration(
-                        labelText: 'Fecha',
-                        prefixIcon: Icon(Icons.event_outlined),
+                      gap,
+                      Text('Moneda del gasto', style: text.labelLarge),
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          for (final c in Currency.values)
+                            ChoiceChip(
+                              key: ValueKey('expenseForm.currency.${c.code}'),
+                              label: Text('${c.symbol} ${c.code}'),
+                              selected: _currency == c,
+                              onSelected: (_) => _selectCurrency(c),
+                            ),
+                        ],
                       ),
-                      child: Text(formatDate(_date)),
-                    ),
+                      if (_isFromAi('currency', _currency))
+                        const _AiChip(field: 'currency'),
+                      gap,
+                      TextFormField(
+                        key: const ValueKey('expenseForm.amount'),
+                        controller: _amount,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        textInputAction: TextInputAction.next,
+                        onChanged: (_) => setState(() {}),
+                        validator: (v) {
+                          final cents = parseMoneyToCents(v ?? '');
+                          return cents != null && cents > 0
+                              ? null
+                              : 'Escribe un monto mayor que 0';
+                        },
+                        decoration: InputDecoration(
+                          labelText: 'Monto',
+                          prefixText: '${_currency.symbol} ',
+                          prefixIcon: const Icon(Icons.payments_outlined),
+                        ),
+                      ),
+                      if (_isFromAi('amount', _amount.text))
+                        const _AiChip(field: 'amount'),
+                      if (_needsConversion) ...[
+                        gap,
+                        _RateField(
+                          controller: _rate,
+                          status: _rateStatus,
+                          onChanged: () => setState(() => _rateTouched = true),
+                          onRetry: () => _loadRate(force: true),
+                        ),
+                        if (_cardAmountCents case final cents?)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 12, top: 8),
+                            child: Text(
+                              'Se registra en la tarjeta como '
+                              '${formatMoney(cents, _card!.currency)}',
+                              key: const ValueKey(
+                                'expenseForm.convertedPreview',
+                              ),
+                              style: text.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                      ],
+                      gap,
+                      InkWell(
+                        key: const ValueKey('expenseForm.date'),
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: _pickDate,
+                        child: InputDecorator(
+                          decoration: const InputDecoration(
+                            labelText: 'Fecha',
+                            prefixIcon: Icon(Icons.event_outlined),
+                          ),
+                          child: Text(formatDate(_date)),
+                        ),
+                      ),
+                      if (_isFromAi('date', _date))
+                        const _AiChip(field: 'date'),
+                      gap,
+                      TextFormField(
+                        key: const ValueKey('expenseForm.notes'),
+                        controller: _notes,
+                        maxLength: notesMaxLength,
+                        maxLines: 2,
+                        minLines: 1,
+                        textCapitalization: TextCapitalization.sentences,
+                        decoration: const InputDecoration(
+                          labelText: 'Notas (opcional)',
+                          prefixIcon: Icon(Icons.notes),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      if (!_cardArchived)
+                        LoadingButton(
+                          key: const ValueKey('expenseForm.save'),
+                          label: _editing ? 'Guardar cambios' : 'Guardar gasto',
+                          loading: _saving,
+                          onPressed: _save,
+                        ),
+                      if (_editing) ...[
+                        const SizedBox(height: 12),
+                        OutlinedButton.icon(
+                          key: const ValueKey('expenseForm.delete'),
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size.fromHeight(52),
+                            foregroundColor: scheme.error,
+                          ),
+                          onPressed: _saving ? null : _delete,
+                          icon: const Icon(Icons.delete_outline),
+                          label: const Text('Eliminar gasto'),
+                        ),
+                      ],
+                    ],
                   ),
-                  gap,
-                  TextFormField(
-                    key: const ValueKey('expenseForm.notes'),
-                    controller: _notes,
-                    maxLength: notesMaxLength,
-                    maxLines: 2,
-                    minLines: 1,
-                    textCapitalization: TextCapitalization.sentences,
-                    decoration: const InputDecoration(
-                      labelText: 'Notas (opcional)',
-                      prefixIcon: Icon(Icons.notes),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  if (!_cardArchived)
-                    LoadingButton(
-                      key: const ValueKey('expenseForm.save'),
-                      label: _editing ? 'Guardar cambios' : 'Guardar gasto',
-                      loading: _saving,
-                      onPressed: _save,
-                    ),
-                  if (_editing) ...[
-                    const SizedBox(height: 12),
-                    OutlinedButton.icon(
-                      key: const ValueKey('expenseForm.delete'),
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(52),
-                        foregroundColor: scheme.error,
-                      ),
-                      onPressed: _saving ? null : _delete,
-                      icon: const Icon(Icons.delete_outline),
-                      label: const Text('Eliminar gasto'),
-                    ),
-                  ],
-                ],
+                ),
               ),
             ),
           ),
-        ),
+          if (_scanning)
+            const PhotoReadingOverlay(
+              key: ValueKey('expenseForm.scanning'),
+              message: 'Leyendo factura…',
+            ),
+        ],
       ),
     );
   }
+}
+
+/// Marks a field the receipt scan filled in.
+class _AiChip extends StatelessWidget {
+  const _AiChip({required this.field});
+
+  final String field;
+
+  @override
+  Widget build(BuildContext context) => FilledFromPhotoChip(
+    key: ValueKey('expenseForm.ai.$field'),
+    label: 'IA',
+    icon: Icons.auto_awesome_outlined,
+  );
 }
 
 /// "Tasa (RD$ por US$)" with where it came from and a retry.

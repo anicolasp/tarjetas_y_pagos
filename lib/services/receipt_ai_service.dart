@@ -89,6 +89,9 @@ abstract interface class ReceiptAiService {
 
   /// Deletes photos left behind when Android closed the app mid-pick.
   Future<void> discardLostPhotos();
+
+  /// Opens the system settings of the app. Throws when it cannot.
+  Future<void> openSettings();
 }
 
 /// Reads a receipt photo with Claude (vision + structured outputs). The
@@ -133,6 +136,9 @@ class ClaudeReceiptService implements ReceiptAiService {
 
   @override
   Future<void> discardLostPhotos() => discardLostPickedPhotos(_lostPhotos);
+
+  @override
+  Future<void> openSettings() => openAppSettings();
 
   @override
   Future<ReceiptScanResult> scan(
