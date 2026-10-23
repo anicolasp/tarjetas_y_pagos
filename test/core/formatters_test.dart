@@ -41,7 +41,10 @@ void main() {
       expect(parseMoneyToCents(' 0.5 '), 50);
       expect(parseMoneyToCents('0'), 0);
       expect(parseMoneyToCents('1,234,567.89'), 123456789);
-      expect(parseMoneyToCents('9999999999999'), 999999999999900);
+      // Up to 10 integer digits.
+      expect(parseMoneyToCents('9999999999.99'), 999999999999);
+      expect(parseMoneyToCents('9,999,999,999.99'), 999999999999);
+      expect(parseMoneyToCents('99999999999'), isNull);
     });
     test('rejects invalid amounts', () {
       for (final bad in [

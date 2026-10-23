@@ -25,7 +25,10 @@ class CreditCardTile extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     const onCard = Colors.white;
     final muted = onCard.withValues(alpha: 0.78);
-    final available = recommendation.availableCents;
+    // "Disponible RD$ 50,000.00 · US$ 1,000.00" (one per limited currency).
+    final available = recommendation.available.entries
+        .map((e) => formatMoney(e.value, e.key))
+        .join(' · ');
 
     return Material(
       color: color,
@@ -86,11 +89,16 @@ class CreditCardTile extends StatelessWidget {
                     style: text.bodySmall?.copyWith(color: muted),
                   ),
                   Text(
-                    available == null
+                    available.isEmpty
                         ? 'Disponible —'
-                        : 'Disponible ${formatMoney(available, card.currency)}',
+                        : 'Disponible $available',
                     style: text.bodySmall?.copyWith(color: muted),
                   ),
+                  if (card.dualCurrency)
+                    Text(
+                      'RD\$ y US\$',
+                      style: text.bodySmall?.copyWith(color: muted),
+                    ),
                 ],
               ),
             ],

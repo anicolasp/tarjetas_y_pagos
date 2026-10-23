@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:tarjetas_y_pagos/core/money.dart';
 import 'package:tarjetas_y_pagos/data/database.dart';
 import 'package:tarjetas_y_pagos/data/repositories/cards_repository.dart';
 
@@ -84,5 +85,31 @@ void main() {
     expect((await repo.listActive(ana)).map((c) => c.alias), ['B']);
     expect((await repo.getById(ana, a.id!))!.archived, isTrue);
     await expectLater(repo.archive(otro, a.id!), throwsStateError);
+  });
+
+  test('a currency with movements cannot be dropped from a card', () async {
+    final card = await seedCard(db, ana);
+    await seedExpense(db, ana, card.id!, 'Supermercado', 'Jumbo');
+    await expectLater(
+      repo.update(card.copyWith(currency: Currency.usd)),
+      throwsArgumentError,
+    );
+    // Turning dual on keeps RD$, so it is allowed.
+    await repo.update(card.copyWith(dualCurrency: true));
+    final dual = (await repo.getById(ana, card.id!))!;
+    expect(dual.dualCurrency, isTrue);
+    // A US$ expense on the dual card blocks turning dual off again.
+    await seedExpense(
+      db,
+      ana,
+      card.id!,
+      'Supermercado',
+      'Amazon',
+      currency: Currency.usd,
+    );
+    await expectLater(
+      repo.update(dual.copyWith(dualCurrency: false)),
+      throwsArgumentError,
+    );
   });
 }

@@ -127,7 +127,9 @@ void main() {
       final ranked = rankCards(
         [best, ok],
         today,
-        balancesCents: {1: 95000}, // 5 % left
+        balances: {
+          1: {Currency.dop: 95000},
+        }, // 5 % left
       );
       expect(ranked.map((r) => r.card.alias), ['Normal', 'Mejor']);
       expect(ranked.last.lowCredit, isTrue);
@@ -139,13 +141,21 @@ void main() {
       final ranked = rankCards(
         [card('A', limitCents: 100000)],
         today,
-        balancesCents: {1: 90000},
+        balances: {
+          1: {Currency.dop: 90000},
+        },
       );
       expect(ranked.single.lowCredit, isFalse);
     });
 
     test('no limit registered: no available amount and no warning', () {
-      final ranked = rankCards([card('A')], today, balancesCents: {1: 50000});
+      final ranked = rankCards(
+        [card('A')],
+        today,
+        balances: {
+          1: {Currency.dop: 50000},
+        },
+      );
       expect(ranked.single.availableCents, isNull);
       expect(ranked.single.lowCredit, isFalse);
     });
@@ -165,7 +175,7 @@ void main() {
     final r = recommendationFor(
       card('A', cutDay: 5, limitCents: 100000, archived: true),
       d(2026, 10, 22),
-      balanceCents: 30000,
+      balances: {Currency.dop: 30000},
     );
     expect(r.nextCut, d(2026, 11, 5));
     expect(r.dueDate, d(2026, 11, 25));

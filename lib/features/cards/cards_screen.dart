@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/responsive.dart';
 import '../../core/router.dart';
 import '../../core/billing_cycle.dart';
+import '../../core/clock.dart';
 import 'cards_providers.dart';
 import 'widgets/credit_card_tile.dart';
 
@@ -14,8 +15,10 @@ class CardsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final ranking = ref.watch(cardRankingProvider);
-    final cards = ref.watch(userCardsProvider).value ?? const [];
+    final today = ref.watch(clockProvider)();
+    final ranking = ref
+        .watch(financeProvider)
+        .whenData((f) => f.inAddedOrder(today));
 
     return Scaffold(
       key: const ValueKey('cards.root'),
@@ -35,9 +38,7 @@ class CardsScreen extends ConsumerWidget {
             text: 'No se pudieron cargar tus tarjetas',
           ),
           AsyncData(value: final list) when list.isEmpty => const _Empty(),
-          AsyncData(value: final list) => _List(
-            items: inAddedOrder(cards, list),
-          ),
+          AsyncData(value: final list) => _List(items: list),
           _ => const Center(child: CircularProgressIndicator()),
         },
       ),

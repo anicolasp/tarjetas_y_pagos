@@ -3,8 +3,10 @@ import 'package:tarjetas_y_pagos/core/money.dart';
 import 'package:tarjetas_y_pagos/data/database.dart';
 import 'package:tarjetas_y_pagos/data/models/app_user.dart';
 import 'package:tarjetas_y_pagos/data/models/credit_card.dart';
+import 'package:tarjetas_y_pagos/data/models/expense.dart';
 import 'package:tarjetas_y_pagos/data/repositories/auth_repository.dart';
 import 'package:tarjetas_y_pagos/data/repositories/cards_repository.dart';
+import 'package:tarjetas_y_pagos/data/repositories/expenses_repository.dart';
 import 'package:tarjetas_y_pagos/services/login_throttle.dart';
 
 import 'fakes.dart';
@@ -54,3 +56,32 @@ Future<CreditCard> seedCard(
     createdAt: DateTime(2026),
   ),
 );
+
+/// An expense on [cardId] in the base category [categoryName]. Defaults to
+/// RD$ 1,000.00 on 20 Oct 2026 (repository "today" is 22 Oct 2026).
+Future<Expense> seedExpense(
+  AppDatabase db,
+  int userId,
+  int cardId,
+  String categoryName,
+  String merchant, {
+  int cents = 100000,
+  DateTime? date,
+  Currency currency = Currency.dop,
+}) async {
+  final repo = ExpensesRepository(db, clock: () => DateTime(2026, 10, 22, 10));
+  final category = (await repo.categories(userId))
+      .firstWhere((c) => c.name == categoryName);
+  return repo.create(
+    Expense(
+      userId: userId,
+      cardId: cardId,
+      categoryId: category.id!,
+      merchant: merchant,
+      amountCents: cents,
+      currency: currency,
+      date: date ?? DateTime(2026, 10, 20),
+      createdAt: DateTime(2026, 10, 22),
+    ),
+  );
+}

@@ -9,6 +9,8 @@ import '../features/auth/unlock_screen.dart';
 import '../features/cards/card_detail_screen.dart';
 import '../features/cards/card_form_screen.dart';
 import '../features/cards/cards_screen.dart';
+import '../features/cards/payment_form_screen.dart';
+import '../features/expenses/expense_form_screen.dart';
 import '../features/home/home_screen.dart';
 import '../features/onboarding/onboarding_screen.dart';
 import '../features/profile/profile_placeholder_screen.dart';
@@ -30,6 +32,12 @@ abstract final class Routes {
   static const cardNew = '/home/cards/new';
   static String cardDetail(int id) => '/home/cards/$id';
   static String cardEdit(int id) => '/home/cards/$id/edit';
+  static String cardPay(int id) => '/home/cards/$id/pay';
+
+  /// New expense, optionally with the card preselected.
+  static String expenseNew({int? cardId}) =>
+      '/home/expenses/new${cardId == null ? '' : '?cardId=$cardId'}';
+  static String expenseEdit(int id) => '/home/expenses/$id';
 }
 
 const _publicRoutes = {
@@ -125,9 +133,27 @@ final routerProvider = Provider<GoRouter>((ref) {
                     builder: (context, state) =>
                         CardFormScreen(cardId: _cardId(state)),
                   ),
+                  GoRoute(
+                    path: 'pay',
+                    builder: (context, state) =>
+                        PaymentFormScreen(cardId: _cardId(state)),
+                  ),
                 ],
               ),
             ],
+          ),
+          GoRoute(
+            path: 'expenses/new',
+            builder: (context, state) => ExpenseFormScreen(
+              initialCardId: int.tryParse(
+                state.uri.queryParameters['cardId'] ?? '',
+              ),
+            ),
+          ),
+          GoRoute(
+            path: 'expenses/:id',
+            builder: (context, state) =>
+                ExpenseFormScreen(expenseId: _cardId(state)),
           ),
         ],
       ),
@@ -140,6 +166,6 @@ final routerProvider = Provider<GoRouter>((ref) {
   return router;
 });
 
-/// Card id from the path; an invalid id (-1) shows "Tarjeta no encontrada".
+/// Id from the path; an invalid id (-1) shows "not found".
 int _cardId(GoRouterState state) =>
     int.tryParse(state.pathParameters['id'] ?? '') ?? -1;

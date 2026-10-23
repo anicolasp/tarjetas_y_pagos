@@ -28,6 +28,8 @@ class CreditCard {
     this.paymentDays = 20,
     this.creditLimitCents = 0,
     required this.currency,
+    this.dualCurrency = false,
+    this.secondaryLimitCents = 0,
     required this.color,
     this.archived = false,
     required this.createdAt,
@@ -46,8 +48,28 @@ class CreditCard {
   /// Days between the cut date and the payment due date.
   final int paymentDays;
   final int creditLimitCents;
+
+  /// Single-currency cards: the only currency. Dual cards: RD$ (primary).
   final Currency currency;
+
+  /// Dual cards keep separate RD$ and US$ balances (and limits).
+  final bool dualCurrency;
+
+  /// US$ limit of a dual card (0 = not registered). [creditLimitCents] is
+  /// always the limit in [currency].
+  final int secondaryLimitCents;
   final int color;
+
+  /// Currencies this card holds balances in.
+  List<Currency> get currencies =>
+      dualCurrency ? const [Currency.dop, Currency.usd] : [currency];
+
+  /// Limit in [c] (0 = not registered).
+  int limitFor(Currency c) {
+    if (c == currency) return creditLimitCents;
+    return dualCurrency ? secondaryLimitCents : 0;
+  }
+
   final bool archived;
   final DateTime createdAt;
 
@@ -62,6 +84,8 @@ class CreditCard {
     paymentDays: m['payment_days'] as int,
     creditLimitCents: m['credit_limit_cents'] as int,
     currency: Currency.fromCode(m['currency'] as String),
+    dualCurrency: decodeBool(m['dual_currency']),
+    secondaryLimitCents: (m['secondary_limit_cents'] as int?) ?? 0,
     color: m['color'] as int,
     archived: decodeBool(m['archived']),
     createdAt: decodeTimestamp(m['created_at'] as String),
@@ -78,6 +102,8 @@ class CreditCard {
     'payment_days': paymentDays,
     'credit_limit_cents': creditLimitCents,
     'currency': currency.code,
+    'dual_currency': encodeBool(dualCurrency),
+    'secondary_limit_cents': secondaryLimitCents,
     'color': color,
     'archived': encodeBool(archived),
     'created_at': encodeTimestamp(createdAt),
@@ -93,6 +119,8 @@ class CreditCard {
     int? paymentDays,
     int? creditLimitCents,
     Currency? currency,
+    bool? dualCurrency,
+    int? secondaryLimitCents,
     int? color,
     bool? archived,
   }) => CreditCard(
@@ -106,6 +134,8 @@ class CreditCard {
     paymentDays: paymentDays ?? this.paymentDays,
     creditLimitCents: creditLimitCents ?? this.creditLimitCents,
     currency: currency ?? this.currency,
+    dualCurrency: dualCurrency ?? this.dualCurrency,
+    secondaryLimitCents: secondaryLimitCents ?? this.secondaryLimitCents,
     color: color ?? this.color,
     archived: archived ?? this.archived,
     createdAt: createdAt,

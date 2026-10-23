@@ -1,11 +1,16 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/billing_cycle.dart';
 import '../../core/clock.dart';
+import '../../data/finance_snapshot.dart';
 import '../../data/models/app_user.dart';
+import '../../data/models/category.dart';
 import '../../data/models/credit_card.dart';
+import '../../data/models/expense.dart';
 import '../../data/providers.dart';
 import '../../data/repositories/cards_repository.dart';
+import '../../data/repositories/expenses_repository.dart';
+import '../../services/exchange_rate_service.dart';
+import '../../services/providers.dart';
 import '../auth/auth_controller.dart';
 
 /// The logged-in user, or null.
@@ -14,57 +19,91 @@ final currentUserProvider = Provider<AppUser?>((ref) {
   return auth is AuthLoggedIn ? auth.user : null;
 });
 
-final cardsRepositoryProvider = FutureProvider<CardsRepository>((ref) async {
-  return CardsRepository(
-    await ref.watch(appDatabaseProvider.future),
-    clock: ref.watch(clockProvider),
+typedef Repos = ({CardsRepository cards, ExpensesRepository expenses});
+
+/// Both repositories over the opened database. They never change once open,
+/// so the providers below watch a single `.future` (chains of derived async
+/// providers trigger a Riverpod 3 "markNeedsBuild during build" when a
+/// paused screen resumes).
+final reposProvider = FutureProvider<Repos>((ref) async {
+  final db = await ref.watch(appDatabaseProvider.future);
+  final clock = ref.watch(clockProvider);
+  return (
+    cards: CardsRepository(db, clock: clock),
+    expenses: ExpensesRepository(db, clock: clock),
   );
 }, retry: (retryCount, error) => null);
 
-/// Active cards of the current user. Invalidate after any change.
-final userCardsProvider = FutureProvider<List<CreditCard>>((ref) async {
+/// The single source for cards, balances, rankings and totals. Call
+/// [refreshFinance] after any change.
+final financeProvider = FutureProvider<FinanceSnapshot>((ref) async {
   final user = ref.watch(currentUserProvider);
-  if (user == null) return const [];
-  final repo = await ref.watch(cardsRepositoryProvider.future);
-  return repo.listActive(user.id!);
+  if (user == null) return FinanceSnapshot.empty;
+  final repos = await ref.watch(reposProvider.future);
+  final userId = user.id!;
+  return FinanceSnapshot(
+    cards: await repos.cards.listActive(userId),
+    expenses: await repos.expenses.list(userId),
+    payments: await repos.expenses.payments(userId),
+  );
 }, retry: (retryCount, error) => null);
 
 /// One active card of the current user, or null if it does not exist, is
 /// not theirs, or is archived (archived cards cannot be opened or edited).
-final cardByIdProvider = FutureProvider.family<CreditCard?, int>((
+final cardByIdProvider = FutureProvider.autoDispose.family<CreditCard?, int>((
   ref,
   id,
 ) async {
   final user = ref.watch(currentUserProvider);
   if (user == null) return null;
-  final repo = await ref.watch(cardsRepositoryProvider.future);
-  final card = await repo.getById(user.id!, id);
+  final repos = await ref.watch(reposProvider.future);
+  final card = await repos.cards.getById(user.id!, id);
   return card == null || card.archived ? null : card;
 }, retry: (retryCount, error) => null);
 
-/// "Mejor tarjeta hoy": active cards ranked for today. Balances are 0 until
-/// expenses exist (#5).
-final cardRankingProvider = FutureProvider<List<CardRecommendation>>((
+/// Expenses matching [filter] (SQL side), newest first.
+final filteredExpensesProvider = FutureProvider.autoDispose
+    .family<List<Expense>, ExpenseFilter>((ref, filter) async {
+      final user = ref.watch(currentUserProvider);
+      if (user == null) return const [];
+      final repos = await ref.watch(reposProvider.future);
+      return repos.expenses.list(user.id!, filter);
+    }, retry: (retryCount, error) => null);
+
+final expenseByIdProvider = FutureProvider.autoDispose.family<Expense?, int>((
   ref,
+  id,
 ) async {
-  final cards = await ref.watch(userCardsProvider.future);
-  return rankCards(cards, ref.watch(clockProvider)());
+  final user = ref.watch(currentUserProvider);
+  if (user == null) return null;
+  final repos = await ref.watch(reposProvider.future);
+  return repos.expenses.getById(user.id!, id);
 }, retry: (retryCount, error) => null);
 
-/// [ranked] in the order the cards were added, as [cards] (from
-/// [userCardsProvider]) lists them. Kept as a plain function: a derived
-/// provider here triggers a Riverpod 3 "markNeedsBuild during build" when a
-/// paused screen resumes.
-List<CardRecommendation> inAddedOrder(
-  List<CreditCard> cards,
-  List<CardRecommendation> ranked,
-) {
-  final byId = {for (final r in ranked) r.card.id: r};
-  return [for (final c in cards) ?byId[c.id]];
-}
+final categoriesProvider = FutureProvider<List<Category>>((ref) async {
+  final user = ref.watch(currentUserProvider);
+  if (user == null) return const [];
+  final repos = await ref.watch(reposProvider.future);
+  return repos.expenses.categories(user.id!);
+}, retry: (retryCount, error) => null);
 
-/// Refreshes every card view after a create/update/archive.
-void refreshCards(WidgetRef ref) {
-  ref.invalidate(userCardsProvider);
+final exchangeRateSourceProvider = Provider<ExchangeRateSource>(
+  (ref) => OpenErApiSource(),
+);
+
+final exchangeRateServiceProvider = Provider<ExchangeRateService>(
+  (ref) => ExchangeRateService(
+    ref.watch(exchangeRateSourceProvider),
+    ref.watch(sharedPreferencesProvider),
+    clock: ref.watch(clockProvider),
+  ),
+);
+
+/// Refreshes every money view after creating, editing or deleting a card,
+/// expense or payment.
+void refreshFinance(WidgetRef ref) {
+  ref.invalidate(financeProvider);
   ref.invalidate(cardByIdProvider);
+  ref.invalidate(filteredExpensesProvider);
+  ref.invalidate(expenseByIdProvider);
 }
