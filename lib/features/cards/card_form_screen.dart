@@ -78,6 +78,11 @@ class _CardFormState extends ConsumerState<_CardForm> {
       Currency.dop;
   late var _color = widget.card?.color ?? cardColors.first;
   var _saving = false;
+
+  /// From choosing the source until the result: the button is disabled.
+  var _scanBusy = false;
+
+  /// Only while the photo is being read: the loading overlay.
   var _scanning = false;
 
   /// What the last scan filled in ('last4', 'brand', 'bank'). A field shows
@@ -139,15 +144,25 @@ class _CardFormState extends ConsumerState<_CardForm> {
     );
     if (source == null || !mounted) return;
     final service = ref.read(cardScanServiceProvider);
-    setState(() => _scanning = true);
+    setState(() => _scanBusy = true);
     final CardScanResult result;
     try {
-      result = await service.scan(source);
+      result = await service.scan(
+        source,
+        onReading: () {
+          if (mounted) setState(() => _scanning = true);
+        },
+      );
     } catch (_) {
       if (mounted) showErrorSnackBar(context, unexpectedErrorMessage);
       return;
     } finally {
-      if (mounted) setState(() => _scanning = false);
+      if (mounted) {
+        setState(() {
+          _scanBusy = false;
+          _scanning = false;
+        });
+      }
     }
     if (!mounted) return;
     switch (result) {
@@ -316,7 +331,7 @@ class _CardFormState extends ConsumerState<_CardForm> {
                           style: OutlinedButton.styleFrom(
                             minimumSize: const Size.fromHeight(52),
                           ),
-                          onPressed: _scanning || _saving ? null : _scan,
+                          onPressed: _scanBusy || _saving ? null : _scan,
                           icon: const Icon(Icons.document_scanner_outlined),
                           label: const Text('Escanear tarjeta'),
                         ),

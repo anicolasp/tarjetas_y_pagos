@@ -84,8 +84,14 @@ class FakeCardScanService implements CardScanService {
   Object? error;
 
   @override
-  Future<CardScanResult> scan(ImageSource source) async {
+  Future<CardScanResult> scan(
+    ImageSource source, {
+    void Function()? onReading,
+  }) async {
     sources.add(source);
+    if (result is CardScanDetected || result is CardScanNothing) {
+      onReading?.call();
+    }
     await gate?.future;
     if (error case final e?) throw e;
     return result;

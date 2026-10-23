@@ -42,6 +42,40 @@ void main() {
     expect(photo.existsSync(), isFalse);
   });
 
+  test('a gallery copy in its own uuid folder: folder removed too', () async {
+    final folder = await Directory(
+      '${tmp.path}/c8a2b80a-bc30-4dae-83bc-a2c1f4cd63e6',
+    ).create();
+    final copy = await File('${folder.path}/1000000018.jpg').writeAsBytes([1]);
+    await MlKitCardScanService(
+      pick: (_) async => copy.path,
+      recognize: (_) async => '4111 1111 1111 1111',
+    ).scan(ImageSource.gallery);
+    expect(copy.existsSync(), isFalse);
+    expect(folder.existsSync(), isFalse);
+    expect(tmp.existsSync(), isTrue);
+  });
+
+  test('other folders are never removed', () async {
+    await service('4111 1111 1111 1111').scan(ImageSource.camera);
+    expect(photo.existsSync(), isFalse);
+    expect(tmp.existsSync(), isTrue); // not a uuid folder
+  });
+
+  test('a uuid folder with other files is kept', () async {
+    final folder = await Directory(
+      '${tmp.path}/c8a2b80a-bc30-4dae-83bc-a2c1f4cd63e6',
+    ).create();
+    final copy = await File('${folder.path}/a.jpg').writeAsBytes([1]);
+    final other = await File('${folder.path}/b.jpg').writeAsBytes([1]);
+    await MlKitCardScanService(
+      pick: (_) async => copy.path,
+      recognize: (_) async => '',
+    ).scan(ImageSource.gallery);
+    expect(copy.existsSync(), isFalse);
+    expect(other.existsSync(), isTrue);
+  });
+
   test('the photo is deleted even when the OCR fails', () async {
     final failing = MlKitCardScanService(
       pick: (_) async => photo.path,
@@ -57,6 +91,34 @@ void main() {
       isA<CardScanNothing>(),
     );
     expect(photo.existsSync(), isFalse);
+  });
+
+  test('onReading runs after a photo is chosen, before the OCR', () async {
+    final events = <String>[];
+    await MlKitCardScanService(
+      pick: (_) async {
+        events.add('pick');
+        return photo.path;
+      },
+      recognize: (_) async {
+        events.add('ocr');
+        return '';
+      },
+    ).scan(ImageSource.gallery, onReading: () => events.add('reading'));
+    expect(events, ['pick', 'reading', 'ocr']);
+  });
+
+  test('onReading does not run on cancel or denied permission', () async {
+    var reading = 0;
+    await MlKitCardScanService(
+      pick: (_) async => null,
+      recognize: (_) async => '',
+    ).scan(ImageSource.camera, onReading: () => reading++);
+    await MlKitCardScanService(
+      pick: (_) async => throw PlatformException(code: 'camera_access_denied'),
+      recognize: (_) async => '',
+    ).scan(ImageSource.camera, onReading: () => reading++);
+    expect(reading, 0);
   });
 
   test('closing the picker is a cancel', () async {

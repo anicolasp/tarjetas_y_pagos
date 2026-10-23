@@ -220,6 +220,28 @@ void main() {
     expect(fieldText(tester, 'cardForm.last4'), '1111');
   });
 
+  testWidgets('no overlay while choosing or answering the permission', (
+    tester,
+  ) async {
+    scanner
+      ..result = const CardScanPermissionDenied()
+      ..gate = Completer<void>();
+    await open(tester);
+    await tester.tap(key('cardForm.scan'));
+    await tester.pumpAndSettle();
+    await tester.tap(key('cardForm.scan.camera'));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(key('cardForm.scanning'), findsNothing);
+    expect(
+      tester.widget<OutlinedButton>(key('cardForm.scan')).onPressed,
+      isNull,
+    );
+    scanner.gate!.complete();
+    await tester.pumpAndSettle();
+    expect(key('cardForm.permissionDialog'), findsOneWidget);
+  });
+
   testWidgets('an unexpected error shows the generic message', (tester) async {
     scanner.error = Exception('ML Kit');
     await open(tester);

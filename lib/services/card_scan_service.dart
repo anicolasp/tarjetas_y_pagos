@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:app_settings/app_settings.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:image_picker/image_picker.dart';
@@ -36,7 +35,8 @@ class CardScanPermissionDenied extends CardScanResult {
 }
 
 abstract interface class CardScanService {
-  Future<CardScanResult> scan(ImageSource source);
+  /// [onReading] runs once a photo was chosen, right before the OCR.
+  Future<CardScanResult> scan(ImageSource source, {void Function()? onReading});
 
   /// Opens the system settings of the app (to grant the camera).
   Future<void> openSettings();
@@ -54,11 +54,11 @@ class MlKitCardScanService implements CardScanService {
   final Future<String?> Function(ImageSource source) _pick;
   final Future<String> Function(String path) _recognize;
 
+  /// No resizing on purpose: a scaled copy would leave the picker's
+  /// original copy of a gallery photo behind in the cache.
   static Future<String?> _pickWithImagePicker(ImageSource source) async =>
       (await ImagePicker().pickImage(
         source: source,
-        maxWidth: 1600,
-        maxHeight: 1600,
         requestFullMetadata: false,
       ))?.path;
 
@@ -73,7 +73,10 @@ class MlKitCardScanService implements CardScanService {
   }
 
   @override
-  Future<CardScanResult> scan(ImageSource source) async {
+  Future<CardScanResult> scan(
+    ImageSource source, {
+    void Function()? onReading,
+  }) async {
     final String? path;
     try {
       path = await _pick(source);
@@ -85,19 +88,40 @@ class MlKitCardScanService implements CardScanService {
     }
     if (path == null) return const CardScanCancelled();
     try {
+      onReading?.call();
       final detection = detectCard(await _recognize(path));
       return detection.isEmpty
           ? const CardScanNothing()
           : CardScanDetected(detection);
     } finally {
-      try {
-        await File(path).delete();
-      } on FileSystemException {
-        // Already gone.
-      }
+      await _deletePhoto(path);
     }
   }
 
+  /// image_picker copies a gallery photo into its own `cache/<uuid>/`
+  /// folder: delete the photo and that folder once empty.
+  static final _uuid = RegExp(
+    r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+  );
+
+  static Future<void> _deletePhoto(String path) async {
+    final photo = File(path);
+    try {
+      await photo.delete();
+      final folder = photo.parent;
+      final name = folder.uri.pathSegments.lastWhere((s) => s.isNotEmpty);
+      if (_uuid.hasMatch(name) && await folder.list().isEmpty) {
+        await folder.delete();
+      }
+    } on FileSystemException {
+      // Already gone.
+    }
+  }
+
+  /// Implemented in `MainActivity.kt`.
+  static const _settings = MethodChannel('tarjetas_y_pagos/settings');
+
   @override
-  Future<void> openSettings() => AppSettings.openAppSettings();
+  Future<void> openSettings() =>
+      _settings.invokeMethod<void>('openAppSettings');
 }

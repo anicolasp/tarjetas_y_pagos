@@ -53,8 +53,6 @@ dependencies:
   flutter_timezone: ^5.1.1
   flutter_localizations:
     sdk: flutter
-  app_settings: ^9.0.1
-
 dev_dependencies:
   flutter_test:
     sdk: flutter
