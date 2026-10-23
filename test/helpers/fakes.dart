@@ -11,6 +11,7 @@ import 'package:tarjetas_y_pagos/data/providers.dart';
 import 'package:tarjetas_y_pagos/features/cards/cards_providers.dart';
 import 'package:tarjetas_y_pagos/services/exchange_rate_service.dart';
 import 'package:tarjetas_y_pagos/services/biometric_service.dart';
+import 'package:tarjetas_y_pagos/services/card_scan_service.dart';
 import 'package:tarjetas_y_pagos/services/password_hasher.dart';
 import 'package:tarjetas_y_pagos/services/providers.dart';
 import 'package:tarjetas_y_pagos/services/session_service.dart';
@@ -68,6 +69,48 @@ class FakeRateSource implements ExchangeRateSource {
   }
 }
 
+/// Returns [result] (default: nothing read) and records the sources used.
+class FakeCardScanService implements CardScanService {
+  FakeCardScanService([this.result = const CardScanNothing()]);
+
+  CardScanResult result;
+  final sources = <ImageSource>[];
+  var settingsOpened = 0;
+  var lostDiscarded = 0;
+
+  /// Thrown by [openSettings] when set.
+  Object? settingsError;
+
+  /// Completes the scan when set; lets a test see the loading overlay.
+  Completer<void>? gate;
+
+  /// Thrown by [scan] when set.
+  Object? error;
+
+  @override
+  Future<CardScanResult> scan(
+    ImageSource source, {
+    void Function()? onReading,
+  }) async {
+    sources.add(source);
+    if (result is CardScanDetected || result is CardScanNothing) {
+      onReading?.call();
+    }
+    await gate?.future;
+    if (error case final e?) throw e;
+    return result;
+  }
+
+  @override
+  Future<void> openSettings() async {
+    if (settingsError case final e?) throw e;
+    settingsOpened++;
+  }
+
+  @override
+  Future<void> discardLostPhotos() async => lostDiscarded++;
+}
+
 /// Secure storage whose reads fail, like a reset Android keystore.
 class BrokenSecureStore extends InMemorySecureStore {
   @override
@@ -83,6 +126,7 @@ Future<List<Override>> testOverrides({
   FakeBiometricService? biometrics,
   DateTime? now,
   FakeRateSource? rates,
+  FakeCardScanService? cardScan,
 }) async {
   SharedPreferences.setMockInitialValues(prefs);
   final sharedPrefs = await SharedPreferences.getInstance();
@@ -97,6 +141,10 @@ Future<List<Override>> testOverrides({
     if (now != null) clockProvider.overrideWithValue(() => now),
     // Never hit the network from tests.
     exchangeRateSourceProvider.overrideWithValue(rates ?? FakeRateSource()),
+    // Never open the camera or ML Kit from tests.
+    cardScanServiceProvider.overrideWithValue(
+      cardScan ?? FakeCardScanService(),
+    ),
   ];
 }
 
