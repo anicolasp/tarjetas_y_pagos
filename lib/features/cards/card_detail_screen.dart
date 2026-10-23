@@ -380,28 +380,18 @@ class _ExpenseTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final e = expense;
     final color = Color(category?.color ?? 0xFF757575);
-    return ListTile(
+    return _MovementTile(
       key: ValueKey('cardDetail.expense.${e.id}'),
-      contentPadding: EdgeInsets.zero,
-      leading: CircleAvatar(
-        backgroundColor: color.withValues(alpha: 0.15),
-        foregroundColor: color,
-        child: Icon(categoryIcon(category?.icon ?? 'category')),
-      ),
-      title: Text(e.merchant),
-      subtitle: Text(
-        [
-          category?.name ?? 'Sin categoría',
-          if (e.wasConverted)
-            '${formatMoney(e.originalAmountCents!, e.originalCurrency!)} '
-                'a ${formatRate(e.exchangeRateMicros!)}',
-        ].join(' · '),
-      ),
-      trailing: Text(
-        formatMoney(e.amountCents, e.currency),
-        style: Theme.of(context).textTheme.bodyLarge
-            ?.copyWith(fontWeight: FontWeight.w600),
-      ),
+      icon: categoryIcon(category?.icon ?? 'category'),
+      color: color,
+      title: e.merchant,
+      subtitle: [
+        category?.name ?? 'Sin categoría',
+        if (e.wasConverted)
+          '${formatMoney(e.originalAmountCents!, e.originalCurrency!)} '
+              'a ${formatRate(e.exchangeRateMicros!)}',
+      ].join(' · '),
+      amount: formatMoney(e.amountCents, e.currency),
       onTap: () => context.push(Routes.expenseEdit(e.id!)),
     );
   }
@@ -452,22 +442,93 @@ class _PaymentTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Fixed green that reads well in both themes.
     const paid = Color(0xFF2E7D32);
-    return ListTile(
+    return _MovementTile(
       key: ValueKey('cardDetail.payment.${payment.id}'),
-      contentPadding: EdgeInsets.zero,
-      leading: CircleAvatar(
-        backgroundColor: paid.withValues(alpha: 0.15),
-        foregroundColor: paid,
-        child: const Icon(Icons.check_circle_outline),
-      ),
-      title: const Text('Pago'),
-      subtitle: payment.note == null ? null : Text(payment.note!),
-      trailing: Text(
-        '−${formatMoney(payment.amountCents, payment.currency)}',
-        style: Theme.of(context).textTheme.bodyLarge
-            ?.copyWith(fontWeight: FontWeight.w600, color: paid),
-      ),
+      icon: Icons.check_circle_outline,
+      color: paid,
+      title: 'Pago',
+      subtitle: payment.note,
+      amount: '−${formatMoney(payment.amountCents, payment.currency)}',
+      amountColor: paid,
       onTap: () => _delete(context, ref),
+    );
+  }
+}
+
+/// A movement row. Unlike ListTile, the amount can wrap below the title
+/// with large text instead of overflowing.
+class _MovementTile extends StatelessWidget {
+  const _MovementTile({
+    super.key,
+    required this.icon,
+    required this.color,
+    required this.title,
+    required this.subtitle,
+    required this.amount,
+    required this.onTap,
+    this.amountColor,
+  });
+
+  final IconData icon;
+  final Color color;
+  final String title;
+  final String? subtitle;
+  final String amount;
+  final Color? amountColor;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            CircleAvatar(
+              backgroundColor: color.withValues(alpha: 0.15),
+              foregroundColor: color,
+              child: Icon(icon),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                spacing: 12,
+                runSpacing: 2,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(title, style: text.bodyLarge),
+                      if (subtitle != null)
+                        Text(
+                          subtitle!,
+                          style: text.bodySmall?.copyWith(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurfaceVariant,
+                          ),
+                        ),
+                    ],
+                  ),
+                  Text(
+                    amount,
+                    style: text.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: amountColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -533,7 +594,7 @@ class _Row extends StatelessWidget {
           Text(label, style: text.bodyMedium),
           Text(
             value,
-            key: valueKey == null ? null : ValueKey(valueKey),
+            key: valueKey == null ? null : ValueKey<String>(valueKey!),
             style: (emphasize ? text.titleMedium : text.bodyMedium)?.copyWith(
               fontWeight: FontWeight.w600,
             ),

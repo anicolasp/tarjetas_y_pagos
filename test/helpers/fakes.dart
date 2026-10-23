@@ -8,6 +8,8 @@ import 'package:tarjetas_y_pagos/app.dart';
 import 'package:tarjetas_y_pagos/core/clock.dart';
 import 'package:tarjetas_y_pagos/data/database.dart';
 import 'package:tarjetas_y_pagos/data/providers.dart';
+import 'package:tarjetas_y_pagos/features/cards/cards_providers.dart';
+import 'package:tarjetas_y_pagos/services/exchange_rate_service.dart';
 import 'package:tarjetas_y_pagos/services/biometric_service.dart';
 import 'package:tarjetas_y_pagos/services/password_hasher.dart';
 import 'package:tarjetas_y_pagos/services/providers.dart';
@@ -51,6 +53,21 @@ class FakeBiometricService implements BiometricService {
   }
 }
 
+/// Fixed US$→RD$ rate (61.409228); null simulates being offline.
+class FakeRateSource implements ExchangeRateSource {
+  FakeRateSource([this.micros = 61409228]);
+
+  int? micros;
+  var calls = 0;
+
+  @override
+  Future<int> fetchUsdToDopMicros() async {
+    calls++;
+    if (micros == null) throw Exception('sin internet');
+    return micros!;
+  }
+}
+
 /// Secure storage whose reads fail, like a reset Android keystore.
 class BrokenSecureStore extends InMemorySecureStore {
   @override
@@ -65,6 +82,7 @@ Future<List<Override>> testOverrides({
   InMemorySecureStore? secureStore,
   FakeBiometricService? biometrics,
   DateTime? now,
+  FakeRateSource? rates,
 }) async {
   SharedPreferences.setMockInitialValues(prefs);
   final sharedPrefs = await SharedPreferences.getInstance();
@@ -77,6 +95,8 @@ Future<List<Override>> testOverrides({
     passwordHasherProvider.overrideWithValue(testHasher),
     if (database != null) appDatabaseProvider.overrideWith((ref) => database),
     if (now != null) clockProvider.overrideWithValue(() => now),
+    // Never hit the network from tests.
+    exchangeRateSourceProvider.overrideWithValue(rates ?? FakeRateSource()),
   ];
 }
 
