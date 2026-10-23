@@ -10,6 +10,8 @@ import '../../core/money.dart';
 import '../../core/responsive.dart';
 import '../../core/router.dart';
 import '../../data/models/credit_card.dart';
+import '../../services/card_scan_service.dart';
+import '../../services/providers.dart';
 import '../auth/auth_widgets.dart';
 import 'cards_providers.dart';
 
@@ -76,8 +78,24 @@ class _CardFormState extends ConsumerState<_CardForm> {
       Currency.dop;
   late var _color = widget.card?.color ?? cardColors.first;
   var _saving = false;
+  var _scanning = false;
+
+  /// What the last scan filled in ('last4', 'brand', 'bank'). A field shows
+  /// "Detectado por foto" while it still holds that value.
+  var _detected = <String, Object>{};
 
   bool get _editing => widget.card != null;
+
+  @override
+  void initState() {
+    super.initState();
+    _last4.addListener(_onScannedFieldEdited);
+    _bank.addListener(_onScannedFieldEdited);
+  }
+
+  void _onScannedFieldEdited() {
+    if (_detected.isNotEmpty && mounted) setState(() {});
+  }
 
   @override
   void dispose() {
@@ -94,6 +112,98 @@ class _CardFormState extends ConsumerState<_CardForm> {
     }
     super.dispose();
   }
+
+  Future<void> _scan() async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              key: const ValueKey('cardForm.scan.camera'),
+              leading: const Icon(Icons.photo_camera_outlined),
+              title: const Text('Tomar foto'),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            ListTile(
+              key: const ValueKey('cardForm.scan.gallery'),
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Elegir de la galería'),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (source == null || !mounted) return;
+    final service = ref.read(cardScanServiceProvider);
+    setState(() => _scanning = true);
+    final CardScanResult result;
+    try {
+      result = await service.scan(source);
+    } catch (_) {
+      if (mounted) showErrorSnackBar(context, unexpectedErrorMessage);
+      return;
+    } finally {
+      if (mounted) setState(() => _scanning = false);
+    }
+    if (!mounted) return;
+    switch (result) {
+      case CardScanDetected(:final detection):
+        setState(() {
+          _detected = {
+            'last4': ?detection.last4,
+            'brand': ?detection.brand,
+            'bank': ?detection.bank,
+          };
+          if (detection.last4 case final last4?) _last4.text = last4;
+          if (detection.brand case final brand?) _brand = brand;
+          if (detection.bank case final bank?) _bank.text = bank;
+        });
+      case CardScanNothing():
+        showErrorSnackBar(
+          context,
+          'No pudimos leer la tarjeta, completa los datos manualmente',
+        );
+      case CardScanPermissionDenied():
+        await _explainCameraPermission(service);
+      case CardScanCancelled():
+        break;
+    }
+  }
+
+  Future<void> _explainCameraPermission(CardScanService service) async {
+    final openSettings = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        key: const ValueKey('cardForm.permissionDialog'),
+        scrollable: true,
+        icon: const Icon(Icons.no_photography_outlined),
+        title: const Text('Permite el uso de la cámara'),
+        content: const Text(
+          'La usamos solo para leer la tarjeta en tu teléfono. La foto no se '
+          'guarda ni se envía, y solo conservamos los últimos 4 dígitos. '
+          'Puedes activarla en los ajustes o elegir una foto de la galería.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Ahora no'),
+          ),
+          FilledButton(
+            key: const ValueKey('cardForm.openSettings'),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Abrir ajustes'),
+          ),
+        ],
+      ),
+    );
+    if (openSettings == true) await service.openSettings();
+  }
+
+  bool _isDetected(String field, Object current) => _detected[field] == current;
 
   Future<void> _save() async {
     if (_saving || !_form.currentState!.validate()) return;
@@ -187,214 +297,310 @@ class _CardFormState extends ConsumerState<_CardForm> {
       appBar: AppBar(
         title: Text(_editing ? 'Editar tarjeta' : 'Nueva tarjeta'),
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          child: ResponsiveCenter(
-            maxWidth: ContentWidth.form,
-            child: Form(
-              key: _form,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  TextFormField(
-                    key: const ValueKey('cardForm.alias'),
-                    controller: _alias,
-                    textCapitalization: TextCapitalization.sentences,
-                    textInputAction: TextInputAction.next,
-                    validator: (v) => (v ?? '').trim().isEmpty
-                        ? 'Escribe un nombre para la tarjeta'
-                        : null,
-                    decoration: const InputDecoration(
-                      labelText: 'Nombre (ej. Gastos del mes)',
-                      prefixIcon: Icon(Icons.label_outline),
-                    ),
-                  ),
-                  gap,
-                  _BankField(controller: _bank),
-                  gap,
-                  Text('Marca', style: text.labelLarge),
-                  const SizedBox(height: 6),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: ResponsiveCenter(
+                maxWidth: ContentWidth.form,
+                child: Form(
+                  key: _form,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      for (final b in CardBrand.values)
-                        ChoiceChip(
-                          key: ValueKey('cardForm.brand.${b.name}'),
-                          label: Text(b.label),
-                          selected: _brand == b,
-                          onSelected: (_) => setState(() => _brand = b),
+                      if (!_editing) ...[
+                        OutlinedButton.icon(
+                          key: const ValueKey('cardForm.scan'),
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size.fromHeight(52),
+                          ),
+                          onPressed: _scanning || _saving ? null : _scan,
+                          icon: const Icon(Icons.document_scanner_outlined),
+                          label: const Text('Escanear tarjeta'),
                         ),
-                    ],
-                  ),
-                  gap,
-                  TextFormField(
-                    key: const ValueKey('cardForm.last4'),
-                    controller: _last4,
-                    keyboardType: TextInputType.number,
-                    textInputAction: TextInputAction.next,
-                    maxLength: 4,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    validator: (v) => RegExp(r'^\d{4}$').hasMatch(v ?? '')
-                        ? null
-                        : 'Escribe los últimos 4 dígitos',
-                    decoration: const InputDecoration(
-                      labelText: 'Últimos 4 dígitos',
-                      prefixText: '•••• ',
-                      prefixIcon: Icon(Icons.pin_outlined),
-                      helperText: 'Nunca guardamos el número completo',
-                    ),
-                  ),
-                  gap,
-                  TextFormField(
-                    key: const ValueKey('cardForm.cutDay'),
-                    controller: _cutDay,
-                    keyboardType: TextInputType.number,
-                    textInputAction: TextInputAction.next,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    validator: (v) =>
-                        _range(v, 1, 31, 'Escribe un día del 1 al 31'),
-                    decoration: const InputDecoration(
-                      labelText: 'Día de corte',
-                      prefixIcon: Icon(Icons.event_outlined),
-                      helperText:
-                          'Si el mes es más corto, se usa el último día',
-                    ),
-                  ),
-                  gap,
-                  TextFormField(
-                    key: const ValueKey('cardForm.paymentDays'),
-                    controller: _paymentDays,
-                    keyboardType: TextInputType.number,
-                    textInputAction: TextInputAction.next,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    validator: (v) =>
-                        _range(v, 0, 60, 'Escribe de 0 a 60 días'),
-                    decoration: const InputDecoration(
-                      labelText: 'Días para pagar después del corte',
-                      prefixIcon: Icon(Icons.hourglass_bottom),
-                    ),
-                  ),
-                  gap,
-                  Text('Moneda', style: text.labelLarge),
-                  const SizedBox(height: 6),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      for (final c in Currency.values)
-                        ChoiceChip(
-                          key: ValueKey('cardForm.currency.${c.code}'),
-                          label: Text('${c.symbol} ${c.code}'),
-                          selected: !_dual && _currency == c,
-                          onSelected: (_) => setState(() {
-                            _currency = c;
-                            _dual = false;
-                          }),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
+                          child: Text(
+                            'Leemos la foto en tu teléfono y solo guardamos los '
+                            'últimos 4 dígitos.',
+                            style: text.bodySmall,
+                          ),
                         ),
-                      ChoiceChip(
-                        key: const ValueKey('cardForm.currency.DUAL'),
-                        label: const Text('RD\$ y US\$ (doble balance)'),
-                        selected: _dual,
-                        onSelected: (_) => setState(() {
-                          _dual = true;
-                          _currency = Currency.dop;
-                        }),
+                        const SizedBox(height: 20),
+                      ],
+                      TextFormField(
+                        key: const ValueKey('cardForm.alias'),
+                        controller: _alias,
+                        textCapitalization: TextCapitalization.sentences,
+                        textInputAction: TextInputAction.next,
+                        validator: (v) => (v ?? '').trim().isEmpty
+                            ? 'Escribe un nombre para la tarjeta'
+                            : null,
+                        decoration: const InputDecoration(
+                          labelText: 'Nombre (ej. Gastos del mes)',
+                          prefixIcon: Icon(Icons.label_outline),
+                        ),
                       ),
-                    ],
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 12, top: 6),
-                    child: Text(
-                      _dual
-                          ? 'Cada gasto queda en su moneda, con un límite por moneda.'
-                          : 'Los gastos en otra moneda se convierten a esta.',
-                      style: text.bodySmall,
-                    ),
-                  ),
-                  gap,
-                  TextFormField(
-                    key: const ValueKey('cardForm.limit'),
-                    controller: _limit,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    textInputAction: TextInputAction.done,
-                    // Empty = no limit registered; a typed limit must be > 0.
-                    validator: (v) {
-                      if ((v ?? '').trim().isEmpty) return null;
-                      final cents = parseMoneyToCents(v!);
-                      return cents != null && cents > 0
-                          ? null
-                          : 'Monto no válido (ej. 50000 o 50,000.00)';
-                    },
-                    decoration: InputDecoration(
-                      labelText: _dual
-                          ? 'Límite en RD\$ (opcional)'
-                          : 'Límite de crédito (opcional)',
-                      prefixText: '${_currency.symbol} ',
-                      prefixIcon: const Icon(Icons.account_balance_wallet),
-                    ),
-                  ),
-                  if (_dual) ...[
-                    gap,
-                    TextFormField(
-                      key: const ValueKey('cardForm.limitUsd'),
-                      controller: _limitUsd,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
+                      gap,
+                      _BankField(controller: _bank),
+                      if (_isDetected('bank', _bank.text))
+                        const _DetectedChip(field: 'bank'),
+                      gap,
+                      Text('Marca', style: text.labelLarge),
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          for (final b in CardBrand.values)
+                            ChoiceChip(
+                              key: ValueKey('cardForm.brand.${b.name}'),
+                              label: Text(b.label),
+                              selected: _brand == b,
+                              onSelected: (_) => setState(() => _brand = b),
+                            ),
+                        ],
                       ),
-                      validator: (v) {
-                        if ((v ?? '').trim().isEmpty) return null;
-                        final cents = parseMoneyToCents(v!);
-                        return cents != null && cents > 0
+                      if (_isDetected('brand', _brand))
+                        const _DetectedChip(field: 'brand'),
+                      gap,
+                      TextFormField(
+                        key: const ValueKey('cardForm.last4'),
+                        controller: _last4,
+                        keyboardType: TextInputType.number,
+                        textInputAction: TextInputAction.next,
+                        maxLength: 4,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
+                        validator: (v) => RegExp(r'^\d{4}$').hasMatch(v ?? '')
                             ? null
-                            : 'Monto no válido (ej. 50000 o 50,000.00)';
-                      },
-                      decoration: const InputDecoration(
-                        labelText: 'Límite en US\$ (opcional)',
-                        prefixText: 'US\$ ',
-                        prefixIcon: Icon(Icons.account_balance_wallet),
-                      ),
-                    ),
-                  ],
-                  gap,
-                  Text('Color', style: text.labelLarge),
-                  const SizedBox(height: 6),
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: [
-                      for (final (i, c) in cardColors.indexed)
-                        _ColorDot(
-                          key: ValueKey('cardForm.color.$i'),
-                          color: Color(c),
-                          selected: _color == c,
-                          onTap: () => setState(() => _color = c),
+                            : 'Escribe los últimos 4 dígitos',
+                        decoration: const InputDecoration(
+                          labelText: 'Últimos 4 dígitos',
+                          prefixText: '•••• ',
+                          prefixIcon: Icon(Icons.pin_outlined),
+                          helperText: 'Nunca guardamos el número completo',
                         ),
+                      ),
+                      if (_isDetected('last4', _last4.text))
+                        const _DetectedChip(field: 'last4'),
+                      gap,
+                      TextFormField(
+                        key: const ValueKey('cardForm.cutDay'),
+                        controller: _cutDay,
+                        keyboardType: TextInputType.number,
+                        textInputAction: TextInputAction.next,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
+                        validator: (v) =>
+                            _range(v, 1, 31, 'Escribe un día del 1 al 31'),
+                        decoration: const InputDecoration(
+                          labelText: 'Día de corte',
+                          prefixIcon: Icon(Icons.event_outlined),
+                          helperText:
+                              'Si el mes es más corto, se usa el último día',
+                        ),
+                      ),
+                      gap,
+                      TextFormField(
+                        key: const ValueKey('cardForm.paymentDays'),
+                        controller: _paymentDays,
+                        keyboardType: TextInputType.number,
+                        textInputAction: TextInputAction.next,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
+                        validator: (v) =>
+                            _range(v, 0, 60, 'Escribe de 0 a 60 días'),
+                        decoration: const InputDecoration(
+                          labelText: 'Días para pagar después del corte',
+                          prefixIcon: Icon(Icons.hourglass_bottom),
+                        ),
+                      ),
+                      gap,
+                      Text('Moneda', style: text.labelLarge),
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          for (final c in Currency.values)
+                            ChoiceChip(
+                              key: ValueKey('cardForm.currency.${c.code}'),
+                              label: Text('${c.symbol} ${c.code}'),
+                              selected: !_dual && _currency == c,
+                              onSelected: (_) => setState(() {
+                                _currency = c;
+                                _dual = false;
+                              }),
+                            ),
+                          ChoiceChip(
+                            key: const ValueKey('cardForm.currency.DUAL'),
+                            label: const Text('RD\$ y US\$ (doble balance)'),
+                            selected: _dual,
+                            onSelected: (_) => setState(() {
+                              _dual = true;
+                              _currency = Currency.dop;
+                            }),
+                          ),
+                        ],
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 12, top: 6),
+                        child: Text(
+                          _dual
+                              ? 'Cada gasto queda en su moneda, con un límite por moneda.'
+                              : 'Los gastos en otra moneda se convierten a esta.',
+                          style: text.bodySmall,
+                        ),
+                      ),
+                      gap,
+                      TextFormField(
+                        key: const ValueKey('cardForm.limit'),
+                        controller: _limit,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        textInputAction: TextInputAction.done,
+                        // Empty = no limit registered; a typed limit must be > 0.
+                        validator: (v) {
+                          if ((v ?? '').trim().isEmpty) return null;
+                          final cents = parseMoneyToCents(v!);
+                          return cents != null && cents > 0
+                              ? null
+                              : 'Monto no válido (ej. 50000 o 50,000.00)';
+                        },
+                        decoration: InputDecoration(
+                          labelText: _dual
+                              ? 'Límite en RD\$ (opcional)'
+                              : 'Límite de crédito (opcional)',
+                          prefixText: '${_currency.symbol} ',
+                          prefixIcon: const Icon(Icons.account_balance_wallet),
+                        ),
+                      ),
+                      if (_dual) ...[
+                        gap,
+                        TextFormField(
+                          key: const ValueKey('cardForm.limitUsd'),
+                          controller: _limitUsd,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          validator: (v) {
+                            if ((v ?? '').trim().isEmpty) return null;
+                            final cents = parseMoneyToCents(v!);
+                            return cents != null && cents > 0
+                                ? null
+                                : 'Monto no válido (ej. 50000 o 50,000.00)';
+                          },
+                          decoration: const InputDecoration(
+                            labelText: 'Límite en US\$ (opcional)',
+                            prefixText: 'US\$ ',
+                            prefixIcon: Icon(Icons.account_balance_wallet),
+                          ),
+                        ),
+                      ],
+                      gap,
+                      Text('Color', style: text.labelLarge),
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: [
+                          for (final (i, c) in cardColors.indexed)
+                            _ColorDot(
+                              key: ValueKey('cardForm.color.$i'),
+                              color: Color(c),
+                              selected: _color == c,
+                              onTap: () => setState(() => _color = c),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 28),
+                      LoadingButton(
+                        key: const ValueKey('cardForm.save'),
+                        label: _editing ? 'Guardar cambios' : 'Agregar tarjeta',
+                        loading: _saving,
+                        onPressed: _save,
+                      ),
+                      if (_editing) ...[
+                        const SizedBox(height: 12),
+                        OutlinedButton.icon(
+                          key: const ValueKey('cardForm.archive'),
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size.fromHeight(52),
+                            foregroundColor: Theme.of(context)
+                                .colorScheme
+                                .error,
+                          ),
+                          onPressed: _saving ? null : _archive,
+                          icon: const Icon(Icons.archive_outlined),
+                          label: const Text('Archivar tarjeta'),
+                        ),
+                      ],
                     ],
                   ),
-                  const SizedBox(height: 28),
-                  LoadingButton(
-                    key: const ValueKey('cardForm.save'),
-                    label: _editing ? 'Guardar cambios' : 'Agregar tarjeta',
-                    loading: _saving,
-                    onPressed: _save,
+                ),
+              ),
+            ),
+          ),
+          if (_scanning) const _ScanningOverlay(),
+        ],
+      ),
+    );
+  }
+}
+
+/// Marks a field filled in by the card scan.
+class _DetectedChip extends StatelessWidget {
+  const _DetectedChip({required this.field});
+
+  final String field;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Align(
+        alignment: AlignmentDirectional.centerStart,
+        child: Chip(
+          key: ValueKey('cardForm.detected.$field'),
+          avatar: const Icon(Icons.photo_camera_outlined, size: 18),
+          label: const Text('Detectado por foto'),
+          visualDensity: VisualDensity.compact,
+        ),
+      ),
+    );
+  }
+}
+
+class _ScanningOverlay extends StatelessWidget {
+  const _ScanningOverlay();
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned.fill(
+      key: const ValueKey('cardForm.scanning'),
+      child: ColoredBox(
+        color: Colors.black54,
+        child: Center(
+          child: Card(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Leyendo la tarjeta…',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
-                  if (_editing) ...[
-                    const SizedBox(height: 12),
-                    OutlinedButton.icon(
-                      key: const ValueKey('cardForm.archive'),
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(52),
-                        foregroundColor: Theme.of(context).colorScheme.error,
-                      ),
-                      onPressed: _saving ? null : _archive,
-                      icon: const Icon(Icons.archive_outlined),
-                      label: const Text('Archivar tarjeta'),
-                    ),
-                  ],
                 ],
               ),
             ),

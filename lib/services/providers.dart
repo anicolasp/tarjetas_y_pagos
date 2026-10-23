@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app_prefs.dart';
 import 'biometric_service.dart';
+import 'card_scan_service.dart';
 import 'login_throttle.dart';
 import 'password_hasher.dart';
 import 'session_service.dart';
@@ -34,6 +35,10 @@ final sessionServiceProvider = Provider<SessionService>(
 
 final biometricServiceProvider = Provider<BiometricService>(
   (ref) => LocalAuthBiometricService(),
+);
+
+final cardScanServiceProvider = Provider<CardScanService>(
+  (ref) => MlKitCardScanService(),
 );
 
 /// Whether the welcome slides were already shown on this device.

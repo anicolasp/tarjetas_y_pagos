@@ -18,6 +18,27 @@ const dominicanBanks = [
   'Qik',
 ];
 
+/// How each bank in [dominicanBanks] may be printed on a card, normalized
+/// (lowercase, no accents). The card scan picks the longest match, so
+/// "asociacion popular" (APAP) wins over "popular" (Banco Popular).
+const bankAliases = {
+  'Banreservas': ['banreservas', 'banco de reservas', 'reservas'],
+  'Banco Popular': ['banco popular', 'popular dominicano', 'popular'],
+  'BHD': ['bhd', 'bhd leon'],
+  'Scotiabank': ['scotiabank', 'scotia'],
+  'APAP': ['apap', 'asociacion popular'],
+  'Banco Santa Cruz': ['santa cruz'],
+  'Promerica': ['promerica'],
+  'Banesco': ['banesco'],
+  'Banco Caribe': ['banco caribe', 'caribe'],
+  'BDI': ['bdi'],
+  'Banco Vimenca': ['vimenca'],
+  'Banco López de Haro': ['lopez de haro'],
+  'Banco Ademi': ['ademi'],
+  'Asociación Cibao': ['asociacion cibao', 'cibao'],
+  'Qik': ['qik'],
+};
+
 /// Card colors offered in the form (ARGB).
 const cardColors = [
   0xFF0F766E, // teal (brand)
