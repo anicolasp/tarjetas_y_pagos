@@ -13,7 +13,9 @@ import 'package:tarjetas_y_pagos/services/exchange_rate_service.dart';
 import 'package:tarjetas_y_pagos/services/biometric_service.dart';
 import 'package:tarjetas_y_pagos/services/card_scan_service.dart';
 import 'package:tarjetas_y_pagos/services/password_hasher.dart';
+import 'package:tarjetas_y_pagos/data/models/category.dart';
 import 'package:tarjetas_y_pagos/services/providers.dart';
+import 'package:tarjetas_y_pagos/services/receipt_ai_service.dart';
 import 'package:tarjetas_y_pagos/services/session_service.dart';
 
 /// Low iteration count and no isolate, so tests are fast and run under the
@@ -111,6 +113,44 @@ class FakeCardScanService implements CardScanService {
   Future<void> discardLostPhotos() async => lostDiscarded++;
 }
 
+/// Returns [result] and records what the form sent. Never calls the API.
+class FakeReceiptAiService implements ReceiptAiService {
+  FakeReceiptAiService([
+    this.result = const ReceiptScanFailed(ReceiptScanError.invalidResponse),
+  ]);
+
+  ReceiptScanResult result;
+  final sources = <ImageSource>[];
+  List<Category>? categories;
+  var settingsOpened = 0;
+  var lostDiscarded = 0;
+
+  /// Completes the scan when set; lets a test see the loading overlay.
+  Completer<void>? gate;
+
+  @override
+  Future<ReceiptScanResult> scan(
+    ImageSource source, {
+    required List<Category> categories,
+    required DateTime today,
+    void Function()? onReading,
+  }) async {
+    sources.add(source);
+    this.categories = categories;
+    if (result is ReceiptScanRead || result is ReceiptScanFailed) {
+      onReading?.call();
+    }
+    await gate?.future;
+    return result;
+  }
+
+  @override
+  Future<void> discardLostPhotos() async => lostDiscarded++;
+
+  @override
+  Future<void> openSettings() async => settingsOpened++;
+}
+
 /// Secure storage whose reads fail, like a reset Android keystore.
 class BrokenSecureStore extends InMemorySecureStore {
   @override
@@ -127,6 +167,8 @@ Future<List<Override>> testOverrides({
   DateTime? now,
   FakeRateSource? rates,
   FakeCardScanService? cardScan,
+  String anthropicApiKey = '',
+  FakeReceiptAiService? receiptAi,
 }) async {
   SharedPreferences.setMockInitialValues(prefs);
   final sharedPrefs = await SharedPreferences.getInstance();
@@ -144,6 +186,11 @@ Future<List<Override>> testOverrides({
     // Never open the camera or ML Kit from tests.
     cardScanServiceProvider.overrideWithValue(
       cardScan ?? FakeCardScanService(),
+    ),
+    // No key by default (the scan button is hidden) and never the real API.
+    anthropicApiKeyProvider.overrideWithValue(anthropicApiKey),
+    receiptAiServiceProvider.overrideWithValue(
+      receiptAi ?? FakeReceiptAiService(),
     ),
   ];
 }

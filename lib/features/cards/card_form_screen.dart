@@ -15,6 +15,7 @@ import '../../data/models/credit_card.dart';
 import '../../services/card_scan_service.dart';
 import '../../services/providers.dart';
 import '../auth/auth_widgets.dart';
+import '../scan/scan_widgets.dart';
 import 'cards_providers.dart';
 
 const defaultPaymentDays = 20;
@@ -128,28 +129,9 @@ class _CardFormState extends ConsumerState<_CardForm> {
     // Busy from the first tap, so a double tap cannot start two scans.
     if (_scanBusy) return;
     setState(() => _scanBusy = true);
-    final source = await showModalBottomSheet<ImageSource>(
-      context: context,
-      showDragHandle: true,
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              key: const ValueKey('cardForm.scan.camera'),
-              leading: const Icon(Icons.photo_camera_outlined),
-              title: const Text('Tomar foto'),
-              onTap: () => Navigator.pop(context, ImageSource.camera),
-            ),
-            ListTile(
-              key: const ValueKey('cardForm.scan.gallery'),
-              leading: const Icon(Icons.photo_library_outlined),
-              title: const Text('Elegir de la galería'),
-              onTap: () => Navigator.pop(context, ImageSource.gallery),
-            ),
-          ],
-        ),
-      ),
+    final source = await showPhotoSourceSheet(
+      context,
+      keyPrefix: 'cardForm.scan',
     );
     if (source == null || !mounted) {
       if (mounted) setState(() => _scanBusy = false);
@@ -194,62 +176,17 @@ class _CardFormState extends ConsumerState<_CardForm> {
           'No pudimos leer la tarjeta, completa los datos manualmente',
         );
       case CardScanPermissionDenied(:final source):
-        await _explainPermission(service, source);
+        await explainPhotoPermission(
+          context,
+          source: source,
+          keyPrefix: 'cardForm',
+          purpose:
+              'leer la tarjeta en tu teléfono. La foto no se guarda ni se '
+              'envía, y solo conservamos los últimos 4 dígitos.',
+          openSettings: service.openSettings,
+        );
       case CardScanCancelled():
         break;
-    }
-  }
-
-  Future<void> _explainPermission(
-    CardScanService service,
-    ImageSource source,
-  ) async {
-    final camera = source == ImageSource.camera;
-    final alternative = camera
-        ? 'Puedes activarla en los ajustes o elegir una foto de la galería.'
-        : 'Puedes activarlo en los ajustes o tomar una foto con la cámara.';
-    final openSettings = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        key: const ValueKey('cardForm.permissionDialog'),
-        scrollable: true,
-        icon: Icon(
-          camera ? Icons.no_photography_outlined : Icons.hide_image_outlined,
-        ),
-        title: Text(
-          camera
-              ? 'Permite el uso de la cámara'
-              : 'Permite el acceso a tus fotos',
-        ),
-        content: Text(
-          'Lo usamos solo para leer la tarjeta en tu teléfono. La foto no se '
-          'guarda ni se envía, y solo conservamos los últimos 4 dígitos. '
-          '$alternative',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Ahora no'),
-          ),
-          FilledButton(
-            key: const ValueKey('cardForm.openSettings'),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Abrir ajustes'),
-          ),
-        ],
-      ),
-    );
-    if (openSettings != true) return;
-    try {
-      await service.openSettings();
-    } catch (_) {
-      // No settings channel on this platform.
-      if (mounted) {
-        showErrorSnackBar(
-          context,
-          'Abre los ajustes del teléfono para permitirlo',
-        );
-      }
     }
   }
 
@@ -396,7 +333,11 @@ class _CardFormState extends ConsumerState<_CardForm> {
                       gap,
                       _BankField(controller: _bank),
                       if (_isDetected('bank', _bank.text))
-                        const _DetectedChip(field: 'bank'),
+                        const FilledFromPhotoChip(
+                          key: ValueKey('cardForm.detected.bank'),
+                          label: 'Detectado por foto',
+                          icon: Icons.photo_camera_outlined,
+                        ),
                       gap,
                       Text('Marca', style: text.labelLarge),
                       const SizedBox(height: 6),
@@ -414,7 +355,11 @@ class _CardFormState extends ConsumerState<_CardForm> {
                         ],
                       ),
                       if (_isDetected('brand', _brand))
-                        const _DetectedChip(field: 'brand'),
+                        const FilledFromPhotoChip(
+                          key: ValueKey('cardForm.detected.brand'),
+                          label: 'Detectado por foto',
+                          icon: Icons.photo_camera_outlined,
+                        ),
                       gap,
                       TextFormField(
                         key: const ValueKey('cardForm.last4'),
@@ -436,7 +381,11 @@ class _CardFormState extends ConsumerState<_CardForm> {
                         ),
                       ),
                       if (_isDetected('last4', _last4.text))
-                        const _DetectedChip(field: 'last4'),
+                        const FilledFromPhotoChip(
+                          key: ValueKey('cardForm.detected.last4'),
+                          label: 'Detectado por foto',
+                          icon: Icons.photo_camera_outlined,
+                        ),
                       gap,
                       TextFormField(
                         key: const ValueKey('cardForm.cutDay'),
@@ -598,64 +547,12 @@ class _CardFormState extends ConsumerState<_CardForm> {
               ),
             ),
           ),
-          if (_scanning) const _ScanningOverlay(),
-        ],
-      ),
-    );
-  }
-}
-
-/// Marks a field filled in by the card scan.
-class _DetectedChip extends StatelessWidget {
-  const _DetectedChip({required this.field});
-
-  final String field;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 6),
-      child: Align(
-        alignment: AlignmentDirectional.centerStart,
-        child: Chip(
-          key: ValueKey('cardForm.detected.$field'),
-          avatar: const Icon(Icons.photo_camera_outlined, size: 18),
-          label: const Text('Detectado por foto'),
-          visualDensity: VisualDensity.compact,
-        ),
-      ),
-    );
-  }
-}
-
-class _ScanningOverlay extends StatelessWidget {
-  const _ScanningOverlay();
-
-  @override
-  Widget build(BuildContext context) {
-    return Positioned.fill(
-      key: const ValueKey('cardForm.scanning'),
-      child: ColoredBox(
-        color: Colors.black54,
-        child: Center(
-          child: Card(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const CircularProgressIndicator(),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Leyendo la tarjeta…',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                ],
-              ),
+          if (_scanning)
+            const PhotoReadingOverlay(
+              key: ValueKey('cardForm.scanning'),
+              message: 'Leyendo la tarjeta…',
             ),
-          ),
-        ),
+        ],
       ),
     );
   }
