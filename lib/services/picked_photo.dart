@@ -49,6 +49,7 @@ const _scaledPrefix = 'scaled_';
 /// Deletes a picked photo and the copies image_picker made of it: a gallery
 /// photo is copied into its own `cache/<uuid>/` folder, and a resized one
 /// is written next to it as `cache/scaled_<name>` while that copy stays.
+/// Only a uuid folder holding nothing but that one file is touched.
 Future<void> deletePickedPhoto(String path) async {
   final photo = File(path);
   final name = photo.uri.pathSegments.last;
@@ -57,7 +58,11 @@ Future<void> deletePickedPhoto(String path) async {
   final original = name.substring(_scaledPrefix.length);
   try {
     await for (final entry in photo.parent.list()) {
-      if (entry is Directory && _uuid.hasMatch(_lastSegment(entry))) {
+      if (entry is! Directory || !_uuid.hasMatch(_lastSegment(entry))) {
+        continue;
+      }
+      final files = await entry.list().toList();
+      if (files.length == 1 && _lastSegment(files.single) == original) {
         await _deleteFileAndUuidFolder(File('${entry.path}/$original'));
       }
     }

@@ -40,6 +40,16 @@ void main() {
     expect(unrelated.existsSync(), isTrue);
   });
 
+  test('a uuid folder with other files is not touched', () async {
+    final original = await write('$uuid/1000000018.jpg');
+    final neighbour = await write('$uuid/other.jpg');
+    final scaled = await write('scaled_1000000018.jpg');
+    await deletePickedPhoto(scaled.path);
+    expect(scaled.existsSync(), isFalse);
+    expect(original.existsSync(), isTrue);
+    expect(neighbour.existsSync(), isTrue);
+  });
+
   test('a camera photo in the cache root leaves the root alone', () async {
     final photo = await write('image_picker123.jpg');
     await deletePickedPhoto(photo.path);

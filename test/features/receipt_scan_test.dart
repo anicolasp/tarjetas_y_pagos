@@ -195,6 +195,35 @@ void main() {
     expect(row['source'], 'manual');
   });
 
+  testWidgets('replacing everything the scan read saves it as manual', (
+    tester,
+  ) async {
+    ai.result = const ReceiptScanRead(
+      ReceiptData(merchant: 'Leído', amountCents: 1000),
+    );
+    await open(tester);
+    await scanFrom(tester, 'gallery');
+    await tester.enterText(key('expenseForm.merchant'), 'Escrito');
+    await tester.enterText(key('expenseForm.amount'), '20');
+    await tester.ensureVisible(key('expenseForm.category.Otros'));
+    await tester.tap(key('expenseForm.category.Otros'));
+    await save(tester);
+    expect((await db.db.query('expenses')).single['source'], 'manual');
+  });
+
+  testWidgets('a second scan keeps the chips of what it did not read', (
+    tester,
+  ) async {
+    await open(tester);
+    await scanFrom(tester, 'gallery');
+    ai.result = const ReceiptScanRead(ReceiptData(merchant: 'Segunda'));
+    await scanFrom(tester, 'gallery');
+    expect(fieldText(tester, 'expenseForm.merchant'), 'Segunda');
+    expect(fieldText(tester, 'expenseForm.amount'), '1234.50');
+    expect(key('expenseForm.ai.merchant'), findsOneWidget);
+    expect(key('expenseForm.ai.amount'), findsOneWidget);
+  });
+
   testWidgets('every error has a message the user can read', (tester) async {
     for (final error in ReceiptScanError.values) {
       expect(error.message, isNotEmpty);

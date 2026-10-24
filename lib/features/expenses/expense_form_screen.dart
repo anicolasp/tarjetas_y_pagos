@@ -170,9 +170,6 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
   /// still holds that value.
   var _fromAi = <String, Object>{};
 
-  /// A receipt scan filled the form: the expense is saved as `ia`.
-  var _scanned = false;
-
   bool get _editing => _e != null;
 
   bool get _canScanReceipt =>
@@ -209,6 +206,15 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
   }
 
   bool _isFromAi(String field, Object current) => _fromAi[field] == current;
+
+  /// Saved as `ia` while at least one field still holds what the receipt
+  /// scan read; once the user replaced all of it, it is a manual expense.
+  bool get _keepsAiData =>
+      _isFromAi('merchant', _merchant.text) ||
+      _isFromAi('amount', _amount.text) ||
+      _isFromAi('currency', _currency) ||
+      _isFromAi('date', _date) ||
+      (_categoryId != null && _isFromAi('category', _categoryId!));
 
   Future<void> _scanReceipt() async {
     // Busy from the first tap, so a double tap cannot start two scans.
@@ -268,8 +274,10 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
       null => null,
     };
     setState(() {
-      _scanned = true;
+      // A second scan adds to the first: a field it did not read keeps its
+      // value and, while unchanged, its chip.
       _fromAi = {
+        ..._fromAi,
         'merchant': ?d.merchant,
         'amount': ?amountText,
         'currency': ?d.currency,
@@ -378,7 +386,8 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
       date: _date,
       notes: _notes.text,
       source:
-          _e?.source ?? (_scanned ? ExpenseSource.ai : ExpenseSource.manual),
+          _e?.source ??
+          (_keepsAiData ? ExpenseSource.ai : ExpenseSource.manual),
       originalAmountCents: converted ? typed : null,
       originalCurrency: converted ? _currency : null,
       exchangeRateMicros: converted ? parseRateMicros(_rate.text) : null,

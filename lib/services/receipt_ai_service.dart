@@ -103,7 +103,7 @@ class ClaudeReceiptService implements ReceiptAiService {
     Future<String?> Function(ImageSource source)? pick,
     Future<List<String>> Function()? lostPhotos,
     this.timeout = const Duration(seconds: 30),
-  }) : _client = client ?? http.Client(),
+  }) : _testClient = client,
        _pick = pick ?? _pickWithImagePicker,
        _lostPhotos = lostPhotos ?? lostPickedPhotos;
 
@@ -114,11 +114,15 @@ class ClaudeReceiptService implements ReceiptAiService {
   /// Retries policy declines on another model (Claude API only).
   static const fallbackBeta = 'server-side-fallback-2026-07-01';
 
-  /// The API limit per image.
-  static const maxImageBytes = 5 * 1024 * 1024;
+  /// The API limit per image applies to the base64 data.
+  static const maxBase64Bytes = 5 * 1024 * 1024;
 
   final String _apiKey;
-  final http.Client _client;
+
+  /// Injected in tests. Otherwise each scan opens its own client and closes
+  /// it at the end, which also aborts a request that timed out (so retries
+  /// do not pile up paid requests in the background).
+  final http.Client? _testClient;
   final Future<String?> Function(ImageSource source) _pick;
   final Future<List<String>> Function() _lostPhotos;
   final Duration timeout;
@@ -176,12 +180,17 @@ class ClaudeReceiptService implements ReceiptAiService {
     if (mediaType == null) {
       return const ReceiptScanFailed(ReceiptScanError.invalidResponse);
     }
-    if (bytes.length > maxImageBytes) {
+    if (base64Length(bytes.length) > maxBase64Bytes) {
       return const ReceiptScanFailed(ReceiptScanError.imageTooLarge);
     }
+    final enumNames = categoryEnum(categories);
+    if (enumNames.isEmpty) {
+      return const ReceiptScanFailed(ReceiptScanError.invalidResponse);
+    }
+    final client = _testClient ?? http.Client();
     final http.Response response;
     try {
-      response = await _client
+      response = await client
           .post(
             endpoint,
             headers: {
@@ -197,10 +206,13 @@ class ClaudeReceiptService implements ReceiptAiService {
           .timeout(timeout);
     } on TimeoutException {
       return const ReceiptScanFailed(ReceiptScanError.timeout);
-    } on SocketException {
+    } on IOException {
+      // No connection, DNS, TLS handshake (captive portal)…
       return const ReceiptScanFailed(ReceiptScanError.offline);
     } on http.ClientException {
       return const ReceiptScanFailed(ReceiptScanError.offline);
+    } finally {
+      if (_testClient == null) client.close();
     }
 
     if (response.statusCode != 200) {
@@ -258,7 +270,7 @@ class ClaudeReceiptService implements ReceiptAiService {
             },
             'category': {
               'type': 'string',
-              'enum': [for (final c in categories) c.name],
+              'enum': categoryEnum(categories),
               'description': 'The closest category for this purchase.',
             },
           },
@@ -369,6 +381,19 @@ class ClaudeReceiptService implements ReceiptAiService {
   }
 
   static const fallbackCategory = 'Otros';
+
+  /// The user's category names, without names repeated in another case
+  /// (the first one wins, as when matching the answer).
+  static List<String> categoryEnum(List<Category> categories) {
+    final seen = <String>{};
+    return [
+      for (final c in categories)
+        if (seen.add(c.name.toLowerCase())) c.name,
+    ];
+  }
+
+  /// Size of [rawBytes] once base64-encoded.
+  static int base64Length(int rawBytes) => (rawBytes + 2) ~/ 3 * 4;
 }
 
 /// JPEG, PNG, WebP or GIF by their first bytes; null for anything else.

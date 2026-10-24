@@ -232,6 +232,48 @@ void main() {
     }
   });
 
+  test('the 5 MB limit is checked on the base64 size', () async {
+    expect(ClaudeReceiptService.base64Length(3), 4);
+    expect(ClaudeReceiptService.base64Length(4), 8);
+    // 4 MB raw is about 5.3 MB in base64 (over 5 MiB): not sent.
+    var calls = 0;
+    final big = [..._jpeg, ...List.filled(4000000, 0)];
+    final result = await ClaudeReceiptService(
+      _key,
+      client: MockClient((_) async {
+        calls++;
+        return http.Response(_response(_valid), 200);
+      }),
+      pick: (_) async => (await photo.writeAsBytes(big)).path,
+      lostPhotos: () async => const [],
+    ).scan(ImageSource.gallery, categories: _categories, today: _today);
+    expect(errorOf(result), ReceiptScanError.imageTooLarge);
+    expect(calls, 0);
+  });
+
+  test('without categories nothing is sent', () async {
+    var calls = 0;
+    final result = await service(
+      MockClient((_) async {
+        calls++;
+        return http.Response(_response(_valid), 200);
+      }),
+    ).scan(ImageSource.gallery, categories: const [], today: _today);
+    expect(errorOf(result), ReceiptScanError.invalidResponse);
+    expect(calls, 0);
+  });
+
+  test('category names repeated in another case are sent once', () {
+    expect(
+      ClaudeReceiptService.categoryEnum(const [
+        Category(id: 1, name: 'Otros', icon: '', color: 0),
+        Category(id: 2, name: 'otros', icon: '', color: 0),
+        Category(id: 3, name: 'Luz', icon: '', color: 0),
+      ]),
+      ['Otros', 'Luz'],
+    );
+  });
+
   test('timeout', () async {
     final result = await service(
       MockClient((_) => Completer<http.Response>().future),
@@ -244,6 +286,7 @@ void main() {
     for (final e in <Exception>[
       const SocketException('Failed host lookup'),
       http.ClientException('Connection refused'),
+      const HandshakeException('captive portal'),
     ]) {
       final result = await scan(MockClient((_) async => throw e));
       expect(errorOf(result), ReceiptScanError.offline);
