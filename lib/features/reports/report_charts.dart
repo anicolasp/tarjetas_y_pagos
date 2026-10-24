@@ -138,6 +138,8 @@ class CategoryDonut extends StatelessWidget {
         children: [
           PieChart(
             PieChartData(
+              // No touch: it would take the page's vertical drag.
+              pieTouchData: PieTouchData(enabled: false),
               sectionsSpace: 2,
               centerSpaceRadius: 58,
               startDegreeOffset: -90,
@@ -153,7 +155,7 @@ class CategoryDonut extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(64),
+            padding: const EdgeInsets.all(36),
             child: FittedBox(
               child: Text(
                 formatMoney(total, currency),
@@ -268,18 +270,48 @@ class _LegendRow extends StatelessWidget {
   }
 }
 
-/// Spending per month: one series, so one color (the app's primary).
-class MonthBars extends StatelessWidget {
+/// Spending per month: one series, so one color (the app's primary). A
+/// tap selects a month and the line below shows its total, so no value
+/// depends on a tooltip. The chart's own touch handling is off: it took
+/// the vertical drag and the page could not scroll from over the bars.
+class MonthBars extends StatefulWidget {
   const MonthBars({super.key, required this.months, required this.currency});
 
   final List<({DateTime month, int totalCents})> months;
   final Currency currency;
 
   @override
+  State<MonthBars> createState() => _MonthBarsState();
+}
+
+class _MonthBarsState extends State<MonthBars> {
+  int? _selected;
+
+  /// The last month with spending, or the last month.
+  int get _shown {
+    final m = widget.months;
+    if (_selected case final i? when i < m.length) return i;
+    final last = m.lastIndexWhere((e) => e.totalCents > 0);
+    return last >= 0 ? last : m.length - 1;
+  }
+
+  @override
+  void didUpdateWidget(MonthBars old) {
+    super.didUpdateWidget(old);
+    if (old.months.length != widget.months.length ||
+        old.currency != widget.currency) {
+      _selected = null;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final months = widget.months;
+    final currency = widget.currency;
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
     final scale = MediaQuery.textScalerOf(context).scale(1);
+    final leftAxis = 40 * scale;
     final multiYear =
         months.isNotEmpty && months.first.month.year != months.last.month.year;
     final maxCents = months.fold(
@@ -295,80 +327,124 @@ class MonthBars extends StatelessWidget {
       return !long && multiYear ? '$name ${m.year % 100}' : name;
     }
 
-    return SizedBox(
+    final shown = _shown;
+    final chart = SizedBox(
       height: 200 + 24 * scale,
-      child: BarChart(
-        BarChartData(
-          maxY: maxCents == 0 ? 1 : maxCents * 1.15,
-          alignment: BarChartAlignment.spaceAround,
-          borderData: FlBorderData(show: false),
-          gridData: FlGridData(
-            drawVerticalLine: false,
-            getDrawingHorizontalLine: (_) =>
-                FlLine(color: scheme.outlineVariant, strokeWidth: 1),
-          ),
-          titlesData: FlTitlesData(
-            topTitles: const AxisTitles(),
-            rightTitles: const AxisTitles(),
-            leftTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 40 * scale,
-                getTitlesWidget: (value, meta) => SideTitleWidget(
-                  meta: meta,
-                  child: Text(
-                    compact.format(value / 100),
-                    style: text.labelSmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
+      child: LayoutBuilder(
+        builder: (context, constraints) => GestureDetector(
+          key: const ValueKey('reports.monthBars'),
+          behavior: HitTestBehavior.opaque,
+          // Bars are evenly spread over the plot (right of the y axis).
+          onTapUp: (d) {
+            final plot = constraints.maxWidth - leftAxis;
+            final i = ((d.localPosition.dx - leftAxis) / plot * months.length)
+                .floor();
+            if (i >= 0 && i < months.length) setState(() => _selected = i);
+          },
+          child: BarChart(
+            BarChartData(
+              maxY: maxCents == 0 ? 1 : maxCents * 1.15,
+              alignment: BarChartAlignment.spaceAround,
+              borderData: FlBorderData(show: false),
+              barTouchData: BarTouchData(enabled: false),
+              gridData: FlGridData(
+                drawVerticalLine: false,
+                getDrawingHorizontalLine: (_) =>
+                    FlLine(color: scheme.outlineVariant, strokeWidth: 1),
+              ),
+              titlesData: FlTitlesData(
+                topTitles: const AxisTitles(),
+                rightTitles: const AxisTitles(),
+                leftTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: leftAxis,
+                    // The top of the axis is maxY (115 % of the largest
+                    // month), not a round step: its label would collide.
+                    getTitlesWidget: (value, meta) => value == meta.max
+                        ? const SizedBox.shrink()
+                        : SideTitleWidget(
+                            meta: meta,
+                            child: Text(
+                              compact.format(value / 100),
+                              style: text.labelSmall?.copyWith(
+                                color: scheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                  ),
+                ),
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 24 * scale,
+                    getTitlesWidget: (value, meta) => SideTitleWidget(
+                      meta: meta,
+                      child: Text(
+                        monthLabel(months[value.toInt()].month),
+                        style: text.labelSmall?.copyWith(
+                          color: value.toInt() == shown
+                              ? scheme.onSurface
+                              : scheme.onSurfaceVariant,
+                          fontWeight: value.toInt() == shown
+                              ? FontWeight.w700
+                              : null,
+                        ),
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 24 * scale,
-                getTitlesWidget: (value, meta) => SideTitleWidget(
-                  meta: meta,
-                  child: Text(
-                    monthLabel(months[value.toInt()].month),
-                    style: text.labelSmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                    ),
+              barGroups: [
+                for (final (i, m) in months.indexed)
+                  BarChartGroupData(
+                    x: i,
+                    barRods: [
+                      BarChartRodData(
+                        toY: m.totalCents.toDouble(),
+                        // The selected month in full color, the rest muted.
+                        color: i == shown
+                            ? scheme.primary
+                            : scheme.primary.withValues(alpha: 0.45),
+                        width: months.length > 8 ? 10 : 18,
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(4),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ),
+              ],
             ),
           ),
-          barTouchData: BarTouchData(
-            touchTooltipData: BarTouchTooltipData(
-              getTooltipColor: (_) => scheme.inverseSurface,
-              getTooltipItem: (group, _, rod, _) => BarTooltipItem(
-                '${monthLabel(months[group.x].month, long: true)}\n'
-                '${formatMoney(months[group.x].totalCents, currency)}',
-                TextStyle(color: scheme.onInverseSurface),
-              ),
-            ),
-          ),
-          barGroups: [
-            for (final (i, m) in months.indexed)
-              BarChartGroupData(
-                x: i,
-                barRods: [
-                  BarChartRodData(
-                    toY: m.totalCents.toDouble(),
-                    color: scheme.primary,
-                    width: months.length > 8 ? 10 : 18,
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(4),
-                    ),
-                  ),
-                ],
-              ),
-          ],
         ),
       ),
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        chart,
+        const SizedBox(height: 8),
+        Text.rich(
+          key: const ValueKey('reports.monthValue'),
+          TextSpan(
+            children: [
+              TextSpan(
+                text: '${monthLabel(months[shown].month, long: true)}: ',
+              ),
+              TextSpan(
+                text: formatMoney(months[shown].totalCents, currency),
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+          style: text.bodyMedium,
+        ),
+        Text(
+          'Toca una barra para ver su mes.',
+          style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+        ),
+      ],
     );
   }
 }

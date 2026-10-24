@@ -275,9 +275,9 @@ class _FilterBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final byCardId = {for (final c in cards) c.id!: c};
     final byCategoryId = {for (final c in categories) c.id!: c};
-    final periodLabel = period == ReportPeriod.custom
-        ? '${formatShortDate(range.from)} – ${formatShortDate(range.to)}'
-        : period.label;
+    // The dates of a custom range live in its removable chip below.
+    final rangeLabel =
+        '${formatShortDate(range.from)} – ${formatShortDate(range.to)}';
     final amountLabel = switch ((more.minCents, more.maxCents)) {
       (null, null) => null,
       (final min?, null) => 'Desde ${centsToInput(min)}',
@@ -296,7 +296,7 @@ class _FilterBar extends StatelessWidget {
             ActionChip(
               key: const ValueKey('reports.period'),
               avatar: const Icon(Icons.date_range, size: 18),
-              label: Text(periodLabel),
+              label: Text(period.label),
               onPressed: onPeriod,
             ),
             ActionChip(
@@ -328,7 +328,8 @@ class _FilterBar extends StatelessWidget {
               if (period == ReportPeriod.custom)
                 InputChip(
                   key: const ValueKey('reports.chip.range'),
-                  label: Text(periodLabel),
+                  avatar: const Icon(Icons.date_range, size: 18),
+                  label: Text(rangeLabel),
                   onDeleted: onRemoveRange,
                 ),
               for (final id in cardIds)
@@ -517,6 +518,7 @@ class _Summary extends ConsumerWidget {
   List<Widget> _content(BuildContext context, ExpenseReport r, Widget gap) {
     final currencies = r.currencies;
     final shown = currencies.contains(currency) ? currency! : currencies.first;
+    final months = r.monthsIn(shown, from: range.from, to: range.to);
     return [
       for (final c in currencies) ...[
         CurrencyTotalsTile(
@@ -560,15 +562,15 @@ class _Summary extends ConsumerWidget {
           categories: {for (final c in categories) c.id!: c},
         ),
       ),
-      gap,
-      ReportSection(
-        key: const ValueKey('reports.byMonth'),
-        title: 'Por mes (${shown.symbol})',
-        child: MonthBars(
-          months: r.monthsIn(shown, from: range.from, to: range.to),
-          currency: shown,
+      // One month is one bar: nothing to compare (its total is above).
+      if (months.length > 1) ...[
+        gap,
+        ReportSection(
+          key: const ValueKey('reports.byMonth'),
+          title: 'Por mes (${shown.symbol})',
+          child: MonthBars(months: months, currency: shown),
         ),
-      ),
+      ],
       gap,
       ReportSection(
         key: const ValueKey('reports.byCard'),

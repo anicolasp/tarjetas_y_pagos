@@ -121,7 +121,7 @@ void main() {
 
   /// Every text under [k], including rich text.
   String textIn(String k) => find
-      .descendant(of: key(k), matching: find.byType(Text))
+      .descendant(of: key(k), matching: find.byType(Text), matchRoot: true)
       .evaluate()
       .map((e) {
         final t = e.widget as Text;
@@ -253,6 +253,62 @@ void main() {
     expect(key('reports.total.DOP'), findsOneWidget);
   });
 
+  testWidgets('monthly bars only when the period spans 2+ months', (
+    tester,
+  ) async {
+    await open(tester);
+    expect(key('reports.byMonth'), findsNothing); // one month = one bar
+    await tap(tester, 'reports.period');
+    await tap(tester, 'reports.period.last3Months');
+    expect(key('reports.byMonth'), findsOneWidget);
+    // Aug (0), Sep (700) and Oct (3,500): three bars, empty months too.
+    expect(textIn('reports.total.DOP'), contains('RD\$ 4,200.00'));
+  });
+
+  testWidgets('a tap on a bar shows that month; no tooltip needed', (
+    tester,
+  ) async {
+    await open(tester);
+    await tap(tester, 'reports.period');
+    await tap(tester, 'reports.period.last3Months');
+    await tester.ensureVisible(key('reports.monthValue'));
+    await tester.pumpAndSettle();
+    // The last month with spending is shown first.
+    expect(textIn('reports.monthValue'), contains('octubre 2026'));
+    expect(textIn('reports.monthValue'), contains('RD\$ 3,500.00'));
+    // Bars are spread evenly right of the y axis: the middle one is Sep.
+    final bars = tester.getRect(key('reports.monthBars'));
+    await tester.tapAt(
+      Offset(bars.left + 40 + (bars.width - 40) / 2, bars.center.dy),
+    );
+    await tester.pumpAndSettle();
+    expect(textIn('reports.monthValue'), contains('septiembre 2026'));
+    expect(textIn('reports.monthValue'), contains('RD\$ 700.00'));
+  });
+
+  testWidgets('dragging over the charts scrolls the page', (tester) async {
+    await open(tester);
+    await tap(tester, 'reports.period');
+    await tap(tester, 'reports.period.last3Months');
+    await tester.ensureVisible(key('reports.monthBars'));
+    await tester.pumpAndSettle();
+    final scrollable = tester.state<ScrollableState>(
+      find
+          .descendant(
+            of: find.byType(TabBarView),
+            matching: find.byType(Scrollable),
+          )
+          .at(1),
+    );
+    final before = scrollable.position.pixels;
+    await tester.dragFrom(
+      tester.getCenter(key('reports.monthBars')),
+      const Offset(0, 200), // the page is at its end: drag it back up
+    );
+    await tester.pumpAndSettle();
+    expect(scrollable.position.pixels, lessThan(before));
+  });
+
   testWidgets('movements open the expense', (tester) async {
     await open(tester);
     await tap(tester, 'reports.tabList');
@@ -311,6 +367,8 @@ void main() {
             );
           }
           await open(tester);
+          await tap(tester, 'reports.period');
+          await tap(tester, 'reports.period.last3Months');
           await tap(tester, 'reports.cards');
           await tap(tester, 'reports.cardOption.$cardA');
           await tap(tester, 'reports.cardsApply');
