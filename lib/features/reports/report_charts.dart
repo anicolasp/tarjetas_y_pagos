@@ -1,4 +1,5 @@
 import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter/foundation.dart' show listEquals, visibleForTesting;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -9,6 +10,28 @@ import '../../core/report.dart';
 import '../../data/models/category.dart';
 import '../../data/models/credit_card.dart';
 import 'chart_colors.dart';
+
+/// Whole percentages of [values] that add up to 100 (largest remainder):
+/// rounding each one alone can show 33 + 33 + 33.
+@visibleForTesting
+List<int> wholePercents(List<int> values) {
+  final total = values.fold(0, (a, b) => a + b);
+  if (total == 0) return List.filled(values.length, 0);
+  final floors = [for (final v in values) v * 100 ~/ total];
+  final byRemainder = List.generate(values.length, (i) => i)
+    ..sort((a, b) {
+      final ra = values[a] * 100 % total;
+      final rb = values[b] * 100 % total;
+      return rb != ra ? rb.compareTo(ra) : a.compareTo(b);
+    });
+  var missing = 100 - floors.fold(0, (a, b) => a + b);
+  for (final i in byRemainder) {
+    if (missing == 0) break;
+    floors[i]++;
+    missing--;
+  }
+  return floors;
+}
 
 /// A titled section of the summary.
 class ReportSection extends StatelessWidget {
@@ -167,17 +190,20 @@ class CategoryDonut extends StatelessWidget {
       ),
     );
 
+    final percents = wholePercents([for (final s in slices) s.cents]);
     final legend = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        for (final s in slices)
+        for (final (i, s) in slices.indexed)
           _LegendRow(
             key: ValueKey(s.key),
             icon: s.icon,
             color: s.color,
             label: s.label,
             value: formatMoney(s.cents, currency),
-            percent: '${(s.cents * 100 / total).round()} %',
+            percent: percents[i] == 0 && s.cents > 0
+                ? '<1 %'
+                : '${percents[i]} %',
           ),
       ],
     );
@@ -298,7 +324,8 @@ class _MonthBarsState extends State<MonthBars> {
   @override
   void didUpdateWidget(MonthBars old) {
     super.didUpdateWidget(old);
-    if (old.months.length != widget.months.length ||
+    // Other data (filters, period, currency): back to the default month.
+    if (!listEquals(old.months, widget.months) ||
         old.currency != widget.currency) {
       _selected = null;
     }
@@ -511,7 +538,6 @@ class CardTotals extends StatelessWidget {
     );
   }
 
-  static String _cardName(CreditCard? c) => c == null
-      ? 'Tarjeta'
-      : '${c.alias} •••• ${c.last4}${c.archived ? ' (archivada)' : ''}';
+  static String _cardName(CreditCard? c) =>
+      c == null ? 'Tarjeta' : '${c.label}${c.archived ? ' (archivada)' : ''}';
 }

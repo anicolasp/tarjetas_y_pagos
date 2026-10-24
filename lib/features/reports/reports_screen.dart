@@ -29,13 +29,32 @@ class ReportsScreen extends ConsumerStatefulWidget {
 class _ReportsScreenState extends ConsumerState<ReportsScreen> {
   var _period = ReportPeriod.thisMonth;
   DateTimeRange? _customRange;
-  var _cardIds = <int>{};
 
-  /// Categories, merchant and amounts (from the shared filter sheet).
-  var _more = const ExpenseFilter();
+  /// Cards, categories, merchant and amounts. Dates come from the period.
+  var _criteria = const ExpenseFilter();
 
   /// Chosen by the user when both currencies have data.
   Currency? _currency;
+
+  /// "Este mes" must follow the calendar when the app comes back on
+  /// another day (or month).
+  late final _lifecycle = AppLifecycleListener(
+    onResume: () {
+      if (mounted) setState(() {});
+    },
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    _lifecycle; // start listening
+  }
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    super.dispose();
+  }
 
   ({DateTime from, DateTime to}) get _range {
     final quick = _period.rangeFor(ref.read(clockProvider)());
@@ -46,15 +65,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
 
   ExpenseFilter get _filter {
     final (:from, :to) = _range;
-    return ExpenseFilter(
-      cardIds: _cardIds,
-      categoryIds: _more.categoryIds,
-      from: from,
-      to: to,
-      merchant: _more.merchant,
-      minCents: _more.minCents,
-      maxCents: _more.maxCents,
-    );
+    return _criteria.copyWith(from: () => from, to: () => to);
   }
 
   Future<void> _pickPeriod() async {
@@ -113,41 +124,36 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
       context: context,
       showDragHandle: true,
       isScrollControlled: true,
-      builder: (context) => _CardPicker(cards: cards, selected: _cardIds),
+      builder: (context) =>
+          _CardPicker(cards: cards, selected: _criteria.cardIds),
     );
-    if (picked != null && mounted) setState(() => _cardIds = picked);
+    if (picked != null && mounted) {
+      setState(() => _criteria = _criteria.copyWith(cardIds: picked));
+    }
   }
 
+  /// Categories, merchant and amounts, plus a custom range. A quick period
+  /// is not shown there as if the user had typed those dates.
   Future<void> _moreFilters(List<Category> categories) async {
-    final (:from, :to) = _range;
+    final custom = _period == ReportPeriod.custom ? _customRange : null;
     final picked = await showExpenseFilterSheet(
       context,
-      current: ExpenseFilter(
-        categoryIds: _more.categoryIds,
-        from: from,
-        to: to,
-        merchant: _more.merchant,
-        minCents: _more.minCents,
-        maxCents: _more.maxCents,
+      current: _criteria.copyWith(
+        from: () => custom?.start,
+        to: () => custom?.end,
       ),
       categories: categories,
     );
     if (picked == null || !mounted) return;
     setState(() {
-      _more = ExpenseFilter(
-        categoryIds: picked.categoryIds,
-        merchant: picked.merchant,
-        minCents: picked.minCents,
-        maxCents: picked.maxCents,
-      );
-      // A range changed in the sheet becomes the custom period; a cleared
-      // one goes back to the default.
-      if (picked.from == null || picked.to == null) {
-        _period = ReportPeriod.thisMonth;
-        _customRange = null;
-      } else if (picked.from != from || picked.to != to) {
+      _criteria = picked.copyWith(from: () => null, to: () => null);
+      if (picked.from != null && picked.to != null) {
         _period = ReportPeriod.custom;
         _customRange = DateTimeRange(start: picked.from!, end: picked.to!);
+      } else if (_period == ReportPeriod.custom) {
+        // The custom range was cleared: back to the default period.
+        _period = ReportPeriod.thisMonth;
+        _customRange = null;
       }
     });
   }
@@ -162,33 +168,27 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
       period: _period,
       range: _range,
       cards: cards,
-      cardIds: _cardIds,
+      criteria: _criteria,
       categories: categories,
-      more: _more,
       onPeriod: _pickPeriod,
-      onCards: () => _pickCards(cards.where((c) => !c.archived).toList()),
+      onCards: () => _pickCards(cards),
       onMore: () => _moreFilters(categories),
-      onRemoveCard: (id) =>
-          setState(() => _cardIds = {..._cardIds}..remove(id)),
+      onRemoveCard: (id) => setState(
+        () => _criteria = _criteria.copyWith(
+          cardIds: {..._criteria.cardIds}..remove(id),
+        ),
+      ),
       onRemoveCategory: (id) => setState(
-        () => _more = ExpenseFilter(
-          categoryIds: {..._more.categoryIds}..remove(id),
-          merchant: _more.merchant,
-          minCents: _more.minCents,
-          maxCents: _more.maxCents,
+        () => _criteria = _criteria.copyWith(
+          categoryIds: {..._criteria.categoryIds}..remove(id),
         ),
       ),
-      onRemoveMerchant: () => setState(
-        () => _more = ExpenseFilter(
-          categoryIds: _more.categoryIds,
-          minCents: _more.minCents,
-          maxCents: _more.maxCents,
-        ),
-      ),
+      onRemoveMerchant: () =>
+          setState(() => _criteria = _criteria.copyWith(merchant: () => null)),
       onRemoveAmount: () => setState(
-        () => _more = ExpenseFilter(
-          categoryIds: _more.categoryIds,
-          merchant: _more.merchant,
+        () => _criteria = _criteria.copyWith(
+          minCents: () => null,
+          maxCents: () => null,
         ),
       ),
       onRemoveRange: () => setState(() {
@@ -243,9 +243,8 @@ class _FilterBar extends StatelessWidget {
     required this.period,
     required this.range,
     required this.cards,
-    required this.cardIds,
+    required this.criteria,
     required this.categories,
-    required this.more,
     required this.onPeriod,
     required this.onCards,
     required this.onMore,
@@ -259,9 +258,10 @@ class _FilterBar extends StatelessWidget {
   final ReportPeriod period;
   final ({DateTime from, DateTime to}) range;
   final List<CreditCard> cards;
-  final Set<int> cardIds;
+
+  /// Cards, categories, merchant and amounts.
+  final ExpenseFilter criteria;
   final List<Category> categories;
-  final ExpenseFilter more;
   final VoidCallback onPeriod;
   final VoidCallback onCards;
   final VoidCallback onMore;
@@ -273,6 +273,8 @@ class _FilterBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cardIds = criteria.cardIds;
+    final more = criteria;
     final byCardId = {for (final c in cards) c.id!: c};
     final byCategoryId = {for (final c in categories) c.id!: c};
     // The dates of a custom range live in its removable chip below.
@@ -335,11 +337,7 @@ class _FilterBar extends StatelessWidget {
               for (final id in cardIds)
                 InputChip(
                   key: ValueKey('reports.chip.card.$id'),
-                  label: Text(
-                    byCardId[id] == null
-                        ? 'Tarjeta'
-                        : '${byCardId[id]!.alias} •••• ${byCardId[id]!.last4}',
-                  ),
+                  label: Text(byCardId[id]?.label ?? 'Tarjeta'),
                   onDeleted: () => onRemoveCard(id),
                 ),
               for (final id in more.categoryIds)
@@ -411,8 +409,8 @@ class _CardPickerState extends State<_CardPicker> {
                 CheckboxListTile(
                   key: ValueKey('reports.cardOption.${c.id}'),
                   value: _selected.contains(c.id),
-                  title: Text('${c.alias} •••• ${c.last4}'),
-                  subtitle: Text(c.bank),
+                  title: Text(c.label),
+                  subtitle: Text(c.archived ? '${c.bank} · archivada' : c.bank),
                   onChanged: (on) => setState(
                     () => on! ? _selected.add(c.id!) : _selected.remove(c.id),
                   ),
@@ -655,7 +653,7 @@ class _ExpenseRow extends StatelessWidget {
       subtitle: [
         formatShortDate(e.date),
         category?.name ?? 'Sin categoría',
-        if (card != null) '${card!.alias} •••• ${card!.last4}',
+        if (card != null) card!.label,
       ].join(' · '),
       amount: formatMoney(e.amountCents, e.currency),
       onTap: () => context.push(Routes.expenseEdit(e.id!)),

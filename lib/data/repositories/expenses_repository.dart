@@ -49,6 +49,28 @@ class ExpenseFilter {
 
   ExpenseFilter cleared() => ExpenseFilter(cardId: cardId, cardIds: cardIds);
 
+  /// A copy with some fields changed. Nullable fields take a function so
+  /// they can also be cleared: `copyWith(merchant: () => null)`.
+  ExpenseFilter copyWith({
+    int? Function()? cardId,
+    Set<int>? cardIds,
+    Set<int>? categoryIds,
+    DateTime? Function()? from,
+    DateTime? Function()? to,
+    String? Function()? merchant,
+    int? Function()? minCents,
+    int? Function()? maxCents,
+  }) => ExpenseFilter(
+    cardId: cardId == null ? this.cardId : cardId(),
+    cardIds: cardIds ?? this.cardIds,
+    categoryIds: categoryIds ?? this.categoryIds,
+    from: from == null ? this.from : from(),
+    to: to == null ? this.to : to(),
+    merchant: merchant == null ? this.merchant : merchant(),
+    minCents: minCents == null ? this.minCents : minCents(),
+    maxCents: maxCents == null ? this.maxCents : maxCents(),
+  );
+
   @override
   bool operator ==(Object other) =>
       other is ExpenseFilter &&
@@ -160,34 +182,41 @@ class ExpensesRepository {
     ExpenseFilter filter = const ExpenseFilter(),
   ]) async {
     final (:where, :args) = _whereFor(userId, filter);
-    Future<List<Map<String, Object?>>> grouped(String key) => _db.db.rawQuery(
-      'SELECT $key AS k, currency, SUM(amount_cents) AS total, '
-      'COUNT(*) AS n FROM expenses WHERE $where '
-      'GROUP BY k, currency',
-      args,
-    );
-
-    final totals = await _db.db.rawQuery(
-      'SELECT currency, SUM(amount_cents) AS total, COUNT(*) AS n '
-      'FROM expenses WHERE $where GROUP BY currency',
-      args,
-    );
-    final byCategory = await grouped('category_id');
-    final byMonth = await grouped("strftime('%Y-%m', date)");
-    final byCard = await grouped('card_id');
+    // One read transaction: every breakdown comes from the same snapshot,
+    // so the totals always match the charts.
+    final (byCategory, byMonth, byCard) = await _db.db.transaction((txn) async {
+      Future<List<Map<String, Object?>>> grouped(String key) => txn.rawQuery(
+        'SELECT $key AS k, currency, SUM(amount_cents) AS total, '
+        'COUNT(*) AS n FROM expenses WHERE $where '
+        'GROUP BY k, currency',
+        args,
+      );
+      return (
+        await grouped('category_id'),
+        await grouped("strftime('%Y-%m', date)"),
+        await grouped('card_id'),
+      );
+    });
 
     Currency currency(Map<String, Object?> r) =>
         Currency.fromCode(r['currency']! as String);
     int total(Map<String, Object?> r) => r['total']! as int;
 
+    // Totals per currency are the sum of the per-category groups (every
+    // expense has exactly one category).
+    final totals = <Currency, ({int total, int count})>{};
+    for (final r in byCategory) {
+      final t = totals[currency(r)] ?? (total: 0, count: 0);
+      totals[currency(r)] = (
+        total: t.total + total(r),
+        count: t.count + (r['n']! as int),
+      );
+    }
+
     return ExpenseReport(
       totals: {
-        for (final r in totals)
-          currency(r): CurrencyTotals(
-            currency: currency(r),
-            totalCents: total(r),
-            count: r['n']! as int,
-          ),
+        for (final MapEntry(key: c, value: t) in totals.entries)
+          c: CurrencyTotals(currency: c, totalCents: t.total, count: t.count),
       },
       byCategory: [
         for (final r in byCategory)

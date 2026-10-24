@@ -5,7 +5,9 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:tarjetas_y_pagos/core/formatters.dart';
 import 'package:tarjetas_y_pagos/core/money.dart';
 import 'package:tarjetas_y_pagos/data/database.dart';
+import 'package:tarjetas_y_pagos/data/repositories/cards_repository.dart';
 import 'package:tarjetas_y_pagos/data/repositories/expenses_repository.dart';
+import 'package:tarjetas_y_pagos/features/reports/report_charts.dart';
 
 import '../helpers/fakes.dart';
 import '../helpers/screen_sizes.dart';
@@ -307,6 +309,84 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(scrollable.position.pixels, lessThan(before));
+  });
+
+  group('code review regressions', () {
+    testWidgets('"Más filtros" on "Este mes" opens the date picker safely '
+        'and does not show the quick period as typed dates', (tester) async {
+      await open(tester);
+      await tap(tester, 'reports.moreFilters');
+      // No range pre-filled: the quick period is not a user-typed range.
+      expect(find.textContaining('01/10/2026'), findsNothing);
+      await tap(tester, 'expenseFilter.dates');
+      expect(tester.takeException(), isNull); // no lastDate assertion
+      await tester.tap(find.byIcon(Icons.close).last);
+      await tester.pumpAndSettle();
+      await tap(tester, 'expenseFilter.category.Supermercado');
+      await tap(tester, 'expenseFilter.apply');
+      // Picking a category keeps the quick period.
+      expect(find.text('Este mes'), findsOneWidget);
+      expect(textIn('reports.total.DOP'), contains('RD\$ 1,500.00'));
+    });
+
+    testWidgets('archived cards can be picked too', (tester) async {
+      await CardsRepository(db).archive(userId, cardB);
+      await open(tester);
+      await tap(tester, 'reports.cards');
+      expect(textIn('reports.cardOption.$cardB'), contains('archivada'));
+      await tap(tester, 'reports.cardOption.$cardB');
+      await tap(tester, 'reports.cardsApply');
+      expect(textIn('reports.total.USD'), contains('US\$ 40.00'));
+      expect(key('reports.total.DOP'), findsNothing);
+    });
+
+    testWidgets('a new filter resets the selected month', (tester) async {
+      await open(tester);
+      await tap(tester, 'reports.period');
+      await tap(tester, 'reports.period.last3Months');
+      await tester.ensureVisible(key('reports.monthBars'));
+      await tester.pumpAndSettle();
+      final bars = tester.getRect(key('reports.monthBars'));
+      await tester.tapAt(
+        Offset(bars.left + 40 + (bars.width - 40) / 2, bars.center.dy),
+      );
+      await tester.pumpAndSettle();
+      expect(textIn('reports.monthValue'), contains('septiembre'));
+      await tap(tester, 'reports.cards');
+      await tap(tester, 'reports.cardOption.$cardA');
+      await tap(tester, 'reports.cardsApply');
+      expect(textIn('reports.monthValue'), contains('octubre'));
+    });
+
+    test('legend percentages add up to 100', () {
+      expect(wholePercents([1, 1, 1]), [34, 33, 33]);
+      expect(wholePercents([997, 3]), [100, 0]); // shown as "<1 %"
+      expect(wholePercents([50, 50]), [50, 50]);
+      expect(wholePercents([0, 0]), [0, 0]);
+      for (final v in [
+        [7, 13, 29, 51],
+        [1, 2, 3, 4, 5, 6],
+      ]) {
+        expect(wholePercents(v).fold(0, (a, b) => a + b), 100);
+      }
+    });
+
+    test('ExpenseFilter.copyWith keeps or clears each field', () {
+      final f = ExpenseFilter(
+        cardIds: {1},
+        categoryIds: {2},
+        merchant: 'x',
+        minCents: 5,
+        maxCents: 9,
+      );
+      final g = f.copyWith(merchant: () => null, minCents: () => null);
+      expect(g.merchant, isNull);
+      expect(g.minCents, isNull);
+      expect(g.cardIds, {1});
+      expect(g.categoryIds, {2});
+      expect(g.maxCents, 9);
+      expect(f.copyWith(), f);
+    });
   });
 
   testWidgets('movements open the expense', (tester) async {

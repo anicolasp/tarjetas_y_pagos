@@ -60,6 +60,9 @@ class CreditCard {
   final int secondaryLimitCents;
   final int color;
 
+  /// "Alias •••• 1234", how a card is named across the app.
+  String get label => '$alias •••• $last4';
+
   /// Currencies this card holds balances in.
   List<Currency> get currencies =>
       dualCurrency ? const [Currency.dop, Currency.usd] : [currency];
