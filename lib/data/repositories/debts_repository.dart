@@ -67,8 +67,11 @@ class DebtsRepository {
   Future<Debt> update(Debt debt) async {
     final d = _validated(debt);
     await _db.db.transaction((txn) async {
-      await _owned(txn, d.userId, d.id!);
+      final current = await _owned(txn, d.userId, d.id!);
       final paid = await _paid(txn, d.id!);
+      if (paid > 0 && d.currency != current.currency) {
+        throw ArgumentError('No se puede cambiar la moneda: ya tiene abonos');
+      }
       if (d.amountCents < paid) {
         throw ArgumentError('El monto no puede ser menor que lo ya abonado');
       }

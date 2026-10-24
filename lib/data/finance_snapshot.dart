@@ -1,12 +1,16 @@
 import '../core/billing_cycle.dart';
+import '../core/debts.dart';
 import '../core/money.dart';
 import '../core/statement.dart';
 import 'models/card_payment.dart';
 import 'models/credit_card.dart';
+import 'models/debt.dart';
+import 'models/debt_payment.dart';
 import 'models/expense.dart';
 
 /// Everything the money screens need, loaded once: the user's active cards
-/// (in the order they were added) and all their expenses and payments.
+/// (in the order they were added), all their expenses and card payments,
+/// and their other debts with their payments.
 /// Rankings, statements and totals are derived from it with pure functions,
 /// so there is a single source of truth and no chain of derived providers.
 class FinanceSnapshot {
@@ -14,6 +18,8 @@ class FinanceSnapshot {
     required this.cards,
     required this.expenses,
     required this.payments,
+    this.debts = const [],
+    this.debtPayments = const [],
   });
 
   static final empty = FinanceSnapshot(
@@ -21,6 +27,44 @@ class FinanceSnapshot {
     expenses: const [],
     payments: const [],
   );
+
+  /// Debts outside the cards, active and settled.
+  final List<Debt> debts;
+
+  /// All payments (abonos) of [debts], newest first.
+  final List<DebtPayment> debtPayments;
+
+  late final List<DebtSummary> debtSummaries = [
+    for (final d in debts) summarize(d, debtPayments),
+  ];
+
+  DebtSummary? debtSummary(int id) {
+    for (final s in debtSummaries) {
+      if (s.debt.id == id) return s;
+    }
+    return null;
+  }
+
+  /// What is left of the active debts, per currency.
+  Map<Currency, int> otherDebt() {
+    final totals = <Currency, int>{};
+    for (final s in debtSummaries) {
+      if (!s.settled) {
+        totals[s.debt.currency] =
+            (totals[s.debt.currency] ?? 0) + s.remainingCents;
+      }
+    }
+    return totals;
+  }
+
+  /// Cards plus other debts, per currency (never mixed).
+  Map<Currency, int> totalDebt(DateTime today) {
+    final totals = {...debt(today)};
+    for (final MapEntry(key: c, value: cents) in otherDebt().entries) {
+      totals[c] = (totals[c] ?? 0) + cents;
+    }
+    return totals;
+  }
 
   /// Active cards, oldest first.
   final List<CreditCard> cards;

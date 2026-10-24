@@ -155,6 +155,19 @@ void main() {
     },
   );
 
+  test('the currency cannot change once there are payments', () async {
+    final d = await debt();
+    expect(
+      (await repo.update(d.copyWith(currency: Currency.usd))).currency,
+      Currency.usd,
+    );
+    await repo.addPayment(ana, pay(d, 100));
+    expect(
+      () => repo.update(d.copyWith(currency: Currency.dop)),
+      throwsArgumentError,
+    );
+  });
+
   test('every query is scoped by user', () async {
     final mine = await debt();
     final theirs = await debt(userId: otro);
