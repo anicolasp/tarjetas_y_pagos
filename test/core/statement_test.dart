@@ -260,4 +260,55 @@ void main() {
       DateTime.utc(2026, 10, 15),
     );
   });
+
+  group('payBy', () {
+    test('only the open cycle: the next cut\'s due date', () {
+      final c = card();
+      final s = statementFor(
+        c,
+        [spent(1000, DateTime(2026, 10, 10))],
+        [],
+        today,
+      );
+      expect(payBy(c, s, today), (
+        date: dateOnly(DateTime(2026, 11, 25)),
+        overdue: false,
+      ));
+    });
+
+    test('a closed statement still owed: its due date', () {
+      final c = card();
+      final s = statementFor(
+        c,
+        [spent(1000, DateTime(2026, 9, 20))],
+        [],
+        today,
+      );
+      expect(payBy(c, s, today), (
+        date: dateOnly(DateTime(2026, 10, 25)),
+        overdue: false,
+      ));
+    });
+
+    test('past it and unpaid: overdue since that date', () {
+      final c = card();
+      final late = DateTime(2026, 10, 27);
+      final s = statementFor(c, [spent(1000, DateTime(2026, 9, 20))], [], late);
+      expect(payBy(c, s, late), (
+        date: dateOnly(DateTime(2026, 10, 25)),
+        overdue: true,
+      ));
+    });
+
+    test('a statement paid off: back to the next cut', () {
+      final c = card();
+      final s = statementFor(
+        c,
+        [spent(1000, DateTime(2026, 9, 20))],
+        [paid(1000, DateTime(2026, 10, 20))],
+        today,
+      );
+      expect(payBy(c, s, today).date, dateOnly(DateTime(2026, 11, 25)));
+    });
+  });
 }

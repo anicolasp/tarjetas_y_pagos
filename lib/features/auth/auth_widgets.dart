@@ -174,3 +174,31 @@ String formatWait(Duration d) {
   if (seconds < 60) return '$seconds s';
   return '${(seconds / 60).ceil()} min';
 }
+
+/// "¿Eliminar …?" with Cancelar / [confirmLabel]. True when confirmed.
+Future<bool> confirmDestructive(
+  BuildContext context, {
+  required String title,
+  required String body,
+  required Key confirmKey,
+  String confirmLabel = 'Eliminar',
+}) async =>
+    await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: Text(body),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            key: confirmKey,
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(confirmLabel),
+          ),
+        ],
+      ),
+    ) ??
+    false;

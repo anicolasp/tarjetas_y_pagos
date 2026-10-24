@@ -4,10 +4,14 @@ import '../../core/billing_cycle.dart';
 import '../database.dart';
 import '../models/debt.dart';
 import '../models/debt_payment.dart';
+import '../../core/validators.dart';
 
 const creditorMaxLength = 80;
 const debtDescriptionMaxLength = 200;
 const debtNoteMaxLength = 200;
+
+/// Oldest date a payment can carry: Jan 1, five years back.
+DateTime earliestPaymentDate(DateTime today) => DateTime.utc(today.year - 5);
 
 /// Debts outside the cards and their payments (abonos). Every query is
 /// scoped by `user_id` (payments through their debt). The status follows
@@ -109,8 +113,10 @@ class DebtsRepository {
     }
     final id = await _db.db.transaction((txn) async {
       final debt = await _owned(txn, userId, payment.debtId);
-      if (day.isBefore(dateOnly(debt.createdAt))) {
-        throw ArgumentError('La fecha es anterior a la deuda');
+      // A loan entered today may have been paid on for months: any date
+      // in the last five years counts (as for expenses).
+      if (day.isBefore(earliestPaymentDate(_clock()))) {
+        throw ArgumentError('La fecha es demasiado antigua');
       }
       final paid = await _paid(txn, debt.id!);
       final remaining = debt.amountCents - paid;
@@ -120,7 +126,7 @@ class DebtsRepository {
       final id = await txn.insert(
         'debt_payments',
         (payment.toMap()..remove('id'))
-          ..['note'] = _trimmedOrNull(payment.note, debtNoteMaxLength),
+          ..['note'] = trimmedOrNull(payment.note, debtNoteMaxLength),
       );
       await _setStatus(
         txn,
@@ -170,19 +176,12 @@ class DebtsRepository {
       throw ArgumentError('Máximo $creditorMaxLength caracteres');
     }
     if (d.amountCents <= 0) throw ArgumentError('Monto no válido');
-    final description = _trimmedOrNull(d.description, debtDescriptionMaxLength);
+    final description = trimmedOrNull(d.description, debtDescriptionMaxLength);
     return d.copyWith(
       creditor: creditor,
       description: description,
       clearDescription: description == null,
     );
-  }
-
-  static String? _trimmedOrNull(String? s, int max) {
-    final t = s?.trim() ?? '';
-    if (t.isEmpty) return null;
-    if (t.length > max) throw ArgumentError('Máximo $max caracteres');
-    return t;
   }
 
   static DebtStatus _statusFor(int amountCents, int paidCents) =>

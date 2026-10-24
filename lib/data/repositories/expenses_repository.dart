@@ -7,6 +7,7 @@ import '../models/category.dart';
 import '../models/credit_card.dart';
 import '../models/db_codec.dart';
 import '../models/expense.dart';
+import '../../core/validators.dart';
 
 const merchantMaxLength = 80;
 const notesMaxLength = 200;
@@ -322,7 +323,7 @@ class ExpensesRepository {
     final id = await _db.db.insert(
       'card_payments',
       (payment.toMap()..remove('id'))
-        ..['note'] = _trimmedOrNull(payment.note, notesMaxLength),
+        ..['note'] = trimmedOrNull(payment.note, notesMaxLength),
     );
     final rows = await _db.db.query(
       'card_payments',
@@ -382,8 +383,8 @@ class ExpensesRepository {
 
     return e.copyWith(
       merchant: merchant,
-      notes: _trimmedOrNull(e.notes, notesMaxLength),
-      clearNotes: _trimmedOrNull(e.notes, notesMaxLength) == null,
+      notes: trimmedOrNull(e.notes, notesMaxLength),
+      clearNotes: trimmedOrNull(e.notes, notesMaxLength) == null,
     );
   }
 
@@ -402,11 +403,5 @@ class ExpensesRepository {
     if (dateOnly(date).isAfter(dateOnly(_clock()))) {
       throw ArgumentError('La fecha no puede ser futura');
     }
-  }
-
-  static String? _trimmedOrNull(String? s, int max) {
-    final t = s?.trim() ?? '';
-    if (t.isEmpty) return null;
-    return t.length > max ? t.substring(0, max) : t;
   }
 }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/billing_cycle.dart';
+import '../../core/statement.dart';
 import '../../core/clock.dart';
 import '../../core/debts.dart';
 import '../../core/formatters.dart';
@@ -176,15 +176,7 @@ class _CardDebtTile extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final card = snapshot.card(cardId)!;
     final statement = snapshot.statementOf(card, today);
-    final owed = statement.byCurrency.values;
-    final late = owed.any((s) => s.overdue);
-    // The payment that matters: a closed statement still owed, else the
-    // one of the next cut (the balance belongs to it).
-    final payBy = late
-        ? owed.firstWhere((s) => s.overdue).overdueSince!
-        : owed.any((s) => s.dueCents > 0)
-        ? statement.dueDate
-        : dueDate(nextCut(today, card.cutDay), card.paymentDays);
+    final (date: due, overdue: late) = payBy(card, statement, today);
     return Card(
       key: ValueKey('debts.card.$cardId'),
       margin: const EdgeInsets.only(bottom: 8),
@@ -216,8 +208,8 @@ class _CardDebtTile extends StatelessWidget {
                       Flexible(
                         child: Text(
                           late
-                              ? 'Vencido desde el ${formatDayMonth(payBy)}'
-                              : 'Fecha límite ${formatDayMonth(payBy)}',
+                              ? 'Vencido desde el ${formatDayMonth(due)}'
+                              : 'Fecha límite ${formatDayMonth(due)}',
                           style: late
                               ? text.bodySmall?.copyWith(
                                   color: scheme.error,
@@ -294,6 +286,9 @@ class DebtSummaryView extends StatelessWidget {
     final d = summary.debt;
     final late = summary.overdue(today);
     final muted = text.bodySmall?.copyWith(color: scheme.onSurfaceVariant);
+    // Floor, so "100 %" only shows when it really is paid off; the same
+    // value is read out by screen readers.
+    final percent = (summary.progress * 100).floor();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -322,7 +317,7 @@ class DebtSummaryView extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Semantics(
-          label: 'Pagado ${(summary.progress * 100).round()} %',
+          label: '$percent % pagado',
           child: ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
@@ -338,7 +333,7 @@ class DebtSummaryView extends StatelessWidget {
           alignment: WrapAlignment.spaceBetween,
           spacing: 12,
           children: [
-            Text('${(summary.progress * 100).floor()} % pagado', style: muted),
+            Text('$percent % pagado', style: muted),
             if (d.dueDate != null && !summary.settled)
               Row(
                 key: ValueKey('debt.${d.id}.due'),

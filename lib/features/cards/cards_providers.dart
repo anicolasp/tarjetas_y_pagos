@@ -48,12 +48,20 @@ final financeProvider = FutureProvider<FinanceSnapshot>((ref) async {
   if (user == null) return FinanceSnapshot.empty;
   final repos = await ref.watch(reposProvider.future);
   final userId = user.id!;
+  // Independent reads: run them together.
+  final (cards, expenses, payments, debts, debtPayments) = await (
+    repos.cards.listActive(userId),
+    repos.expenses.list(userId),
+    repos.expenses.payments(userId),
+    repos.debts.list(userId),
+    repos.debts.payments(userId),
+  ).wait;
   return FinanceSnapshot(
-    cards: await repos.cards.listActive(userId),
-    expenses: await repos.expenses.list(userId),
-    payments: await repos.expenses.payments(userId),
-    debts: await repos.debts.list(userId),
-    debtPayments: await repos.debts.payments(userId),
+    cards: cards,
+    expenses: expenses,
+    payments: payments,
+    debts: debts,
+    debtPayments: debtPayments,
   );
 }, retry: (retryCount, error) => null);
 

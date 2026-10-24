@@ -68,8 +68,7 @@ class _PaymentFormState extends ConsumerState<_PaymentForm> {
 
   Future<void> _pickDate() async {
     final today = ref.read(clockProvider)();
-    final created = widget.summary.debt.createdAt;
-    final first = DateTime(created.year, created.month, created.day);
+    final first = DateTime(today.year - 5); // see earliestPaymentDate
     final picked = await showDatePicker(
       context: context,
       initialDate: _date.isBefore(first) ? first : _date,

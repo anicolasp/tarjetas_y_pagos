@@ -323,6 +323,27 @@ void main() {
     expect(find.text('Ya abonaste RD\$ 600.00'), findsOneWidget);
   });
 
+  testWidgets('an old due date still opens the date picker', (tester) async {
+    final d = await seedDebt(due: DateTime(2019, 6, 1));
+    await start(tester, path: '/home/debts/${d.id}/edit');
+    await tap(tester, 'debtForm.dueDate');
+    expect(tester.takeException(), isNull);
+    expect(find.byType(DatePickerDialog), findsOneWidget);
+  });
+
+  testWidgets('99.5 % paid reads 99 % on screen and to screen readers', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    final d = await seedDebt(cents: 10000);
+    await addPayment(d, 9950);
+    await start(tester, path: '/home/debts');
+    expect(find.text('99 % pagado'), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp(r'99 % pagado')), findsWidgets);
+    expect(find.bySemanticsLabel(RegExp(r'100 %')), findsNothing);
+    semantics.dispose();
+  });
+
   testWidgets('delete a debt from its form', (tester) async {
     final d = await seedDebt();
     await start(tester, path: '/home/debts/${d.id}/edit');

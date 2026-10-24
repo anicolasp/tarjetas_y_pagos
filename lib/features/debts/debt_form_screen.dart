@@ -76,11 +76,17 @@ class _DebtFormState extends ConsumerState<_DebtForm> {
 
   Future<void> _pickDue() async {
     final today = ref.read(clockProvider)();
+    final initial = _due ?? today.add(const Duration(days: 30));
+    var first = DateTime(today.year - 5);
+    var last = DateTime(today.year + 10);
+    // A stored date outside the usual range must still open the picker.
+    if (initial.isBefore(first)) first = initial;
+    if (initial.isAfter(last)) last = initial;
     final picked = await showDatePicker(
       context: context,
-      initialDate: _due ?? today.add(const Duration(days: 30)),
-      firstDate: DateTime(today.year - 5),
-      lastDate: DateTime(today.year + 10),
+      initialDate: initial,
+      firstDate: first,
+      lastDate: last,
     );
     if (picked != null) setState(() => _due = picked);
   }
@@ -121,25 +127,13 @@ class _DebtFormState extends ConsumerState<_DebtForm> {
   }
 
   Future<void> _delete() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('¿Eliminar esta deuda?'),
-        content: const Text('También se eliminan sus abonos.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            key: const ValueKey('debtForm.deleteConfirm'),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Eliminar'),
-          ),
-        ],
-      ),
+    final confirmed = await confirmDestructive(
+      context,
+      title: '¿Eliminar esta deuda?',
+      body: 'También se eliminan sus abonos.',
+      confirmKey: const ValueKey('debtForm.deleteConfirm'),
     );
-    if (confirmed != true || !mounted) return;
+    if (!confirmed || !mounted) return;
     try {
       final repo = (await ref.read(reposProvider.future)).debts;
       await repo.delete(_d!.userId, _d.id!);

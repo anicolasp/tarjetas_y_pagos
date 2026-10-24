@@ -116,14 +116,17 @@ void main() {
     expect(() => repo.addPayment(ana, pay(d, 1)), throwsArgumentError);
   });
 
-  test('payment dates: not in the future, not before the debt', () async {
-    final d = await debt();
+  test('payment dates: not in the future, at most five years back', () async {
+    final d = await debt(); // recorded on 1 Oct 2026
     expect(
       () => repo.addPayment(ana, pay(d, 100, date: DateTime(2026, 10, 23))),
       throwsArgumentError,
     );
+    // An existing loan entered today: earlier payments still count.
+    await repo.addPayment(ana, pay(d, 100, date: DateTime(2026, 3, 15)));
+    await repo.addPayment(ana, pay(d, 100, date: DateTime(2021, 1, 1)));
     expect(
-      () => repo.addPayment(ana, pay(d, 100, date: DateTime(2026, 9, 30))),
+      () => repo.addPayment(ana, pay(d, 100, date: DateTime(2020, 12, 31))),
       throwsArgumentError,
     );
     expect(() => repo.addPayment(ana, pay(d, 0)), throwsArgumentError);

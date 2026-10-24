@@ -34,8 +34,21 @@ class FinanceSnapshot {
   /// All payments (abonos) of [debts], newest first.
   final List<DebtPayment> debtPayments;
 
+  /// Payments grouped by debt, built once.
+  late final Map<int, List<DebtPayment>> _paymentsByDebt = () {
+    final byDebt = <int, List<DebtPayment>>{};
+    for (final p in debtPayments) {
+      (byDebt[p.debtId] ??= []).add(p);
+    }
+    return byDebt;
+  }();
+
+  /// Payments of one debt, newest first.
+  List<DebtPayment> paymentsOfDebt(int debtId) =>
+      _paymentsByDebt[debtId] ?? const [];
+
   late final List<DebtSummary> debtSummaries = [
-    for (final d in debts) summarize(d, debtPayments),
+    for (final d in debts) summarize(d, paymentsOfDebt(d.id!)),
   ];
 
   DebtSummary? debtSummary(int id) {

@@ -129,6 +129,27 @@ CardStatement statementFor(
   );
 }
 
+/// The payment that matters for [card] today: a closed statement still
+/// owed (late or not), else the due date of the next cut, which is where
+/// the current balance goes.
+({DateTime date, bool overdue}) payBy(
+  CreditCard card,
+  CardStatement statement,
+  DateTime today,
+) {
+  final owed = statement.byCurrency.values;
+  for (final s in owed) {
+    if (s.overdue) return (date: s.overdueSince!, overdue: true);
+  }
+  if (owed.any((s) => s.dueCents > 0)) {
+    return (date: statement.dueDate, overdue: false);
+  }
+  return (
+    date: dueDate(nextCut(today, card.cutDay), card.paymentDays),
+    overdue: false,
+  );
+}
+
 /// Spent in [today]'s calendar month, per currency.
 Map<Currency, int> spentInMonth(Iterable<Expense> expenses, DateTime today) {
   final totals = <Currency, int>{};

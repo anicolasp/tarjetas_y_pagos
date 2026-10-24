@@ -25,25 +25,13 @@ class DebtDetailScreen extends ConsumerWidget {
     DebtPayment payment,
     String amount,
   ) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('¿Eliminar este abono?'),
-        content: Text('Lo que falta por pagar volverá a subir $amount.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            key: const ValueKey('debtDetail.deletePaymentConfirm'),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Eliminar'),
-          ),
-        ],
-      ),
+    final confirmed = await confirmDestructive(
+      context,
+      title: '¿Eliminar este abono?',
+      body: 'Lo que falta por pagar volverá a subir $amount.',
+      confirmKey: const ValueKey('debtDetail.deletePaymentConfirm'),
     );
-    if (confirmed != true) return;
+    if (!confirmed) return;
     final user = ref.read(currentUserProvider);
     if (user == null) return;
     try {
@@ -71,10 +59,7 @@ class DebtDetailScreen extends ConsumerWidget {
       );
     }
     final d = summary.debt;
-    final payments = [
-      for (final p in snapshot.debtPayments)
-        if (p.debtId == debtId) p,
-    ];
+    final payments = snapshot.paymentsOfDebt(debtId);
     final text = Theme.of(context).textTheme;
     const paid = Color(0xFF2E7D32); // reads in both themes
 
