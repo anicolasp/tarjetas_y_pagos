@@ -11,7 +11,6 @@ import '../../core/responsive.dart';
 import '../../core/router.dart';
 import '../../data/finance_snapshot.dart';
 import '../../data/models/app_user.dart';
-import '../auth/auth_widgets.dart';
 import '../cards/cards_providers.dart';
 import '../cards/recommendation_text.dart';
 import '../cards/widgets/credit_card_tile.dart';
@@ -201,7 +200,9 @@ class _MonthSummary extends StatelessWidget {
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final spent = snapshot.spentThisMonth(now);
-    final debt = snapshot.debt(now);
+    final cardDebt = snapshot.debt(now);
+    final otherDebt = snapshot.otherDebt();
+    final debt = snapshot.totalDebt(now);
     // Currencies of the cards and of any movement, or the default one.
     final currencies = {
       for (final c in snapshot.cards) ...c.currencies,
@@ -228,13 +229,27 @@ class _MonthSummary extends StatelessWidget {
                 cents: spent[c] ?? 0,
                 currency: c,
               ),
-            for (final c in currencies)
+            for (final c in currencies) ...[
               _SummaryRow(
                 key: ValueKey('home.debt.${c.code}'),
-                label: 'Deuda en tarjetas',
+                label: 'Deuda total',
                 cents: debt[c] ?? 0,
                 currency: c,
               ),
+              // The split only matters when there are other debts.
+              if ((otherDebt[c] ?? 0) > 0)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Text(
+                    'Tarjetas ${formatMoney(cardDebt[c] ?? 0, c)} · '
+                    'Otras deudas ${formatMoney(otherDebt[c]!, c)}',
+                    key: ValueKey('home.debtSplit.${c.code}'),
+                    style: text.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+            ],
           ],
         ),
       ),
@@ -408,7 +423,6 @@ class _QuickAccess extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    void soon() => showErrorSnackBar(context, 'Próximamente');
     final items = [
       (
         key: 'home.quick.cards',
@@ -432,7 +446,7 @@ class _QuickAccess extends StatelessWidget {
         key: 'home.quick.debts',
         icon: Icons.account_balance_wallet_outlined,
         label: 'Deudas',
-        onTap: soon,
+        onTap: () => context.push(Routes.debts),
       ),
     ];
 

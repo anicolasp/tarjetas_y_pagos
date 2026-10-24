@@ -109,13 +109,10 @@ void main() {
     expect(find.text('RD\$ 0.00'), findsNWidgets(2));
   });
 
-  testWidgets('quick access shows "Próximamente" for later features', (
-    tester,
-  ) async {
+  testWidgets('every quick access opens its screen', (tester) async {
     await start(tester);
-    // Reports exist since #7; debts are still to come.
     await tapVisible(tester, 'home.quick.debts');
-    expect(find.text('Próximamente'), findsOneWidget);
+    expect(key('debts.root'), findsOneWidget);
   });
 
   testWidgets('add two cards, best card, edit limit and archive', (

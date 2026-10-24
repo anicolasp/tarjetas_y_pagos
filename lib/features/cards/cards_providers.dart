@@ -9,6 +9,7 @@ import '../../data/models/credit_card.dart';
 import '../../data/models/expense.dart';
 import '../../data/providers.dart';
 import '../../data/repositories/cards_repository.dart';
+import '../../data/repositories/debts_repository.dart';
 import '../../data/repositories/expenses_repository.dart';
 import '../../services/exchange_rate_service.dart';
 import '../../services/providers.dart';
@@ -20,7 +21,11 @@ final currentUserProvider = Provider<AppUser?>((ref) {
   return auth is AuthLoggedIn ? auth.user : null;
 });
 
-typedef Repos = ({CardsRepository cards, ExpensesRepository expenses});
+typedef Repos = ({
+  CardsRepository cards,
+  ExpensesRepository expenses,
+  DebtsRepository debts,
+});
 
 /// Both repositories over the opened database. They never change once open,
 /// so the providers below watch a single `.future` (chains of derived async
@@ -32,6 +37,7 @@ final reposProvider = FutureProvider<Repos>((ref) async {
   return (
     cards: CardsRepository(db, clock: clock),
     expenses: ExpensesRepository(db, clock: clock),
+    debts: DebtsRepository(db, clock: clock),
   );
 }, retry: (retryCount, error) => null);
 
@@ -42,10 +48,20 @@ final financeProvider = FutureProvider<FinanceSnapshot>((ref) async {
   if (user == null) return FinanceSnapshot.empty;
   final repos = await ref.watch(reposProvider.future);
   final userId = user.id!;
+  // Independent reads: run them together.
+  final (cards, expenses, payments, debts, debtPayments) = await (
+    repos.cards.listActive(userId),
+    repos.expenses.list(userId),
+    repos.expenses.payments(userId),
+    repos.debts.list(userId),
+    repos.debts.payments(userId),
+  ).wait;
   return FinanceSnapshot(
-    cards: await repos.cards.listActive(userId),
-    expenses: await repos.expenses.list(userId),
-    payments: await repos.expenses.payments(userId),
+    cards: cards,
+    expenses: expenses,
+    payments: payments,
+    debts: debts,
+    debtPayments: debtPayments,
   );
 }, retry: (retryCount, error) => null);
 

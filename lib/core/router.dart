@@ -17,6 +17,10 @@ import '../features/profile/profile_placeholder_screen.dart';
 import '../features/splash/splash_screen.dart';
 import '../services/providers.dart';
 import '../features/reports/reports_screen.dart';
+import '../features/debts/debt_detail_screen.dart';
+import '../features/debts/debt_form_screen.dart';
+import '../features/debts/debt_payment_form_screen.dart';
+import '../features/debts/debts_screen.dart';
 
 abstract final class Routes {
   static const splash = '/';
@@ -30,6 +34,11 @@ abstract final class Routes {
   // and the Android back button never closes the app from a sub-screen.
   static const profile = '/home/profile';
   static const reports = '/home/reports';
+  static const debts = '/home/debts';
+  static const debtNew = '/home/debts/new';
+  static String debtDetail(int id) => '/home/debts/$id';
+  static String debtEdit(int id) => '/home/debts/$id/edit';
+  static String debtPay(int id) => '/home/debts/$id/pay';
   static const cards = '/home/cards';
   static const cardNew = '/home/cards/new';
   static String cardDetail(int id) => '/home/cards/$id';
@@ -121,6 +130,34 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const ReportsScreen(),
           ),
           GoRoute(
+            path: 'debts',
+            builder: (context, state) => const DebtsScreen(),
+            routes: [
+              // 'new' must come before ':id'.
+              GoRoute(
+                path: 'new',
+                builder: (context, state) => const DebtFormScreen(),
+              ),
+              GoRoute(
+                path: ':id',
+                builder: (context, state) =>
+                    DebtDetailScreen(debtId: _pathId(state)),
+                routes: [
+                  GoRoute(
+                    path: 'edit',
+                    builder: (context, state) =>
+                        DebtFormScreen(debtId: _pathId(state)),
+                  ),
+                  GoRoute(
+                    path: 'pay',
+                    builder: (context, state) =>
+                        DebtPaymentFormScreen(debtId: _pathId(state)),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          GoRoute(
             path: 'cards',
             builder: (context, state) => const CardsScreen(),
             routes: [
@@ -132,17 +169,17 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: ':id',
                 builder: (context, state) =>
-                    CardDetailScreen(cardId: _cardId(state)),
+                    CardDetailScreen(cardId: _pathId(state)),
                 routes: [
                   GoRoute(
                     path: 'edit',
                     builder: (context, state) =>
-                        CardFormScreen(cardId: _cardId(state)),
+                        CardFormScreen(cardId: _pathId(state)),
                   ),
                   GoRoute(
                     path: 'pay',
                     builder: (context, state) =>
-                        PaymentFormScreen(cardId: _cardId(state)),
+                        PaymentFormScreen(cardId: _pathId(state)),
                   ),
                 ],
               ),
@@ -159,7 +196,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'expenses/:id',
             builder: (context, state) =>
-                ExpenseFormScreen(expenseId: _cardId(state)),
+                ExpenseFormScreen(expenseId: _pathId(state)),
           ),
         ],
       ),
@@ -173,5 +210,5 @@ final routerProvider = Provider<GoRouter>((ref) {
 });
 
 /// Id from the path; an invalid id (-1) shows "not found".
-int _cardId(GoRouterState state) =>
+int _pathId(GoRouterState state) =>
     int.tryParse(state.pathParameters['id'] ?? '') ?? -1;

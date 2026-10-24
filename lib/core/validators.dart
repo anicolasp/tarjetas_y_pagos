@@ -47,3 +47,11 @@ String? validateName(String? value, {required String field}) {
   if (v.length > nameMaxLength) return 'Máximo $nameMaxLength caracteres';
   return null;
 }
+
+/// Optional free text: trimmed, null when empty, cut at [max] characters
+/// (the forms already stop at [max]; this guards other callers).
+String? trimmedOrNull(String? s, int max) {
+  final t = s?.trim() ?? '';
+  if (t.isEmpty) return null;
+  return t.length > max ? t.substring(0, max) : t;
+}
