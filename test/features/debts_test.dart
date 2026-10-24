@@ -205,6 +205,71 @@ void main() {
     expect(textIn('home.debt.USD'), contains('US\$ 50.00'));
   });
 
+  group('card due date', () {
+    String payBy(WidgetTester tester) => textIn('debts.card.$cardId.payBy');
+
+    testWidgets('balance of the open cycle: the next cut\'s due date', (
+      tester,
+    ) async {
+      // Spent on 10 Oct, after the 5 Oct cut: due with the 5 Nov cut.
+      await start(tester, path: '/home/debts');
+      expect(find.text('Fecha límite 25/nov'), findsOneWidget);
+    });
+
+    testWidgets('a closed statement still owed: its due date', (tester) async {
+      await seedExpense(
+        db,
+        userId,
+        cardId,
+        'Otros',
+        'Antes del corte',
+        cents: 1000,
+        date: DateTime(2026, 9, 20),
+      );
+      await start(tester, path: '/home/debts');
+      expect(find.text('Fecha límite 25/oct'), findsOneWidget);
+      expect(payBy(tester), isNot(contains('Vencido')));
+    });
+
+    testWidgets('past it and unpaid: "Vencido" in red with an icon', (
+      tester,
+    ) async {
+      await seedExpense(
+        db,
+        userId,
+        cardId,
+        'Otros',
+        'Antes del corte',
+        cents: 1000,
+        date: DateTime(2026, 9, 20),
+      );
+      final store = InMemorySecureStore()
+        ..values['session_user_id'] = '$userId';
+      await tester.pumpWidget(
+        testApp(
+          await testOverrides(
+            database: Future.value(db),
+            prefs: {'onboarding_seen': true},
+            secureStore: store,
+            now: DateTime(2026, 10, 27, 10),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      GoRouter.of(tester.element(find.byType(Navigator).first))
+          .push('/home/debts');
+      await tester.pumpAndSettle();
+      expect(find.text('Vencido desde el 25/oct'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: key('debts.card.$cardId.payBy'),
+          matching: find.byIcon(Icons.warning_amber),
+        ),
+        findsOneWidget,
+      );
+    });
+  });
+
   testWidgets('an overdue debt says "Vencida" with an icon', (tester) async {
     final d = await seedDebt(due: DateTime(2026, 10, 15));
     await start(tester, path: '/home/debts');

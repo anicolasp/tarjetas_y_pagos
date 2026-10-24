@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/billing_cycle.dart';
 import '../../core/clock.dart';
 import '../../core/debts.dart';
 import '../../core/formatters.dart';
@@ -172,8 +173,18 @@ class _CardDebtTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
     final card = snapshot.card(cardId)!;
     final statement = snapshot.statementOf(card, today);
+    final owed = statement.byCurrency.values;
+    final late = owed.any((s) => s.overdue);
+    // The payment that matters: a closed statement still owed, else the
+    // one of the next cut (the balance belongs to it).
+    final payBy = late
+        ? owed.firstWhere((s) => s.overdue).overdueSince!
+        : owed.any((s) => s.dueCents > 0)
+        ? statement.dueDate
+        : dueDate(nextCut(today, card.cutDay), card.paymentDays);
     return Card(
       key: ValueKey('debts.card.$cardId'),
       margin: const EdgeInsets.only(bottom: 8),
@@ -190,9 +201,32 @@ class _CardDebtTile extends StatelessWidget {
                 spacing: 12,
                 children: [
                   Text(card.label, style: text.titleSmall),
-                  Text(
-                    'Fecha límite ${formatDayMonth(statement.dueDate)}',
-                    style: text.bodySmall,
+                  Row(
+                    key: ValueKey('debts.card.$cardId.payBy'),
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (late) ...[
+                        Icon(
+                          Icons.warning_amber,
+                          size: 16,
+                          color: scheme.error,
+                        ),
+                        const SizedBox(width: 4),
+                      ],
+                      Flexible(
+                        child: Text(
+                          late
+                              ? 'Vencido desde el ${formatDayMonth(payBy)}'
+                              : 'Fecha límite ${formatDayMonth(payBy)}',
+                          style: late
+                              ? text.bodySmall?.copyWith(
+                                  color: scheme.error,
+                                  fontWeight: FontWeight.w600,
+                                )
+                              : text.bodySmall,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
