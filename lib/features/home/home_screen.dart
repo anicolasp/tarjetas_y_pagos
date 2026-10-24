@@ -426,7 +426,7 @@ class _QuickAccess extends StatelessWidget {
         key: 'home.quick.reports',
         icon: Icons.insights,
         label: 'Reportes',
-        onTap: soon,
+        onTap: () => context.push(Routes.reports),
       ),
       (
         key: 'home.quick.debts',

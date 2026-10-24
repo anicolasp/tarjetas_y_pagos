@@ -16,6 +16,7 @@ import '../features/onboarding/onboarding_screen.dart';
 import '../features/profile/profile_placeholder_screen.dart';
 import '../features/splash/splash_screen.dart';
 import '../services/providers.dart';
+import '../features/reports/reports_screen.dart';
 
 abstract final class Routes {
   static const splash = '/';
@@ -28,6 +29,7 @@ abstract final class Routes {
   // Private screens live under /home so `go` always keeps Home below them
   // and the Android back button never closes the app from a sub-screen.
   static const profile = '/home/profile';
+  static const reports = '/home/reports';
   static const cards = '/home/cards';
   static const cardNew = '/home/cards/new';
   static String cardDetail(int id) => '/home/cards/$id';
@@ -113,6 +115,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'profile',
             builder: (context, state) => const ProfilePlaceholderScreen(),
+          ),
+          GoRoute(
+            path: 'reports',
+            builder: (context, state) => const ReportsScreen(),
           ),
           GoRoute(
             path: 'cards',

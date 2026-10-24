@@ -1,4 +1,6 @@
 import '../../core/billing_cycle.dart';
+import '../../core/money.dart';
+import '../../core/report.dart';
 import '../database.dart';
 import '../models/card_payment.dart';
 import '../models/category.dart';
@@ -13,6 +15,7 @@ const notesMaxLength = 200;
 class ExpenseFilter {
   const ExpenseFilter({
     this.cardId,
+    this.cardIds = const {},
     this.categoryIds = const {},
     this.from,
     this.to,
@@ -21,7 +24,11 @@ class ExpenseFilter {
     this.maxCents,
   });
 
+  /// One card (card detail).
   final int? cardId;
+
+  /// Any of these cards (reports). Empty: every card.
+  final Set<int> cardIds;
   final Set<int> categoryIds;
   final DateTime? from;
   final DateTime? to;
@@ -40,12 +47,36 @@ class ExpenseFilter {
       minCents == null &&
       maxCents == null;
 
-  ExpenseFilter cleared() => ExpenseFilter(cardId: cardId);
+  ExpenseFilter cleared() => ExpenseFilter(cardId: cardId, cardIds: cardIds);
+
+  /// A copy with some fields changed. Nullable fields take a function so
+  /// they can also be cleared: `copyWith(merchant: () => null)`.
+  ExpenseFilter copyWith({
+    int? Function()? cardId,
+    Set<int>? cardIds,
+    Set<int>? categoryIds,
+    DateTime? Function()? from,
+    DateTime? Function()? to,
+    String? Function()? merchant,
+    int? Function()? minCents,
+    int? Function()? maxCents,
+  }) => ExpenseFilter(
+    cardId: cardId == null ? this.cardId : cardId(),
+    cardIds: cardIds ?? this.cardIds,
+    categoryIds: categoryIds ?? this.categoryIds,
+    from: from == null ? this.from : from(),
+    to: to == null ? this.to : to(),
+    merchant: merchant == null ? this.merchant : merchant(),
+    minCents: minCents == null ? this.minCents : minCents(),
+    maxCents: maxCents == null ? this.maxCents : maxCents(),
+  );
 
   @override
   bool operator ==(Object other) =>
       other is ExpenseFilter &&
       other.cardId == cardId &&
+      other.cardIds.length == cardIds.length &&
+      other.cardIds.containsAll(cardIds) &&
       other.categoryIds.length == categoryIds.length &&
       other.categoryIds.containsAll(categoryIds) &&
       other.from == from &&
@@ -57,6 +88,7 @@ class ExpenseFilter {
   @override
   int get hashCode => Object.hash(
     cardId,
+    Object.hashAllUnordered(cardIds),
     Object.hashAllUnordered(categoryIds),
     from,
     to,
@@ -77,22 +109,26 @@ class ExpensesRepository {
 
   // ---------------------------------------------------------------- read
 
-  /// Newest first. Includes expenses of archived cards.
-  Future<List<Expense>> list(
-    int userId, [
-    ExpenseFilter filter = const ExpenseFilter(),
-  ]) async {
+  /// The SQL condition for [filter], always scoped to [userId]. Shared by
+  /// the list and the report so both see exactly the same expenses.
+  static ({String where, List<Object?> args}) _whereFor(
+    int userId,
+    ExpenseFilter filter,
+  ) {
     final where = ['user_id = ?'];
     final args = <Object?>[userId];
+    void inList(String column, Set<int> ids) {
+      where.add('$column IN (${List.filled(ids.length, '?').join(', ')})');
+      args.addAll(ids);
+    }
+
     if (filter.cardId != null) {
       where.add('card_id = ?');
       args.add(filter.cardId);
     }
+    if (filter.cardIds.isNotEmpty) inList('card_id', filter.cardIds);
     if (filter.categoryIds.isNotEmpty) {
-      where.add(
-        'category_id IN (${List.filled(filter.categoryIds.length, '?').join(', ')})',
-      );
-      args.addAll(filter.categoryIds);
+      inList('category_id', filter.categoryIds);
     }
     if (filter.from != null) {
       where.add('date >= ?');
@@ -120,13 +156,90 @@ class ExpensesRepository {
       where.add('amount_cents <= ?');
       args.add(filter.maxCents);
     }
+    return (where: where.join(' AND '), args: args);
+  }
+
+  /// Newest first. Includes expenses of archived cards.
+  Future<List<Expense>> list(
+    int userId, [
+    ExpenseFilter filter = const ExpenseFilter(),
+  ]) async {
+    final (:where, :args) = _whereFor(userId, filter);
     final rows = await _db.db.query(
       'expenses',
-      where: where.join(' AND '),
+      where: where,
       whereArgs: args,
       orderBy: 'date DESC, id DESC',
     );
     return rows.map(Expense.fromMap).toList();
+  }
+
+  /// Totals per currency and per category, month and card for [filter],
+  /// aggregated in SQL. Amounts are what was charged to each card (a
+  /// converted expense counts in the card's currency).
+  Future<ExpenseReport> report(
+    int userId, [
+    ExpenseFilter filter = const ExpenseFilter(),
+  ]) async {
+    final (:where, :args) = _whereFor(userId, filter);
+    // One read transaction: every breakdown comes from the same snapshot,
+    // so the totals always match the charts.
+    final (byCategory, byMonth, byCard) = await _db.db.transaction((txn) async {
+      Future<List<Map<String, Object?>>> grouped(String key) => txn.rawQuery(
+        'SELECT $key AS k, currency, SUM(amount_cents) AS total, '
+        'COUNT(*) AS n FROM expenses WHERE $where '
+        'GROUP BY k, currency',
+        args,
+      );
+      return (
+        await grouped('category_id'),
+        await grouped("strftime('%Y-%m', date)"),
+        await grouped('card_id'),
+      );
+    });
+
+    Currency currency(Map<String, Object?> r) =>
+        Currency.fromCode(r['currency']! as String);
+    int total(Map<String, Object?> r) => r['total']! as int;
+
+    // Totals per currency are the sum of the per-category groups (every
+    // expense has exactly one category).
+    final totals = <Currency, ({int total, int count})>{};
+    for (final r in byCategory) {
+      final t = totals[currency(r)] ?? (total: 0, count: 0);
+      totals[currency(r)] = (
+        total: t.total + total(r),
+        count: t.count + (r['n']! as int),
+      );
+    }
+
+    return ExpenseReport(
+      totals: {
+        for (final MapEntry(key: c, value: t) in totals.entries)
+          c: CurrencyTotals(currency: c, totalCents: t.total, count: t.count),
+      },
+      byCategory: [
+        for (final r in byCategory)
+          (
+            categoryId: r['k']! as int,
+            currency: currency(r),
+            totalCents: total(r),
+            count: r['n']! as int,
+          ),
+      ],
+      byMonth: [
+        for (final r in byMonth)
+          (
+            month: DateTime.parse('${r['k']! as String}-01'),
+            currency: currency(r),
+            totalCents: total(r),
+          ),
+      ],
+      byCard: [
+        for (final r in byCard)
+          (cardId: r['k']! as int, currency: currency(r), totalCents: total(r)),
+      ],
+    );
   }
 
   Future<Expense?> getById(int userId, int id) async {

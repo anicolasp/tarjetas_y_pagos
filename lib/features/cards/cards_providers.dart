@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/clock.dart';
+import '../../core/report.dart';
 import '../../data/finance_snapshot.dart';
 import '../../data/models/app_user.dart';
 import '../../data/models/category.dart';
@@ -70,6 +71,25 @@ final filteredExpensesProvider = FutureProvider.autoDispose
       return repos.expenses.list(user.id!, filter);
     }, retry: (retryCount, error) => null);
 
+/// Totals and series for [filter] (SQL side), per currency.
+final reportProvider = FutureProvider.autoDispose
+    .family<ExpenseReport, ExpenseFilter>((ref, filter) async {
+      final user = ref.watch(currentUserProvider);
+      if (user == null) return ExpenseReport.empty;
+      final repos = await ref.watch(reposProvider.future);
+      return repos.expenses.report(user.id!, filter);
+    }, retry: (retryCount, error) => null);
+
+/// Active and archived cards, to name the card of any expense.
+final allCardsProvider = FutureProvider.autoDispose<List<CreditCard>>((
+  ref,
+) async {
+  final user = ref.watch(currentUserProvider);
+  if (user == null) return const [];
+  final repos = await ref.watch(reposProvider.future);
+  return repos.cards.listAll(user.id!);
+}, retry: (retryCount, error) => null);
+
 final expenseByIdProvider = FutureProvider.autoDispose.family<Expense?, int>((
   ref,
   id,
@@ -106,4 +126,6 @@ void refreshFinance(WidgetRef ref) {
   ref.invalidate(cardByIdProvider);
   ref.invalidate(filteredExpensesProvider);
   ref.invalidate(expenseByIdProvider);
+  ref.invalidate(reportProvider);
+  ref.invalidate(allCardsProvider);
 }
