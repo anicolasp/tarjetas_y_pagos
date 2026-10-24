@@ -113,7 +113,8 @@ void main() {
     tester,
   ) async {
     await start(tester);
-    await tapVisible(tester, 'home.quick.reports');
+    // Reports exist since #7; debts are still to come.
+    await tapVisible(tester, 'home.quick.debts');
     expect(find.text('Próximamente'), findsOneWidget);
   });
 

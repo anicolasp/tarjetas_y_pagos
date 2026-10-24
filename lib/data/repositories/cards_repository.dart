@@ -23,6 +23,17 @@ class CardsRepository {
     return rows.map(CreditCard.fromMap).toList();
   }
 
+  /// Active and archived: reports still name the card of old expenses.
+  Future<List<CreditCard>> listAll(int userId) async {
+    final rows = await _db.db.query(
+      'cards',
+      where: 'user_id = ?',
+      whereArgs: [userId],
+      orderBy: 'created_at, id',
+    );
+    return rows.map(CreditCard.fromMap).toList();
+  }
+
   Future<CreditCard?> getById(int userId, int id) async {
     final rows = await _db.db.query(
       'cards',
