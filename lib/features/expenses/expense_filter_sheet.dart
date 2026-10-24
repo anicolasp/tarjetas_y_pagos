@@ -82,6 +82,7 @@ class _FilterSheetState extends State<_FilterSheet> {
       context,
       ExpenseFilter(
         cardId: widget.current.cardId,
+        cardIds: widget.current.cardIds,
         categoryIds: _categories,
         from: _range?.start,
         to: _range?.end,
