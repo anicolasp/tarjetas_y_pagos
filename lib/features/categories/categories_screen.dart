@@ -7,6 +7,7 @@ import '../../core/responsive.dart';
 import '../../core/router.dart';
 import '../../data/models/category.dart';
 import '../cards/cards_providers.dart';
+import '../reports/chart_colors.dart';
 
 /// "Mis categorías": the user's own (editable) and the base ones (read
 /// only).
@@ -82,12 +83,19 @@ class _CategoryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = Color(category.color);
+    // Some base colors (brown, gray) vanish on the dark surface: measure
+    // against the tinted circle the icon actually sits on.
+    final base = Color(category.color);
+    final background = Color.alphaBlend(
+      base.withValues(alpha: 0.15),
+      Theme.of(context).colorScheme.surface,
+    );
+    final color = readableOn(base, background);
     return ListTile(
       key: ValueKey('categories.item.${category.id}'),
       contentPadding: EdgeInsets.zero,
       leading: CircleAvatar(
-        backgroundColor: color.withValues(alpha: 0.15),
+        backgroundColor: background,
         foregroundColor: color,
         child: Icon(categoryIcon(category.icon)),
       ),

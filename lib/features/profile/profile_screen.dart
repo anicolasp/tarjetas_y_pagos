@@ -280,7 +280,10 @@ class _Section extends StatelessWidget {
         Card(
           margin: EdgeInsets.zero,
           clipBehavior: Clip.antiAlias,
-          child: Column(children: children),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: children,
+          ),
         ),
       ],
     );
