@@ -169,6 +169,7 @@ class FakeNotificationService implements NotificationService {
   String? launchRoute;
   var permissionRequests = 0;
   var cancels = 0;
+  var replaces = 0;
   List<PlannedNotification> scheduled = [];
   void Function(String route)? _onTap;
 
@@ -188,8 +189,10 @@ class FakeNotificationService implements NotificationService {
   }
 
   @override
-  Future<void> replaceAll(List<PlannedNotification> plan) async =>
-      scheduled = [...plan];
+  Future<void> replaceAll(List<PlannedNotification> plan) async {
+    replaces++;
+    scheduled = [...plan];
+  }
 
   @override
   Future<void> cancelAll() async {

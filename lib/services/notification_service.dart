@@ -1,6 +1,7 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
-import 'package:timezone/data/latest.dart' as tz_data;
+// The 10-year database: much lighter to load at startup than the full one.
+import 'package:timezone/data/latest_10y.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../core/notification_plan.dart';
@@ -42,7 +43,17 @@ class LocalNotificationService implements NotificationService {
       final zone = await FlutterTimezone.getLocalTimezone();
       tz.setLocalLocation(tz.getLocation(zone.identifier));
     } on Object {
-      // Unknown zone name: keep UTC rather than not reminding at all.
+      // Unknown zone name: use the device's current offset, so 9:00 stays
+      // 9:00 local (UTC would send it at 5:00 in Santo Domingo).
+      tz.setLocalLocation(
+        tz.Location('Device', [tz.minTime], [0], [
+          tz.TimeZone(
+            DateTime.now().timeZoneOffset,
+            isDst: false,
+            abbreviation: 'LOCAL',
+          ),
+        ]),
+      );
     }
     await _plugin.initialize(
       settings: const InitializationSettings(

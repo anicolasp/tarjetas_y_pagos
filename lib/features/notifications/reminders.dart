@@ -39,24 +39,39 @@ final remindersProvider = Provider<void>((ref) {
   void enqueue(Future<void> Function() job) =>
       queue = queue.then((_) => job()).catchError(_log);
 
+  // What is scheduled now, to skip the platform calls when a reload (a new
+  // expense, a theme change…) leaves the plan as it was.
+  String? scheduled;
+
   ref.listen(financeProvider, (_, next) {
     if (next case AsyncData(:final value)) {
       enqueue(() async {
+        // No user while loading or locked (unlock pending): keep what is
+        // scheduled. Only a logout cancels (below).
         final user = ref.read(currentUserProvider);
-        if (user == null) return service.cancelAll();
-        await service.replaceAll(
-          planNotifications(
-            value,
-            now: ref.read(clockProvider)(),
-            daysBefore: user.notifyDaysBefore,
-          ),
+        if (user == null) return;
+        final plan = planNotifications(
+          value,
+          now: ref.read(clockProvider)(),
+          daysBefore: user.notifyDaysBefore,
         );
+        final key = plan
+            .map((n) => '${n.id}|${n.at}|${n.body}|${n.route}')
+            .join('\n');
+        if (key == scheduled) return;
+        await service.replaceAll(plan);
+        scheduled = key;
       });
     }
   }, fireImmediately: true);
 
   ref.listen(authControllerProvider, (_, next) {
-    if (next is AuthLoggedOut) enqueue(service.cancelAll);
+    if (next is AuthLoggedOut) {
+      enqueue(() async {
+        await service.cancelAll();
+        scheduled = null;
+      });
+    }
   });
 
   // Opens a tapped notification's screen once the user is inside the app.

@@ -6,10 +6,10 @@ import '../../core/greeting.dart';
 import '../../core/money.dart';
 import '../../core/responsive.dart';
 import '../../core/router.dart';
-import '../../data/repositories/auth_repository.dart' show notifyDaysRange;
 import '../auth/auth_controller.dart';
 import '../auth/auth_widgets.dart';
 import '../cards/cards_providers.dart';
+import '../notifications/notice_days_stepper.dart';
 
 /// "Mi perfil": data, security, appearance, preferences, categories and
 /// logout. Every change applies at once to the whole app.
@@ -331,31 +331,10 @@ class _NotifyDays extends StatelessWidget {
         spacing: 8,
         children: [
           Text('Avisarme antes de', style: text.bodyLarge),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                key: const ValueKey('profile.notifyDays.minus'),
-                tooltip: 'Menos días',
-                onPressed: onChanged == null || days <= notifyDaysRange.min
-                    ? null
-                    : () => onChanged!(days - 1),
-                icon: const Icon(Icons.remove),
-              ),
-              Text(
-                days == 1 ? '1 día' : '$days días',
-                key: const ValueKey('profile.notifyDays'),
-                style: text.titleMedium,
-              ),
-              IconButton(
-                key: const ValueKey('profile.notifyDays.plus'),
-                tooltip: 'Más días',
-                onPressed: onChanged == null || days >= notifyDaysRange.max
-                    ? null
-                    : () => onChanged!(days + 1),
-                icon: const Icon(Icons.add),
-              ),
-            ],
+          NoticeDaysStepper(
+            days: days,
+            onChanged: onChanged,
+            keyPrefix: 'profile.notifyDays',
           ),
         ],
       ),

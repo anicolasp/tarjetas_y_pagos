@@ -124,12 +124,12 @@ void main() {
       isTrue,
     );
 
-    // E2E 3: the card cuts on the 28th; with 3 days the reminder is today
-    // 25 Oct at 9:00, already past at 10:00. One more day ahead: 26 Oct.
-    expect(
-      notifications.scheduled.where((n) => n.body.contains('corta')),
-      isEmpty,
+    // E2E 3: the card cuts on the 28th; 3 days before is today at 9:00,
+    // already past at 10:00, so it reminds of the next cut (28 Nov).
+    final cut = notifications.scheduled.singleWhere(
+      (n) => n.body.contains('corta'),
     );
+    expect(cut.at, DateTime(2026, 11, 25, 9));
   });
 
   testWidgets('E2E 3: with N days the cut reminder is pending', (tester) async {
@@ -244,6 +244,33 @@ void main() {
       await tap(tester, 'cardForm.archive');
       await tap(tester, 'cardForm.archiveConfirm');
       expect(notifications.scheduled, isEmpty);
+    });
+
+    testWidgets('opening locked keeps them (only a logout cancels)', (
+      tester,
+    ) async {
+      final user = await seedUser(db);
+      store.values['session_user_id'] = '${user.id}';
+      await db.db.update('users', {'biometric_enabled': 1});
+      await start(tester, biometrics: FakeBiometricService(succeeds: false));
+      expect(key('unlock.root'), findsOneWidget);
+      expect(notifications.cancels, 0);
+    });
+
+    testWidgets('a reload that leaves the plan as it was does not '
+        'reschedule', (tester) async {
+      final user = await seedUser(db);
+      store.values['session_user_id'] = '${user.id}';
+      await seedCard(db, user.id!, cutDay: 31);
+      await start(tester);
+      expect(notifications.replaces, 1);
+      // A theme change reloads the finance snapshot; the plan is the same.
+      await tap(tester, 'home.avatar');
+      await tap(tester, 'profile.theme.dark');
+      expect(notifications.replaces, 1);
+      // A new notice period changes it.
+      await tap(tester, 'profile.notifyDays.plus');
+      expect(notifications.replaces, 2);
     });
 
     testWidgets('logout cancels them all', (tester) async {

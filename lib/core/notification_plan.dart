@@ -41,7 +41,13 @@ int notificationId(int entityId, ReminderKind kind) =>
 
 /// The reminders [daysBefore] days ahead of each card's next cut and
 /// payment deadline (only when it owes something) and of each active
-/// debt's due date. Times already past are left out.
+/// debt's due date. Times already past are left out, except the cut,
+/// which moves to the following one.
+///
+/// Only the next occurrence is planned: the app replans on every start
+/// and change, so a user who opens it at least once a cycle always has
+/// the next reminders. A late statement gets no deadline reminder (its
+/// date already passed, for every currency of the card).
 List<PlannedNotification> planNotifications(
   FinanceSnapshot snapshot, {
   required DateTime now,
@@ -50,6 +56,13 @@ List<PlannedNotification> planNotifications(
   final today = dateOnly(now);
   final plan = <PlannedNotification>[];
 
+  DateTime reminderAt(DateTime event) => DateTime(
+    event.year,
+    event.month,
+    event.day - daysBefore,
+    notificationHour,
+  );
+
   void add(
     int entityId,
     ReminderKind kind,
@@ -57,12 +70,7 @@ List<PlannedNotification> planNotifications(
     String body,
     String route,
   ) {
-    final at = DateTime(
-      event.year,
-      event.month,
-      event.day - daysBefore,
-      notificationHour,
-    );
+    final at = reminderAt(event);
     if (at.isBefore(now)) return;
     plan.add(
       PlannedNotification(
@@ -83,10 +91,16 @@ List<PlannedNotification> planNotifications(
 
   for (final card in snapshot.cards) {
     final id = card.id!;
+    // Too close to this cut for the notice (it cuts tomorrow, notice is 3
+    // days): remind of the following one instead of nothing.
+    var cut = nextCut(today, card.cutDay);
+    if (reminderAt(cut).isBefore(now)) {
+      cut = cutInMonth(cut.year, cut.month + 1, card.cutDay);
+    }
     add(
       id,
       ReminderKind.cut,
-      nextCut(today, card.cutDay),
+      cut,
       'Tu tarjeta ${card.alias} corta $inDays',
       Routes.cardDetail(id),
     );

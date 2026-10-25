@@ -5,11 +5,11 @@ import 'package:go_router/go_router.dart';
 import '../../core/money.dart';
 import '../../core/responsive.dart';
 import '../../core/router.dart';
-import '../../data/repositories/auth_repository.dart' show notifyDaysRange;
 import '../../services/providers.dart';
 import '../auth/auth_controller.dart';
 import '../auth/auth_widgets.dart';
 import '../cards/cards_providers.dart';
+import '../notifications/notice_days_stepper.dart';
 
 /// First setup after registering, in 4 steps: currency, first card,
 /// biometrics and notifications. "Omitir" (or finishing) goes to Home;
@@ -314,31 +314,10 @@ class _NoticeDays extends StatelessWidget {
     return Column(
       children: [
         Text('Avisarme antes de', style: text.bodyLarge),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            IconButton(
-              key: const ValueKey('setup.notifyDays.minus'),
-              tooltip: 'Menos días',
-              onPressed: onChanged == null || days <= notifyDaysRange.min
-                  ? null
-                  : () => onChanged!(days - 1),
-              icon: const Icon(Icons.remove),
-            ),
-            Text(
-              days == 1 ? '1 día' : '$days días',
-              key: const ValueKey('setup.notifyDays'),
-              style: text.titleMedium,
-            ),
-            IconButton(
-              key: const ValueKey('setup.notifyDays.plus'),
-              tooltip: 'Más días',
-              onPressed: onChanged == null || days >= notifyDaysRange.max
-                  ? null
-                  : () => onChanged!(days + 1),
-              icon: const Icon(Icons.add),
-            ),
-          ],
+        NoticeDaysStepper(
+          days: days,
+          onChanged: onChanged,
+          keyPrefix: 'setup.notifyDays',
         ),
       ],
     );

@@ -91,6 +91,18 @@ void main() {
     expect(p.map((n) => n.id), [notificationId(1, ReminderKind.cut)]);
   });
 
+  test('a cut too close for the notice reminds of the following one', () {
+    // Cuts tomorrow (23 Oct): 3 days before is already past → 23 Nov.
+    final p = plan(
+      FinanceSnapshot(
+        cards: [card(cutDay: 23)],
+        expenses: const [],
+        payments: const [],
+      ),
+    );
+    expect(p.single.at, DateTime(2026, 11, 20, 9));
+  });
+
   test('an overdue statement gets no deadline reminder', () {
     final s = FinanceSnapshot(
       cards: [card()],
