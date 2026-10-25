@@ -5,6 +5,7 @@ import 'app_prefs.dart';
 import 'biometric_service.dart';
 import 'card_scan_service.dart';
 import 'login_throttle.dart';
+import 'notification_service.dart';
 import 'password_hasher.dart';
 import 'receipt_ai_service.dart';
 import 'session_service.dart';
@@ -51,6 +52,31 @@ final anthropicApiKeyProvider = Provider<String>(
 final receiptAiServiceProvider = Provider<ReceiptAiService>(
   (ref) => ClaudeReceiptService(ref.watch(anthropicApiKeyProvider)),
 );
+
+final notificationServiceProvider = Provider<NotificationService>(
+  (ref) => LocalNotificationService(),
+);
+
+/// The id of the user who still has the setup wizard ahead, or null.
+final setupPendingProvider = NotifierProvider<SetupPending, int?>(
+  SetupPending.new,
+);
+
+class SetupPending extends Notifier<int?> {
+  @override
+  int? build() => ref.watch(appPrefsProvider).setupPendingUser;
+
+  Future<void> start(int userId) async {
+    await ref.read(appPrefsProvider).setSetupPendingUser(userId);
+    state = userId;
+  }
+
+  /// Finished or skipped.
+  Future<void> done() async {
+    await ref.read(appPrefsProvider).setSetupPendingUser(null);
+    state = null;
+  }
+}
 
 /// Whether the welcome slides were already shown on this device.
 final onboardingSeenProvider = NotifierProvider<OnboardingSeen, bool>(

@@ -17,6 +17,7 @@ import '../features/categories/categories_screen.dart';
 import '../features/categories/category_form_screen.dart';
 import '../features/profile/account_forms.dart';
 import '../features/profile/profile_screen.dart';
+import '../features/setup_wizard/setup_wizard_screen.dart';
 import '../features/splash/splash_screen.dart';
 import '../services/providers.dart';
 import '../features/reports/reports_screen.dart';
@@ -32,6 +33,7 @@ abstract final class Routes {
   static const register = '/register';
   static const unlock = '/unlock';
   static const home = '/home';
+  static const setup = '/setup';
 
   // Private screens live under /home so `go` always keeps Home below them
   // and the Android back button never closes the app from a sub-screen.
@@ -75,6 +77,7 @@ String? authRedirect({
   required AuthState auth,
   required bool onboardingSeen,
   required String location,
+  bool setupPending = false,
 }) {
   String? goTo(String target) => location == target ? null : target;
 
@@ -87,7 +90,16 @@ String? authRedirect({
       location == Routes.login || location == Routes.register
           ? null
           : Routes.login,
-    AuthLoggedIn() => _publicRoutes.contains(location) ? Routes.home : null,
+    // While the wizard is pending, Home leads to it; screens it opens on
+    // top (the card form) stay reachable.
+    AuthLoggedIn() when setupPending =>
+      _publicRoutes.contains(location) || location == Routes.home
+          ? Routes.setup
+          : null,
+    AuthLoggedIn() =>
+      _publicRoutes.contains(location) || location == Routes.setup
+          ? Routes.home
+          : null,
   };
 }
 
@@ -100,15 +112,22 @@ final routerProvider = Provider<GoRouter>((ref) {
     if (previous.runtimeType != next.runtimeType) refresh.value++;
   });
   ref.listen(onboardingSeenProvider, (_, _) => refresh.value++);
+  ref.listen(setupPendingProvider, (_, _) => refresh.value++);
 
   final router = GoRouter(
     initialLocation: Routes.splash,
     refreshListenable: refresh,
-    redirect: (context, state) => authRedirect(
-      auth: ref.read(authControllerProvider),
-      onboardingSeen: ref.read(onboardingSeenProvider),
-      location: state.matchedLocation,
-    ),
+    redirect: (context, state) {
+      final auth = ref.read(authControllerProvider);
+      return authRedirect(
+        auth: auth,
+        onboardingSeen: ref.read(onboardingSeenProvider),
+        location: state.matchedLocation,
+        setupPending:
+            auth is AuthLoggedIn &&
+            ref.read(setupPendingProvider) == auth.user.id,
+      );
+    },
     routes: [
       GoRoute(
         path: Routes.splash,
@@ -129,6 +148,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.unlock,
         builder: (context, state) => const UnlockScreen(),
+      ),
+      GoRoute(
+        path: Routes.setup,
+        builder: (context, state) => const SetupWizardScreen(),
       ),
       GoRoute(
         path: Routes.home,

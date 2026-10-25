@@ -37,6 +37,7 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  /// Registers; the setup wizard that follows is skipped (#10 tests it).
   Future<void> register(
     WidgetTester tester, {
     String email = 'ana@example.com',
@@ -51,6 +52,10 @@ void main() {
     await tester.ensureVisible(key('register.submit'));
     await tester.tap(key('register.submit'));
     await tester.pumpAndSettle();
+    if (tester.any(key('setup.root'))) {
+      await tester.tap(key('setup.skip'));
+      await tester.pumpAndSettle();
+    }
   }
 
   /// Logout lives in the profile, reached from the home avatar.

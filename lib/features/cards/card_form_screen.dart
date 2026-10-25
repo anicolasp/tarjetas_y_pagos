@@ -222,7 +222,8 @@ class _CardFormState extends ConsumerState<_CardForm> {
         await repo.create(card);
       }
       refreshFinance(ref);
-      if (mounted) context.pop();
+      // true: saved (the setup wizard moves on).
+      if (mounted) context.pop(true);
     } on ArgumentError catch (e) {
       // Business rule from the repository: show why.
       if (mounted) showErrorSnackBar(context, '${e.message}');
