@@ -7,6 +7,7 @@ class AppPrefs {
 
   static const _onboardingSeenKey = 'onboarding_seen';
   static const _lastThemeKey = 'last_theme_mode';
+  static const _setupPendingKey = 'setup_pending_user';
 
   final SharedPreferences _prefs;
 
@@ -23,4 +24,12 @@ class AppPrefs {
 
   Future<void> setLastThemeMode(ThemeMode mode) =>
       _prefs.setString(_lastThemeKey, mode.name);
+
+  /// The user who registered and has not finished (or skipped) the setup
+  /// wizard yet.
+  int? get setupPendingUser => _prefs.getInt(_setupPendingKey);
+
+  Future<void> setSetupPendingUser(int? userId) => userId == null
+      ? _prefs.remove(_setupPendingKey)
+      : _prefs.setInt(_setupPendingKey, userId);
 }

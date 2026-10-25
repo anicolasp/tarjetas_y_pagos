@@ -17,6 +17,8 @@ import 'package:tarjetas_y_pagos/data/models/category.dart';
 import 'package:tarjetas_y_pagos/services/providers.dart';
 import 'package:tarjetas_y_pagos/services/receipt_ai_service.dart';
 import 'package:tarjetas_y_pagos/services/session_service.dart';
+import 'package:tarjetas_y_pagos/services/notification_service.dart';
+import 'package:tarjetas_y_pagos/core/notification_plan.dart';
 
 /// Low iteration count and no isolate, so tests are fast and run under the
 /// widget tester's fake async.
@@ -159,6 +161,43 @@ class BrokenSecureStore extends InMemorySecureStore {
 }
 
 /// Overrides every platform-backed provider with an in-memory fake.
+/// Records what would be scheduled; never touches the plugin.
+class FakeNotificationService implements NotificationService {
+  FakeNotificationService({this.permission = true, this.launchRoute});
+
+  bool permission;
+  String? launchRoute;
+  var permissionRequests = 0;
+  var cancels = 0;
+  List<PlannedNotification> scheduled = [];
+  void Function(String route)? _onTap;
+
+  /// Simulates tapping a notification.
+  void tap(String route) => _onTap!(route);
+
+  @override
+  Future<String?> init({required void Function(String route) onTap}) async {
+    _onTap = onTap;
+    return launchRoute;
+  }
+
+  @override
+  Future<bool> requestPermission() async {
+    permissionRequests++;
+    return permission;
+  }
+
+  @override
+  Future<void> replaceAll(List<PlannedNotification> plan) async =>
+      scheduled = [...plan];
+
+  @override
+  Future<void> cancelAll() async {
+    cancels++;
+    scheduled = [];
+  }
+}
+
 Future<List<Override>> testOverrides({
   Future<AppDatabase>? database,
   Map<String, Object> prefs = const {},
@@ -169,6 +208,7 @@ Future<List<Override>> testOverrides({
   FakeCardScanService? cardScan,
   String anthropicApiKey = '',
   FakeReceiptAiService? receiptAi,
+  FakeNotificationService? notifications,
 }) async {
   SharedPreferences.setMockInitialValues(prefs);
   final sharedPrefs = await SharedPreferences.getInstance();
@@ -191,6 +231,10 @@ Future<List<Override>> testOverrides({
     anthropicApiKeyProvider.overrideWithValue(anthropicApiKey),
     receiptAiServiceProvider.overrideWithValue(
       receiptAi ?? FakeReceiptAiService(),
+    ),
+    // Never schedule real notifications from tests.
+    notificationServiceProvider.overrideWithValue(
+      notifications ?? FakeNotificationService(),
     ),
   ];
 }

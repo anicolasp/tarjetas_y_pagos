@@ -130,6 +130,8 @@ class AuthController extends Notifier<AuthState> {
       email: email,
       password: password,
     );
+    // Before the session starts, so the router goes straight to the wizard.
+    await ref.read(setupPendingProvider.notifier).start(user.id!);
     await _startSession(user);
   }
 

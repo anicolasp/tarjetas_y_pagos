@@ -154,7 +154,11 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
   var _rateTouched = false;
   late int? _categoryId = _e?.categoryId;
   late Currency _currency =
-      _e?.originalCurrency ?? _e?.currency ?? _card?.currency ?? Currency.dop;
+      _e?.originalCurrency ??
+      _e?.currency ??
+      _card?.currency ??
+      ref.read(currentUserProvider)?.defaultCurrency ??
+      Currency.dop;
   late DateTime _date = _e?.date ?? ref.read(clockProvider)();
   var _rateStatus = _RateStatus.idle;
   var _saving = false;

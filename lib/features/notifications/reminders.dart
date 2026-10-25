@@ -1,0 +1,80 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../core/clock.dart';
+import '../../core/notification_plan.dart';
+import '../../core/router.dart';
+import '../../services/providers.dart';
+import '../auth/auth_controller.dart';
+import '../cards/cards_providers.dart';
+
+/// The screen of a tapped notification, waiting for the user to be inside
+/// the app (after unlock, login or the setup wizard).
+final notificationRouteProvider = NotifierProvider<NotificationRoute, String?>(
+  NotificationRoute.new,
+);
+
+class NotificationRoute extends Notifier<String?> {
+  @override
+  String? build() => null;
+
+  void open(String route) => state = route;
+
+  void clear() => state = null;
+}
+
+/// Keeps the scheduled reminders equal to the current data: every time the
+/// finance snapshot loads (app start, any card/debt change, a new notice
+/// days value) they are all replaced; on logout they are all cancelled.
+/// Watched once from the app root.
+final remindersProvider = Provider<void>((ref) {
+  final service = ref.watch(notificationServiceProvider);
+  final routes = ref.read(notificationRouteProvider.notifier);
+
+  // One change at a time, in order: cancel + schedule never interleave.
+  var queue = service
+      .init(onTap: routes.open)
+      .then((launch) => launch == null ? null : routes.open(launch))
+      .catchError(_log);
+  void enqueue(Future<void> Function() job) =>
+      queue = queue.then((_) => job()).catchError(_log);
+
+  ref.listen(financeProvider, (_, next) {
+    if (next case AsyncData(:final value)) {
+      enqueue(() async {
+        final user = ref.read(currentUserProvider);
+        if (user == null) return service.cancelAll();
+        await service.replaceAll(
+          planNotifications(
+            value,
+            now: ref.read(clockProvider)(),
+            daysBefore: user.notifyDaysBefore,
+          ),
+        );
+      });
+    }
+  }, fireImmediately: true);
+
+  ref.listen(authControllerProvider, (_, next) {
+    if (next is AuthLoggedOut) enqueue(service.cancelAll);
+  });
+
+  // Opens a tapped notification's screen once the user is inside the app.
+  void openPending() {
+    final route = ref.read(notificationRouteProvider);
+    final auth = ref.read(authControllerProvider);
+    if (route == null || auth is! AuthLoggedIn) return;
+    if (ref.read(setupPendingProvider) == auth.user.id) return;
+    routes.clear();
+    ref.read(routerProvider).go(route);
+  }
+
+  ref.listen(notificationRouteProvider, (_, _) => openPending());
+  ref.listen(authControllerProvider, (_, _) => openPending());
+  ref.listen(setupPendingProvider, (_, _) => openPending());
+});
+
+void _log(Object error) {
+  // A reminder that could not be scheduled must not break the app.
+  debugPrint('Reminders: $error');
+}

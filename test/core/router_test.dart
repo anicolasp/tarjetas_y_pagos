@@ -55,4 +55,23 @@ void main() {
     }
     expect(go(AuthLoggedIn(user), Routes.home), isNull);
   });
+
+  test('setup pending: Home and public routes lead to the wizard', () {
+    String? pending(String location) => authRedirect(
+      auth: AuthLoggedIn(user),
+      onboardingSeen: true,
+      location: location,
+      setupPending: true,
+    );
+    expect(pending(Routes.home), Routes.setup);
+    expect(pending(Routes.register), Routes.setup);
+    expect(pending(Routes.setup), isNull);
+    // The card form opened from the wizard stays open.
+    expect(pending(Routes.cardNew), isNull);
+  });
+
+  test('without setup pending the wizard is not reachable', () {
+    expect(go(AuthLoggedIn(user), Routes.setup), Routes.home);
+    expect(go(const AuthLoggedOut(), Routes.setup), Routes.login);
+  });
 }
