@@ -1,4 +1,7 @@
+import 'package:flutter/material.dart' show ThemeMode;
 import 'package:sqflite/sqflite.dart';
+
+import '../../core/money.dart';
 
 import '../../core/validators.dart';
 import '../../services/login_throttle.dart';
@@ -20,6 +23,14 @@ class LockedOutException implements Exception {
 
   final Duration remaining;
 }
+
+/// The current password given to confirm a change is wrong.
+class WrongPasswordException implements Exception {
+  const WrongPasswordException();
+}
+
+/// Days of notice before cuts, due dates and debts (#10).
+const notifyDaysRange = (min: 0, max: 30);
 
 /// Local accounts: registration and login against the `users` table.
 /// Never logs emails or passwords.
@@ -110,6 +121,118 @@ class AuthRepository {
       limit: 1,
     );
     return rows.isEmpty ? null : AppUser.fromMap(rows.single);
+  }
+
+  // ------------------------------------------------------------- profile
+
+  Future<AppUser> updateName(int userId, String firstName, String lastName) {
+    final error =
+        validateName(firstName, field: 'nombre') ??
+        validateName(lastName, field: 'apellido');
+    if (error != null) throw ArgumentError(error);
+    return _update(userId, {
+      'first_name': firstName.trim(),
+      'last_name': lastName.trim(),
+    });
+  }
+
+  /// Needs the current password. Throws [WrongPasswordException],
+  /// [LockedOutException], [EmailTakenException] or [ArgumentError].
+  Future<AppUser> changeEmail(
+    int userId, {
+    required String currentPassword,
+    required String newEmail,
+  }) async {
+    final error = validateEmail(newEmail);
+    if (error != null) throw ArgumentError(error);
+    final user = await _verifiedUser(userId, currentPassword);
+    final normalized = normalizeEmail(newEmail);
+    if (normalized == user.email) return user;
+    if (await _findByEmail(normalized) != null) {
+      throw const EmailTakenException();
+    }
+    try {
+      return await _update(userId, {'email': normalized});
+    } on DatabaseException catch (e) {
+      if (e.isUniqueConstraintError()) throw const EmailTakenException();
+      rethrow;
+    }
+  }
+
+  /// Needs the current password; the new one gets a new salt. Throws
+  /// [WrongPasswordException], [LockedOutException] or [ArgumentError].
+  Future<AppUser> changePassword(
+    int userId, {
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final error = validatePassword(newPassword);
+    if (error != null) throw ArgumentError(error);
+    final user = await _verifiedUser(userId, currentPassword);
+    if (newPassword == currentPassword) {
+      throw ArgumentError('La nueva contraseña debe ser distinta');
+    }
+    final salt = _hasher.newSalt();
+    return _update(user.id!, {
+      'salt': salt,
+      'password_hash': await _hasher.hash(newPassword, salt),
+    });
+  }
+
+  /// Preferences; only the given ones change.
+  Future<AppUser> updatePreferences(
+    int userId, {
+    ThemeMode? themeMode,
+    Currency? defaultCurrency,
+    int? notifyDaysBefore,
+    bool? biometricEnabled,
+  }) {
+    if (notifyDaysBefore != null &&
+        (notifyDaysBefore < notifyDaysRange.min ||
+            notifyDaysBefore > notifyDaysRange.max)) {
+      throw ArgumentError(
+        'Escribe de ${notifyDaysRange.min} a ${notifyDaysRange.max} días',
+      );
+    }
+    return _update(userId, {
+      'theme_mode': ?themeMode?.name,
+      'default_currency': ?defaultCurrency?.code,
+      'notify_days_before': ?notifyDaysBefore,
+      if (biometricEnabled != null)
+        'biometric_enabled': biometricEnabled ? 1 : 0,
+    });
+  }
+
+  /// The user, once [password] is confirmed. Wrong guesses count against
+  /// the same per-email throttle as the login.
+  Future<AppUser> _verifiedUser(int userId, String password) async {
+    final user = await getById(userId);
+    if (user == null) throw StateError('Usuario no encontrado');
+    final locked = _throttle.lockedFor(user.email);
+    if (locked != null) throw LockedOutException(locked);
+    if (!await _hasher.verify(password, user.salt, user.passwordHash)) {
+      await _throttle.registerFailure(user.email);
+      final nowLocked = _throttle.lockedFor(user.email);
+      if (nowLocked != null) throw LockedOutException(nowLocked);
+      throw const WrongPasswordException();
+    }
+    await _throttle.reset(user.email);
+    return user;
+  }
+
+  Future<AppUser> _update(int userId, Map<String, Object?> values) async {
+    if (values.isNotEmpty) {
+      final count = await _db.db.update(
+        'users',
+        values,
+        where: 'id = ?',
+        whereArgs: [userId],
+      );
+      if (count == 0) throw StateError('Usuario no encontrado');
+    }
+    final user = await getById(userId);
+    if (user == null) throw StateError('Usuario no encontrado');
+    return user;
   }
 
   Future<AppUser?> _findByEmail(String normalizedEmail) async {
