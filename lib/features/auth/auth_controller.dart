@@ -182,6 +182,13 @@ class AuthController extends Notifier<AuthState> {
     ref.read(appPrefsProvider).setLastThemeMode(user.themeMode);
   }
 
+  /// [user] after a profile edit, unless the session ended (logout) or
+  /// changed while the edit was running.
+  void _updateUser(AppUser user) {
+    final current = state;
+    if (current is AuthLoggedIn && current.user.id == user.id) _setUser(user);
+  }
+
   AppUser get _user {
     final current = state;
     if (current is! AuthLoggedIn) throw StateError('Sin sesión');
@@ -192,13 +199,15 @@ class AuthController extends Notifier<AuthState> {
 
   /// Throws [ArgumentError].
   Future<void> updateName(String firstName, String lastName) async =>
-      _setUser(await (await _repo).updateName(_user.id!, firstName, lastName));
+      _updateUser(
+        await (await _repo).updateName(_user.id!, firstName, lastName),
+      );
 
   /// Throws the [AuthRepository.changeEmail] exceptions.
   Future<void> changeEmail({
     required String currentPassword,
     required String newEmail,
-  }) async => _setUser(
+  }) async => _updateUser(
     await (await _repo).changeEmail(
       _user.id!,
       currentPassword: currentPassword,
@@ -210,7 +219,7 @@ class AuthController extends Notifier<AuthState> {
   Future<void> changePassword({
     required String currentPassword,
     required String newPassword,
-  }) async => _setUser(
+  }) async => _updateUser(
     await (await _repo).changePassword(
       _user.id!,
       currentPassword: currentPassword,
@@ -222,7 +231,7 @@ class AuthController extends Notifier<AuthState> {
     ThemeMode? themeMode,
     Currency? defaultCurrency,
     int? notifyDaysBefore,
-  }) async => _setUser(
+  }) async => _updateUser(
     await (await _repo).updatePreferences(
       _user.id!,
       themeMode: themeMode,
@@ -233,18 +242,20 @@ class AuthController extends Notifier<AuthState> {
 
   /// Turns biometrics on only after a verified fingerprint.
   Future<EnableBiometricsResult> enableBiometrics() async {
+    // Taken now: the prompt can stay open while the session changes.
+    final userId = _user.id!;
     final bio = ref.read(biometricServiceProvider);
     if (!await bio.isAvailable()) return EnableBiometricsResult.unavailable;
     if (!await bio.authenticate('Confirma tu huella para activarla')) {
       return EnableBiometricsResult.notConfirmed;
     }
-    _setUser(
-      await (await _repo).updatePreferences(_user.id!, biometricEnabled: true),
+    _updateUser(
+      await (await _repo).updatePreferences(userId, biometricEnabled: true),
     );
     return EnableBiometricsResult.enabled;
   }
 
-  Future<void> disableBiometrics() async => _setUser(
+  Future<void> disableBiometrics() async => _updateUser(
     await (await _repo).updatePreferences(_user.id!, biometricEnabled: false),
   );
 

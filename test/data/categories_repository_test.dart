@@ -52,6 +52,18 @@ void main() {
     expect((await repo.create(otro, draft('Mascotas'))).userId, otro);
   });
 
+  test('uniqueness also ignores the case of accented letters', () async {
+    await repo.create(ana, draft('Educación'));
+    expect(() => repo.create(ana, draft('EDUCACIÓN')), throwsArgumentError);
+  });
+
+  test('the length counts characters, as the text field does', () async {
+    // 20 emoji are 40 UTF-16 units but 20 characters.
+    final c = await repo.create(ana, draft('🐶' * 20));
+    expect(c.name, '🐶' * 20);
+    expect(() => repo.create(ana, draft('🐱' * 31)), throwsArgumentError);
+  });
+
   test('validation: name, icon and color', () async {
     expect(() => repo.create(ana, draft(' ')), throwsArgumentError);
     expect(() => repo.create(ana, draft('x' * 31)), throwsArgumentError);

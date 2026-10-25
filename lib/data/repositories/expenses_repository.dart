@@ -7,6 +7,7 @@ import '../models/category.dart';
 import '../models/credit_card.dart';
 import '../models/db_codec.dart';
 import '../models/expense.dart';
+import 'categories_repository.dart';
 import '../../core/validators.dart';
 
 const merchantMaxLength = 80;
@@ -254,15 +255,8 @@ class ExpensesRepository {
   }
 
   /// Base categories plus the user's own, alphabetically ("Otros" last).
-  Future<List<Category>> categories(int userId) async {
-    final rows = await _db.db.query(
-      'categories',
-      where: 'user_id IS NULL OR user_id = ?',
-      whereArgs: [userId],
-      orderBy: "name = 'Otros', name COLLATE NOCASE",
-    );
-    return rows.map(Category.fromMap).toList();
-  }
+  Future<List<Category>> categories(int userId) =>
+      CategoriesRepository(_db).list(userId);
 
   /// Newest first; payments of every card of the user, or one card.
   Future<List<CardPayment>> payments(int userId, {int? cardId}) async {

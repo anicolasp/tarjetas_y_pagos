@@ -92,7 +92,7 @@ mixin _CurrentPassword<T extends ConsumerStatefulWidget> on ConsumerState<T> {
       context.pop();
     } on WrongPasswordException {
       _wrongValue = current.text;
-      form.currentState!.validate();
+      if (mounted) form.currentState!.validate();
     } on LockedOutException catch (e) {
       if (mounted) {
         showErrorSnackBar(

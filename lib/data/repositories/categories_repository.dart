@@ -1,3 +1,5 @@
+import 'package:flutter/widgets.dart' show StringCharacters;
+
 import '../../core/category_icons.dart';
 import '../database.dart';
 import '../models/category.dart';
@@ -126,7 +128,8 @@ class CategoriesRepository {
   }) async {
     final name = c.name.trim();
     if (name.isEmpty) throw ArgumentError('Escribe un nombre');
-    if (name.length > categoryNameMaxLength) {
+    // Characters as the text field counts them (an emoji is one).
+    if (name.characters.length > categoryNameMaxLength) {
       throw ArgumentError('Máximo $categoryNameMaxLength caracteres');
     }
     if (!categoryIcons.containsKey(c.icon)) {
@@ -135,15 +138,12 @@ class CategoriesRepository {
     if (!categoryColors.contains(c.color)) {
       throw ArgumentError('Color no válido');
     }
-    final clash = await _db.db.query(
-      'categories',
-      where:
-          '(user_id IS NULL OR user_id = ?) AND name = ? COLLATE NOCASE'
-          '${exceptId == null ? '' : ' AND id != ?'}',
-      whereArgs: [userId, name, ?exceptId],
-      limit: 1,
-    );
-    if (clash.isNotEmpty) throw ArgumentError('Ya tienes una categoría así');
+    // Compared in Dart: SQLite's NOCASE only folds ASCII, so "EDUCACIÓN"
+    // would not clash with "Educación".
+    final key = name.toLowerCase();
+    final clash = (await list(userId))
+        .any((o) => o.id != exceptId && o.name.toLowerCase() == key);
+    if (clash) throw ArgumentError('Ya tienes una categoría así');
     return c.copyWith(name: name);
   }
 }

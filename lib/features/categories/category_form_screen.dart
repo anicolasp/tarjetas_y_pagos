@@ -8,6 +8,7 @@ import '../../data/models/category.dart';
 import '../../data/repositories/categories_repository.dart';
 import '../auth/auth_widgets.dart';
 import '../cards/cards_providers.dart';
+import '../reports/chart_colors.dart';
 
 /// New category ([categoryId] null) or edit/delete an own one: name, icon
 /// and color.
@@ -21,7 +22,17 @@ class CategoryFormScreen extends ConsumerWidget {
     if (categoryId == null) return const _CategoryForm(category: null);
     final categories = ref.watch(categoriesProvider);
     if (!categories.hasValue) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return Scaffold(
+        appBar: AppBar(),
+        body: Center(
+          child: categories.hasError
+              ? const Text(
+                  'No se pudieron cargar las categorías',
+                  key: ValueKey('categoryForm.loadError'),
+                )
+              : const CircularProgressIndicator(),
+        ),
+      );
     }
     final own = categories.value!.where((c) => c.id == categoryId && !c.isBase);
     if (own.isEmpty) {
@@ -111,10 +122,15 @@ class _CategoryFormState extends ConsumerState<_CategoryForm> {
         );
         if (!ok) return;
       } else {
-        final others = [
+        // Already alphabetical with "Otros" last: bring "Otros" first.
+        final rest = [
           for (final o in ref.read(categoriesProvider).value ?? <Category>[])
             if (o.id != c.id) o,
-        ]..sort((a, b) => a.name == 'Otros' ? -1 : (b.name == 'Otros' ? 1 : 0));
+        ];
+        final others = [
+          ...rest.where((o) => o.name == 'Otros'),
+          ...rest.where((o) => o.name != 'Otros'),
+        ];
         target = await showDialog<int>(
           context: context,
           builder: (context) =>
@@ -165,7 +181,10 @@ class _CategoryFormState extends ConsumerState<_CategoryForm> {
                       labelText: 'Nombre (ej. Mascotas)',
                       prefixIcon: Icon(
                         categoryIcon(_icon),
-                        color: Color(_color),
+                        color: readableOn(
+                          Color(_color),
+                          scheme.surfaceContainerHighest,
+                        ),
                       ),
                       counterText: '',
                     ),
@@ -302,7 +321,10 @@ class _ReassignDialogState extends State<_ReassignDialog> {
                       Icon(
                         categoryIcon(c.icon),
                         size: 18,
-                        color: Color(c.color),
+                        color: readableOn(
+                          Color(c.color),
+                          Theme.of(context).colorScheme.surfaceContainerHighest,
+                        ),
                       ),
                       const SizedBox(width: 8),
                       Flexible(

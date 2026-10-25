@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:tarjetas_y_pagos/core/formatters.dart';
@@ -9,6 +12,7 @@ import 'package:tarjetas_y_pagos/data/models/app_user.dart';
 import 'package:tarjetas_y_pagos/data/models/category.dart';
 import 'package:tarjetas_y_pagos/data/repositories/auth_repository.dart';
 import 'package:tarjetas_y_pagos/data/repositories/categories_repository.dart';
+import 'package:tarjetas_y_pagos/features/auth/auth_controller.dart';
 import 'package:tarjetas_y_pagos/services/login_throttle.dart';
 
 import '../helpers/fakes.dart';
@@ -150,6 +154,27 @@ void main() {
     await tester.enterText(key('login.password'), 'nueva2026');
     await tap(tester, 'login.submit');
     expect(key('home.root'), findsOneWidget);
+  });
+
+  testWidgets('an edit that ends after logout does not log back in', (
+    tester,
+  ) async {
+    final bio = FakeBiometricService()..pending = Completer<bool>();
+    await start(tester, biometrics: bio);
+    final container = ProviderScope.containerOf(
+      tester.element(key('profile.root')),
+    );
+    final auth = container.read(authControllerProvider.notifier);
+    // The fingerprint prompt is still open when the logout lands.
+    final enabling = auth.enableBiometrics();
+    await tester.pump();
+    await auth.logout();
+    await tester.pumpAndSettle();
+    bio.pending!.complete(true);
+    await enabling;
+    await tester.pumpAndSettle();
+    expect(container.read(authControllerProvider), isA<AuthLoggedOut>());
+    expect(key('login.root'), findsOneWidget);
   });
 
   testWidgets('change email: taken one rejected, a new one works', (
