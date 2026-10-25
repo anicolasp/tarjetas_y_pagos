@@ -1,4 +1,7 @@
+import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../core/money.dart';
 
 import '../../data/models/app_user.dart';
 import '../../data/providers.dart';
@@ -46,6 +49,16 @@ final authRepositoryProvider = FutureProvider<AuthRepository>((ref) async {
 final authControllerProvider = NotifierProvider<AuthController, AuthState>(
   AuthController.new,
 );
+
+/// The app theme: the user's choice, or the last user's before login.
+final themeModeProvider = Provider<ThemeMode>((ref) {
+  return switch (ref.watch(authControllerProvider)) {
+    AuthLoggedIn(:final user) || AuthNeedsUnlock(:final user) => user.themeMode,
+    _ => ref.watch(appPrefsProvider).lastThemeMode,
+  };
+});
+
+enum EnableBiometricsResult { enabled, unavailable, notConfirmed }
 
 class AuthController extends Notifier<AuthState> {
   static const biometricReason = 'Confirma tu identidad para entrar';
@@ -129,7 +142,7 @@ class AuthController extends Notifier<AuthState> {
         .authenticate(biometricReason);
     // The user may have chosen "Usar contraseña" while the prompt was open.
     if (!ok || !identical(state, current)) return false;
-    state = AuthLoggedIn(current.user);
+    _setUser(current.user);
     return true;
   }
 
@@ -160,8 +173,80 @@ class AuthController extends Notifier<AuthState> {
 
   Future<void> _startSession(AppUser user) async {
     await ref.read(sessionServiceProvider).start(user.id!);
-    state = AuthLoggedIn(user);
+    _setUser(user);
   }
+
+  /// The logged-in user after a change: every screen sees it at once.
+  void _setUser(AppUser user) {
+    state = AuthLoggedIn(user);
+    ref.read(appPrefsProvider).setLastThemeMode(user.themeMode);
+  }
+
+  AppUser get _user {
+    final current = state;
+    if (current is! AuthLoggedIn) throw StateError('Sin sesión');
+    return current.user;
+  }
+
+  // ------------------------------------------------------------- profile
+
+  /// Throws [ArgumentError].
+  Future<void> updateName(String firstName, String lastName) async =>
+      _setUser(await (await _repo).updateName(_user.id!, firstName, lastName));
+
+  /// Throws the [AuthRepository.changeEmail] exceptions.
+  Future<void> changeEmail({
+    required String currentPassword,
+    required String newEmail,
+  }) async => _setUser(
+    await (await _repo).changeEmail(
+      _user.id!,
+      currentPassword: currentPassword,
+      newEmail: newEmail,
+    ),
+  );
+
+  /// Throws the [AuthRepository.changePassword] exceptions.
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async => _setUser(
+    await (await _repo).changePassword(
+      _user.id!,
+      currentPassword: currentPassword,
+      newPassword: newPassword,
+    ),
+  );
+
+  Future<void> updatePreferences({
+    ThemeMode? themeMode,
+    Currency? defaultCurrency,
+    int? notifyDaysBefore,
+  }) async => _setUser(
+    await (await _repo).updatePreferences(
+      _user.id!,
+      themeMode: themeMode,
+      defaultCurrency: defaultCurrency,
+      notifyDaysBefore: notifyDaysBefore,
+    ),
+  );
+
+  /// Turns biometrics on only after a verified fingerprint.
+  Future<EnableBiometricsResult> enableBiometrics() async {
+    final bio = ref.read(biometricServiceProvider);
+    if (!await bio.isAvailable()) return EnableBiometricsResult.unavailable;
+    if (!await bio.authenticate('Confirma tu huella para activarla')) {
+      return EnableBiometricsResult.notConfirmed;
+    }
+    _setUser(
+      await (await _repo).updatePreferences(_user.id!, biometricEnabled: true),
+    );
+    return EnableBiometricsResult.enabled;
+  }
+
+  Future<void> disableBiometrics() async => _setUser(
+    await (await _repo).updatePreferences(_user.id!, biometricEnabled: false),
+  );
 
   Future<AuthLoggedOut> _loggedOut(AuthRepository repo) async {
     final lastId = await ref.read(sessionServiceProvider).lastUserId();

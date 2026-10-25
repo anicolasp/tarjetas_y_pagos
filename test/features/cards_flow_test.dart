@@ -93,7 +93,11 @@ void main() {
       await tester.pumpAndSettle();
       expect(key('profile.root'), findsOneWidget);
       expect(find.text('maria.jose@example.com'), findsOneWidget);
+      await tester.ensureVisible(key('profile.logout'));
+      await tester.pumpAndSettle();
       await tester.tap(key('profile.logout'));
+      await tester.pumpAndSettle();
+      await tester.tap(key('profile.logoutConfirm'));
       await tester.pumpAndSettle();
       expect(key('login.root'), findsOneWidget);
     });
