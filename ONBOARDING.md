@@ -74,14 +74,18 @@ lib/
   services/        plugins detrás de interfaces (sesión, biometría, OCR de
                    tarjeta, IA de facturas, tasa de cambio, notificaciones)
   features/<x>/    pantallas + providers Riverpod de cada funcionalidad:
-                   auth, onboarding, setup_wizard, home, cards, expenses,
-                   scan, reports, debts, profile, categories, notifications
+                   splash, onboarding, auth, setup_wizard, home, cards,
+                   expenses, scan, reports, debts, profile, categories,
+                   notifications
 ```
 
 Reglas que se respetan en todo el código:
 
 - **Riverpod 3** para estado y dependencias. Todo servicio externo tiene un
-  provider (`services/providers.dart`) que los tests reemplazan por un fake.
+  provider que los tests reemplazan por un fake: casi todos en
+  `services/providers.dart`; la tasa de cambio en
+  `features/cards/cards_providers.dart` y el reloj (`clockProvider`) en
+  `core/clock.dart`.
 - **Una sola fuente de verdad financiera:** `financeProvider`
   (`features/cards/cards_providers.dart`) carga tarjetas, gastos, pagos,
   deudas y abonos del usuario en un `FinanceSnapshot`. Home, tarjetas,
@@ -90,8 +94,9 @@ Reglas que se respetan en todo el código:
 - **Router** (`core/router.dart`, go_router): `authRedirect` decide a dónde
   ir según el estado: slides → login → desbloqueo con huella → asistente
   pendiente → Home. Las pantallas privadas cuelgan de `/home/...` para que
-  "atrás" nunca cierre la app. El router solo se refresca cuando cambia el
-  *tipo* de estado de auth (no en cada edición del perfil).
+  "atrás" nunca cierre la app. El router vuelve a evaluar el redirect
+  cuando cambia el *tipo* de estado de auth (no en cada edición del
+  perfil), la bandera de las slides o la del asistente pendiente.
 - **Dinero en centavos (`int`)** y monedas RD$ (`DOP`) / US$ (`USD`) que
   nunca se suman entre sí: todo total va por moneda.
 - **De una tarjeta solo se guardan los últimos 4 dígitos.** El OCR (ML Kit,
@@ -130,7 +135,8 @@ esquema:
 
 **Contraseñas:** PBKDF2-HMAC-SHA256 con salt aleatorio por usuario
 (`services/password_hasher.dart`). Tras 5 intentos fallidos, el correo se
-bloquea 30 s, luego 60 s, 120 s… (`services/login_throttle.dart`). La sesión
+bloquea 30 s, luego 60 s, 120 s…, hasta un máximo de 15 min; los fallos de
+más de 15 min se olvidan (`services/login_throttle.dart`). La sesión
 (id del usuario) vive en `flutter_secure_storage`.
 
 ## 5. Lógica del dominio
@@ -161,9 +167,10 @@ del vencimiento de cada deuda activa. IDs estables
 `FinanceSnapshot` y se cancelan al cerrar sesión. Las alarmas son
 inexactas (pueden llegar hasta ~1 h tarde).
 
-**Tasa US$→RD$** (`services/exchange_rate_service.dart`): se consulta en
-línea al registrar un gasto en otra moneda que la tarjeta; se guarda la
-tasa usada con el gasto.
+**Tasa US$→RD$** (`services/exchange_rate_service.dart`): se usa al
+registrar un gasto en otra moneda que la tarjeta. Se guarda en caché 12 h y
+después se vuelve a consultar en línea; la tasa usada queda guardada con el
+gasto.
 
 ## 6. Tests
 
@@ -176,10 +183,13 @@ flutter test --name "archiving"               # por nombre
 - `test/core`: lógica pura. `test/data`: repositorios y migraciones contra
   una base en memoria (`test/helpers/test_db.dart`). `test/features`:
   la app completa con `testApp(await testOverrides(...))`.
-- `testOverrides` (`test/helpers/fakes.dart`) reemplaza **todo** lo
-  externo: base de datos, almacenamiento seguro, biometría, cámara/OCR, IA,
-  tasa de cambio, notificaciones y reloj (`now:`). Ningún test toca la red
-  ni un plugin real. Si agregas un servicio, agrega su fake ahí.
+- `testOverrides` (`test/helpers/fakes.dart`) reemplaza lo externo:
+  almacenamiento seguro, biometría, cámara/OCR, IA, tasa de cambio y
+  notificaciones siempre; la base de datos y el reloj solo si los pasas
+  (`database: Future.value(await openTestDatabase())`, `now: …`). **Pasa
+  siempre `database:`** en los tests de pantallas: sin él se intenta abrir
+  la base real y el test se cuelga. Ningún test toca la red ni un plugin
+  real. Si agregas un servicio, agrega su fake ahí.
 - `seedUser`, `seedCard`, `seedExpense` (`test/helpers/seed.dart`) crean
   datos ficticios. La contraseña de prueba es `abc12345`.
 - Cada pantalla nueva lleva su matriz responsive:
@@ -211,7 +221,8 @@ Uso:
 3. Visual: `set_device_config` con `platform_brightness: dark` y
    `text_scale: 2`; para horizontal:
    `adb shell settings put system accelerometer_rotation 0` y
-   `adb shell settings put system user_rotation 1` (vuelve con `0` / `1`).
+   `adb shell settings put system user_rotation 1`. Para volver a
+   vertical: `user_rotation 0` y `accelerometer_rotation 1`.
 
 Trucos aprendidos:
 
@@ -238,7 +249,10 @@ Trucos aprendidos:
   registrada; en ese caso se verifica la ruta "no disponible" y el resto
   con widget tests.
 
-Las capturas de cada issue están en `docs/screenshots/issue-N/`.
+Las capturas de los issues #1–#8 están en `docs/screenshots/issue-N/`
+(#9 y #10 no guardaron capturas; su verificación está descrita en los
+PRs #23 y #24) y las del README en
+`docs/screenshots/readme/`.
 
 ## 8. Flujo de trabajo
 
