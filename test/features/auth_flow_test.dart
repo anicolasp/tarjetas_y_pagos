@@ -57,7 +57,11 @@ void main() {
   Future<void> logout(WidgetTester tester) async {
     await tester.tap(key('home.avatar'));
     await tester.pumpAndSettle();
+    await tester.ensureVisible(key('profile.logout'));
+    await tester.pumpAndSettle();
     await tester.tap(key('profile.logout'));
+    await tester.pumpAndSettle();
+    await tester.tap(key('profile.logoutConfirm'));
     await tester.pumpAndSettle();
   }
 

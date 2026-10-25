@@ -9,6 +9,7 @@ import '../../data/models/credit_card.dart';
 import '../../data/models/expense.dart';
 import '../../data/providers.dart';
 import '../../data/repositories/cards_repository.dart';
+import '../../data/repositories/categories_repository.dart';
 import '../../data/repositories/debts_repository.dart';
 import '../../data/repositories/expenses_repository.dart';
 import '../../services/exchange_rate_service.dart';
@@ -25,6 +26,7 @@ typedef Repos = ({
   CardsRepository cards,
   ExpensesRepository expenses,
   DebtsRepository debts,
+  CategoriesRepository categories,
 });
 
 /// Both repositories over the opened database. They never change once open,
@@ -38,6 +40,7 @@ final reposProvider = FutureProvider<Repos>((ref) async {
     cards: CardsRepository(db, clock: clock),
     expenses: ExpensesRepository(db, clock: clock),
     debts: DebtsRepository(db, clock: clock),
+    categories: CategoriesRepository(db),
   );
 }, retry: (retryCount, error) => null);
 
@@ -144,4 +147,11 @@ void refreshFinance(WidgetRef ref) {
   ref.invalidate(expenseByIdProvider);
   ref.invalidate(reportProvider);
   ref.invalidate(allCardsProvider);
+}
+
+/// After creating, editing or deleting a category (a deletion may move
+/// expenses to another one).
+void refreshCategories(WidgetRef ref) {
+  ref.invalidate(categoriesProvider);
+  refreshFinance(ref);
 }

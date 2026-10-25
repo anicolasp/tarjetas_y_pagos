@@ -13,7 +13,10 @@ import '../features/cards/payment_form_screen.dart';
 import '../features/expenses/expense_form_screen.dart';
 import '../features/home/home_screen.dart';
 import '../features/onboarding/onboarding_screen.dart';
-import '../features/profile/profile_placeholder_screen.dart';
+import '../features/categories/categories_screen.dart';
+import '../features/categories/category_form_screen.dart';
+import '../features/profile/account_forms.dart';
+import '../features/profile/profile_screen.dart';
 import '../features/splash/splash_screen.dart';
 import '../services/providers.dart';
 import '../features/reports/reports_screen.dart';
@@ -33,6 +36,12 @@ abstract final class Routes {
   // Private screens live under /home so `go` always keeps Home below them
   // and the Android back button never closes the app from a sub-screen.
   static const profile = '/home/profile';
+  static const profileName = '/home/profile/name';
+  static const profileEmail = '/home/profile/email';
+  static const profilePassword = '/home/profile/password';
+  static const categories = '/home/profile/categories';
+  static const categoryNew = '/home/profile/categories/new';
+  static String categoryEdit(int id) => '/home/profile/categories/$id';
   static const reports = '/home/reports';
   static const debts = '/home/debts';
   static const debtNew = '/home/debts/new';
@@ -84,8 +93,12 @@ String? authRedirect({
 
 final routerProvider = Provider<GoRouter>((ref) {
   // Re-runs the redirect whenever the session or onboarding flag changes.
+  // Only a change of kind matters (logged in → out…): a profile edit is a
+  // new AuthLoggedIn too, and refreshing then would rebuild the open page.
   final refresh = ValueNotifier(0);
-  ref.listen(authControllerProvider, (_, _) => refresh.value++);
+  ref.listen(authControllerProvider, (previous, next) {
+    if (previous.runtimeType != next.runtimeType) refresh.value++;
+  });
   ref.listen(onboardingSeenProvider, (_, _) => refresh.value++);
 
   final router = GoRouter(
@@ -123,7 +136,37 @@ final routerProvider = Provider<GoRouter>((ref) {
         routes: [
           GoRoute(
             path: 'profile',
-            builder: (context, state) => const ProfilePlaceholderScreen(),
+            builder: (context, state) => const ProfileScreen(),
+            routes: [
+              GoRoute(
+                path: 'name',
+                builder: (context, state) => const EditNameScreen(),
+              ),
+              GoRoute(
+                path: 'email',
+                builder: (context, state) => const ChangeEmailScreen(),
+              ),
+              GoRoute(
+                path: 'password',
+                builder: (context, state) => const ChangePasswordScreen(),
+              ),
+              GoRoute(
+                path: 'categories',
+                builder: (context, state) => const CategoriesScreen(),
+                routes: [
+                  // 'new' must come before ':id'.
+                  GoRoute(
+                    path: 'new',
+                    builder: (context, state) => const CategoryFormScreen(),
+                  ),
+                  GoRoute(
+                    path: ':id',
+                    builder: (context, state) =>
+                        CategoryFormScreen(categoryId: _pathId(state)),
+                  ),
+                ],
+              ),
+            ],
           ),
           GoRoute(
             path: 'reports',

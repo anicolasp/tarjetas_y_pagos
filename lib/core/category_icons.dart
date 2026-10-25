@@ -26,3 +26,20 @@ const categoryIcons = <String, IconData>{
 };
 
 IconData categoryIcon(String key) => categoryIcons[key] ?? Icons.category;
+
+/// Colors offered for custom categories (ARGB). Charts lift them to a
+/// readable contrast per theme (`readableOn`).
+const categoryColors = [
+  0xFF2E7D32, // green
+  0xFF00897B, // teal
+  0xFF0277BD, // blue
+  0xFF3949AB, // indigo
+  0xFF6A1B9A, // purple
+  0xFFAD1457, // pink
+  0xFFC62828, // red
+  0xFFEF6C00, // orange
+  0xFFF9A825, // amber
+  0xFF5D4037, // brown
+  0xFF546E7A, // blue grey
+  0xFF757575, // grey
+];

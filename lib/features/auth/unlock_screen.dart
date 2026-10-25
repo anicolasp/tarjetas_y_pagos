@@ -13,7 +13,13 @@ class UnlockScreen extends ConsumerStatefulWidget {
 }
 
 class _UnlockScreenState extends ConsumerState<UnlockScreen> {
-  var _failed = false;
+  /// After this many failed fingerprints only the password is offered.
+  static const maxFailures = 3;
+
+  var _failures = 0;
+
+  bool get _failed => _failures > 0;
+  bool get _blocked => _failures >= maxFailures;
 
   @override
   void initState() {
@@ -25,8 +31,9 @@ class _UnlockScreenState extends ConsumerState<UnlockScreen> {
   }
 
   Future<void> _unlock() async {
+    if (_blocked) return;
     final ok = await ref.read(authControllerProvider.notifier).unlock();
-    if (!ok && mounted) setState(() => _failed = true);
+    if (!ok && mounted) setState(() => _failures++);
   }
 
   @override
@@ -38,24 +45,35 @@ class _UnlockScreenState extends ConsumerState<UnlockScreen> {
       key: const ValueKey('unlock.root'),
       icon: Icons.lock_outline,
       title: 'Hola, $name',
-      subtitle: _failed
+      subtitle: _blocked
+          ? 'No pudimos verificar tu huella. Entra con tu contraseña.'
+          : _failed
           ? 'No se pudo verificar tu huella. Intenta de nuevo o usa tu '
                 'contraseña.'
           : 'Usa tu huella para entrar',
       children: [
-        FilledButton.icon(
-          key: const ValueKey('unlock.biometric'),
-          onPressed: _unlock,
-          icon: const Icon(Icons.fingerprint),
-          label: const Text('Desbloquear con huella'),
-        ),
-        const SizedBox(height: 12),
-        TextButton(
-          key: const ValueKey('unlock.usePassword'),
-          onPressed: () =>
-              ref.read(authControllerProvider.notifier).usePassword(),
-          child: const Text('Usar contraseña'),
-        ),
+        if (!_blocked) ...[
+          FilledButton.icon(
+            key: const ValueKey('unlock.biometric'),
+            onPressed: _unlock,
+            icon: const Icon(Icons.fingerprint),
+            label: const Text('Desbloquear con huella'),
+          ),
+          const SizedBox(height: 12),
+          TextButton(
+            key: const ValueKey('unlock.usePassword'),
+            onPressed: () =>
+                ref.read(authControllerProvider.notifier).usePassword(),
+            child: const Text('Usar contraseña'),
+          ),
+        ] else
+          FilledButton.icon(
+            key: const ValueKey('unlock.usePassword'),
+            onPressed: () =>
+                ref.read(authControllerProvider.notifier).usePassword(),
+            icon: const Icon(Icons.password),
+            label: const Text('Entrar con contraseña'),
+          ),
       ],
     );
   }
