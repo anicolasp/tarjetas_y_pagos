@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/billing_cycle.dart';
 import '../../../core/formatters.dart';
 import '../../../data/models/credit_card.dart';
+import '../../../l10n/l10n.dart';
 
 /// A credit card drawn in its color: bank, brand, alias, `•••• 1234`, next
 /// cut and available credit. Height follows the content, so it never
@@ -85,18 +86,18 @@ class CreditCardTile extends StatelessWidget {
                 runSpacing: 4,
                 children: [
                   Text(
-                    'Corte ${formatDayMonth(recommendation.nextCut)}',
+                    context.l10n.cutOn(formatDayMonth(recommendation.nextCut)),
                     style: text.bodySmall?.copyWith(color: muted),
                   ),
                   Text(
                     available.isEmpty
-                        ? 'Disponible —'
-                        : 'Disponible $available',
+                        ? context.l10n.availableNone
+                        : context.l10n.availableAmount(available),
                     style: text.bodySmall?.copyWith(color: muted),
                   ),
                   if (card.dualCurrency)
                     Text(
-                      'RD\$ y US\$',
+                      context.l10n.dualBalance,
                       style: text.bodySmall?.copyWith(color: muted),
                     ),
                 ],

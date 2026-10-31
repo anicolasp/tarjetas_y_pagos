@@ -16,12 +16,13 @@ import '../../data/models/category.dart';
 import '../../data/models/credit_card.dart';
 import '../../data/models/expense.dart';
 import '../../data/repositories/expenses_repository.dart';
+import '../../l10n/l10n.dart';
 import '../auth/auth_widgets.dart';
 import '../expenses/expense_filter_sheet.dart';
+import '../expenses/widgets/movement_tile.dart';
 import 'cards_providers.dart';
 import 'recommendation_text.dart';
 import 'widgets/credit_card_tile.dart';
-import '../expenses/widgets/movement_tile.dart';
 
 /// A card: balance per currency, limit usage, what to pay this cut, and its
 /// movements (expenses and payments) by date, with filters.
@@ -56,12 +57,12 @@ class _CardDetailScreenState extends ConsumerState<CardDetailScreen> {
     return Scaffold(
       key: const ValueKey('cardDetail.root'),
       appBar: AppBar(
-        title: Text(card?.alias ?? 'Tarjeta'),
+        title: Text(card?.alias ?? context.l10n.card),
         actions: [
           if (card != null) ...[
             IconButton(
               key: const ValueKey('cardDetail.filter'),
-              tooltip: 'Filtrar gastos',
+              tooltip: context.l10n.filterExpenses,
               onPressed: () => _openFilter(categories),
               icon: Badge(
                 isLabelVisible: !_filter.isEmpty,
@@ -70,7 +71,7 @@ class _CardDetailScreenState extends ConsumerState<CardDetailScreen> {
             ),
             IconButton(
               key: const ValueKey('cardDetail.edit'),
-              tooltip: 'Editar tarjeta',
+              tooltip: context.l10n.editCard,
               icon: const Icon(Icons.edit_outlined),
               onPressed: () => context.push(Routes.cardEdit(widget.cardId)),
             ),
@@ -84,7 +85,7 @@ class _CardDetailScreenState extends ConsumerState<CardDetailScreen> {
               onPressed: () =>
                   context.push(Routes.expenseNew(cardId: widget.cardId)),
               icon: const Icon(Icons.add),
-              label: const Text('Nuevo gasto'),
+              label: Text(context.l10n.newExpense),
             ),
       body: SafeArea(
         child: switch (finance) {
@@ -97,7 +98,7 @@ class _CardDetailScreenState extends ConsumerState<CardDetailScreen> {
             onClearFilter: () => setState(() => _filter = _filter.cleared()),
           ),
           AsyncData() ||
-          AsyncError() => const Center(child: Text('Tarjeta no encontrada')),
+          AsyncError() => Center(child: Text(context.l10n.cardNotFound)),
           _ => const Center(child: CircularProgressIndicator()),
         },
       ),
@@ -168,13 +169,13 @@ class _Body extends ConsumerWidget {
               const SizedBox(height: 24),
               Row(
                 children: [
-                  Expanded(child: Text('Movimientos', style: text.titleMedium)),
+                  Expanded(child: Text(context.l10n.movements, style: text.titleMedium)),
                   if (!filter.isEmpty)
                     TextButton.icon(
                       key: const ValueKey('cardDetail.clearFilter'),
                       onPressed: onClearFilter,
                       icon: const Icon(Icons.filter_list_off, size: 18),
-                      label: const Text('Quitar filtros'),
+                      label: Text(context.l10n.clearFilters),
                     ),
                 ],
               ),
@@ -184,12 +185,12 @@ class _Body extends ConsumerWidget {
                 Column(
                   key: const ValueKey('cardDetail.filterError'),
                   children: [
-                    const Text('No se pudieron filtrar los gastos'),
+                    Text(context.l10n.filterError),
                     TextButton.icon(
                       onPressed: () =>
                           ref.invalidate(filteredExpensesProvider(filter)),
                       icon: const Icon(Icons.refresh),
-                      label: const Text('Reintentar'),
+                      label: Text(context.l10n.retry),
                     ),
                   ],
                 )
@@ -209,7 +210,7 @@ class _Body extends ConsumerWidget {
                   Padding(
                     padding: const EdgeInsets.only(top: 12, bottom: 4),
                     child: Text(
-                      _dayLabel(day, today),
+                      _dayLabel(context.l10n, day, today),
                       style: text.labelLarge?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
@@ -254,11 +255,11 @@ class _Body extends ConsumerWidget {
     return groups;
   }
 
-  static String _dayLabel(DateTime day, DateTime today) {
+  static String _dayLabel(AppLocalizations l, DateTime day, DateTime today) {
     final diff = dateOnly(today).difference(day).inDays;
     return switch (diff) {
-      0 => 'Hoy',
-      1 => 'Ayer',
+      0 => l.today,
+      1 => l.yesterday,
       _ => formatDate(day),
     };
   }
@@ -300,18 +301,18 @@ class _StatementCard extends StatelessWidget {
               ),
               const SizedBox(height: 12),
             ],
-            _Row('Próximo corte', formatDate(recommendation.nextCut)),
+            _Row(context.l10n.nextCut, formatDate(recommendation.nextCut)),
             _Row(
-              'Fecha límite de ese corte',
+              context.l10n.nextCutDue,
               formatDate(recommendation.dueDate),
             ),
             _Row(
-              'Si la usas hoy, pagas en',
-              '${recommendation.financingDays} días',
+              context.l10n.payInIfUsedToday,
+              context.l10n.daysCountPlain(recommendation.financingDays),
             ),
             const SizedBox(height: 4),
             Text(
-              explainRecommendation(recommendation, today),
+              explainRecommendation(context.l10n, recommendation, today),
               style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
             ),
             const SizedBox(height: 12),
@@ -319,7 +320,7 @@ class _StatementCard extends StatelessWidget {
               key: const ValueKey('cardDetail.pay'),
               onPressed: () => context.push(Routes.cardPay(card.id!)),
               icon: const Icon(Icons.payments_outlined),
-              label: const Text('Registrar pago'),
+              label: Text(context.l10n.registerPayment),
             ),
           ],
         ),
@@ -354,7 +355,9 @@ class _CurrencyBlock extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _Row(
-          inFavor ? 'Saldo a favor (${c.code})' : 'Balance (${c.code})',
+          inFavor
+              ? context.l10n.creditInFavor(c.code)
+              : context.l10n.balanceIn(c.code),
           formatMoney(s.balanceCents.abs(), c),
           emphasize: true,
           valueKey: 'cardDetail.balanceValue.${c.code}',
@@ -374,28 +377,32 @@ class _CurrencyBlock extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Disponible ${formatMoney(limit - s.balanceCents, c)} '
-            'de ${formatMoney(limit, c)}',
+            context.l10n.availableOf(
+              formatMoney(limit - s.balanceCents, c),
+              formatMoney(limit, c),
+            ),
             style: text.bodySmall,
           ),
         ],
         const SizedBox(height: 6),
         _Row(
-          'A pagar este corte',
+          context.l10n.dueThisStatement,
           formatMoney(s.dueCents, c),
           valueKey: 'cardDetail.due.${c.code}',
         ),
         if (s.dueCents > 0 && dueDate.isAfter(dateOnly(today)))
           Text(
-            'Paga antes del ${formatDate(dueDate)}',
+            context.l10n.payBefore(formatDate(dueDate)),
             style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
           ),
         if (s.overdue)
           Padding(
             padding: const EdgeInsets.only(top: 4),
             child: Text(
-              'Vencido: ${formatMoney(s.overdueCents, c)} desde el '
-              '${formatDate(s.overdueSince!)}',
+              context.l10n.overdueSince(
+                formatMoney(s.overdueCents, c),
+                formatDate(s.overdueSince!),
+              ),
               key: ValueKey('cardDetail.overdue.${c.code}'),
               style: text.bodySmall?.copyWith(
                 color: scheme.error,
@@ -424,10 +431,14 @@ class _ExpenseTile extends StatelessWidget {
       color: color,
       title: e.merchant,
       subtitle: [
-        category?.name ?? 'Sin categoría',
+        category == null
+            ? context.l10n.noCategory
+            : context.l10n.categoryLabel(category!),
         if (e.wasConverted)
-          '${formatMoney(e.originalAmountCents!, e.originalCurrency!)} '
-              'a ${formatRate(e.exchangeRateMicros!)}',
+          context.l10n.convertedAt(
+            formatMoney(e.originalAmountCents!, e.originalCurrency!),
+            formatRate(e.exchangeRateMicros!),
+          ),
       ].join(' · '),
       amount: formatMoney(e.amountCents, e.currency),
       onTap: () => context.push(Routes.expenseEdit(e.id!)),
@@ -444,20 +455,21 @@ class _PaymentTile extends ConsumerWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('¿Eliminar este pago?'),
+        title: Text(context.l10n.deletePaymentTitle),
         content: Text(
-          'El balance volverá a subir '
-          '${formatMoney(payment.amountCents, payment.currency)}.',
+          context.l10n.deletePaymentBody(
+            formatMoney(payment.amountCents, payment.currency),
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
+            child: Text(context.l10n.cancel),
           ),
           FilledButton(
             key: const ValueKey('cardDetail.deletePaymentConfirm'),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Eliminar'),
+            child: Text(context.l10n.delete),
           ),
         ],
       ),
@@ -484,7 +496,7 @@ class _PaymentTile extends ConsumerWidget {
       key: ValueKey('cardDetail.payment.${payment.id}'),
       icon: Icons.check_circle_outline,
       color: paid,
-      title: 'Pago',
+      title: context.l10n.payment,
       subtitle: payment.note,
       amount: '−${formatMoney(payment.amountCents, payment.currency)}',
       amountColor: paid,
@@ -514,15 +526,15 @@ class _EmptyMovements extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           filtered
-              ? 'Ningún gasto coincide con los filtros'
-              : 'Aún no hay movimientos en esta tarjeta',
+              ? context.l10n.noExpensesMatch
+              : context.l10n.noMovementsYet,
           textAlign: TextAlign.center,
           style: text.bodyLarge,
         ),
         if (!filtered) ...[
           const SizedBox(height: 4),
           Text(
-            'Toca "Nuevo gasto" para registrar el primero.',
+            context.l10n.tapNewExpenseHint,
             textAlign: TextAlign.center,
             style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
           ),

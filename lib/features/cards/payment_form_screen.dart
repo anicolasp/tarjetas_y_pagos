@@ -9,6 +9,7 @@ import '../../core/responsive.dart';
 import '../../data/models/card_payment.dart';
 import '../../data/models/credit_card.dart';
 import '../../data/repositories/expenses_repository.dart';
+import '../../l10n/l10n.dart';
 import '../auth/auth_widgets.dart';
 import 'cards_providers.dart';
 
@@ -29,7 +30,7 @@ class PaymentFormScreen extends ConsumerWidget {
     if (card == null) {
       return Scaffold(
         appBar: AppBar(),
-        body: const Center(child: Text('Tarjeta no encontrada')),
+        body: Center(child: Text(context.l10n.cardNotFound)),
       );
     }
     final statement = finance.value!.statementOf(
@@ -117,7 +118,7 @@ class _PaymentFormState extends ConsumerState<_PaymentForm> {
 
     return Scaffold(
       key: const ValueKey('paymentForm.root'),
-      appBar: AppBar(title: const Text('Registrar pago')),
+      appBar: AppBar(title: Text(context.l10n.registerPayment)),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(vertical: 16),
@@ -159,10 +160,10 @@ class _PaymentFormState extends ConsumerState<_PaymentForm> {
                       final cents = parseMoneyToCents(v ?? '');
                       return cents != null && cents > 0
                           ? null
-                          : 'Escribe un monto mayor que 0';
+                          : context.l10n.fieldAmountPositive;
                     },
                     decoration: InputDecoration(
-                      labelText: 'Monto pagado',
+                      labelText: context.l10n.amountPaid,
                       prefixText: '${_currency.symbol} ',
                       prefixIcon: const Icon(Icons.payments_outlined),
                     ),
@@ -175,7 +176,7 @@ class _PaymentFormState extends ConsumerState<_PaymentForm> {
                         onPressed: () =>
                             setState(() => _amount.text = centsToInput(due)),
                         child: Text(
-                          'Pagar lo de este corte: ${formatMoney(due, _currency)}',
+                          context.l10n.payStatementDue(formatMoney(due, _currency)),
                         ),
                       ),
                     ),
@@ -185,8 +186,8 @@ class _PaymentFormState extends ConsumerState<_PaymentForm> {
                     borderRadius: BorderRadius.circular(12),
                     onTap: _pickDate,
                     child: InputDecorator(
-                      decoration: const InputDecoration(
-                        labelText: 'Fecha del pago',
+                      decoration: InputDecoration(
+                        labelText: context.l10n.paymentDate,
                         prefixIcon: Icon(Icons.event_outlined),
                       ),
                       child: Text(formatDate(_date)),
@@ -197,15 +198,15 @@ class _PaymentFormState extends ConsumerState<_PaymentForm> {
                     key: const ValueKey('paymentForm.note'),
                     controller: _note,
                     maxLength: notesMaxLength,
-                    decoration: const InputDecoration(
-                      labelText: 'Nota (opcional)',
+                    decoration: InputDecoration(
+                      labelText: context.l10n.noteOptional,
                       prefixIcon: Icon(Icons.notes),
                     ),
                   ),
                   const SizedBox(height: 20),
                   LoadingButton(
                     key: const ValueKey('paymentForm.save'),
-                    label: 'Registrar pago',
+                    label: context.l10n.registerPayment,
                     loading: _saving,
                     onPressed: _save,
                   ),

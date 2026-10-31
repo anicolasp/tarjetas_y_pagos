@@ -6,6 +6,7 @@ import '../../core/category_icons.dart';
 import '../../core/responsive.dart';
 import '../../core/router.dart';
 import '../../data/models/category.dart';
+import '../../l10n/l10n.dart';
 import '../cards/cards_providers.dart';
 import '../reports/chart_colors.dart';
 
@@ -21,12 +22,12 @@ class CategoriesScreen extends ConsumerWidget {
 
     return Scaffold(
       key: const ValueKey('categories.root'),
-      appBar: AppBar(title: const Text('Categorías')),
+      appBar: AppBar(title: Text(context.l10n.sectionCategories)),
       floatingActionButton: FloatingActionButton.extended(
         key: const ValueKey('categories.add'),
         onPressed: () => context.push(Routes.categoryNew),
         icon: const Icon(Icons.add),
-        label: const Text('Nueva categoría'),
+        label: Text(context.l10n.newCategory),
       ),
       body: SafeArea(
         child: switch (categories) {
@@ -37,11 +38,11 @@ class CategoriesScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text('Mis categorías', style: text.titleMedium),
+                  Text(context.l10n.myCategories, style: text.titleMedium),
                   const SizedBox(height: 8),
                   if (!value.any((c) => !c.isBase))
                     Text(
-                      'Aún no has creado categorías.',
+                      context.l10n.noOwnCategories,
                       key: const ValueKey('categories.empty'),
                       style: text.bodyMedium,
                     )
@@ -53,9 +54,12 @@ class CategoriesScreen extends ConsumerWidget {
                           onTap: () => context.push(Routes.categoryEdit(c.id!)),
                         ),
                   const SizedBox(height: 24),
-                  Text('Incluidas', style: text.titleMedium),
                   Text(
-                    'Vienen con la app y no se pueden cambiar.',
+                    context.l10n.includedCategories,
+                    style: text.titleMedium,
+                  ),
+                  Text(
+                    context.l10n.includedCategoriesHint,
                     style: text.bodySmall,
                   ),
                   const SizedBox(height: 8),
@@ -65,9 +69,7 @@ class CategoriesScreen extends ConsumerWidget {
               ),
             ),
           ),
-          AsyncError() => const Center(
-            child: Text('No se pudieron cargar las categorías'),
-          ),
+          AsyncError() => Center(child: Text(context.l10n.categoriesLoadError)),
           _ => const Center(child: CircularProgressIndicator()),
         },
       ),
@@ -99,7 +101,7 @@ class _CategoryTile extends StatelessWidget {
         foregroundColor: color,
         child: Icon(categoryIcon(category.icon)),
       ),
-      title: Text(category.name),
+      title: Text(context.l10n.categoryLabel(category)),
       trailing: onTap == null
           ? const Icon(Icons.lock_outline, size: 18)
           : const Icon(Icons.chevron_right),

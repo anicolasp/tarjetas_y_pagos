@@ -230,5 +230,372 @@
   "noSecurityQuestion": "Esta cuenta no tiene pregunta de seguridad",
   "wrongAnswer": "La respuesta no es correcta",
   "securityQuestionMissing": "Configura una pregunta para poder recuperar tu contraseña.",
-  "securityQuestionSaved": "Pregunta de seguridad guardada"
+  "securityQuestionSaved": "Pregunta de seguridad guardada",
+  "greetingMorning": "Buenos días, {name}",
+  "@greetingMorning": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "greetingAfternoon": "Buenas tardes, {name}",
+  "@greetingAfternoon": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "greetingNight": "Buenas noches, {name}",
+  "@greetingNight": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "cutsIn": "{days, plural, =0{Corta hoy} =1{Corta mañana} other{Corta en {days} días}}",
+  "@cutsIn": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "recommendationLine": "{cut} · pagas el {due} · {days} días",
+  "@recommendationLine": {
+    "placeholders": {
+      "cut": {
+        "type": "String"
+      },
+      "due": {
+        "type": "String"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "receiptErrorOffline": "Sin conexión a internet. Completa el gasto a mano.",
+  "receiptErrorTimeout": "La IA tardó demasiado. Intenta de nuevo o completa a mano.",
+  "receiptErrorInvalidKey": "La clave de la IA no es válida. Completa el gasto a mano.",
+  "receiptErrorRateLimited": "La IA está recibiendo muchas solicitudes. Intenta en un rato.",
+  "receiptErrorUnavailable": "La IA no está disponible ahora. Completa el gasto a mano.",
+  "receiptErrorImageTooLarge": "La foto es demasiado grande. Prueba con otra.",
+  "receiptErrorInvalidResponse": "No pudimos leer la factura. Completa el gasto a mano.",
+  "fieldCardAliasRequired": "Escribe un nombre para la tarjeta",
+  "fieldCardBankRequired": "Escribe el banco",
+  "fieldCardLast4Invalid": "Escribe los últimos 4 dígitos",
+  "fieldCardCutDayRange": "El día de corte va del 1 al 31",
+  "fieldCardPaymentDaysRange": "Los días para pagar van de 0 a 60",
+  "fieldCardLimitInvalid": "Límite no válido",
+  "fieldCardDualMustBeDop": "Una tarjeta de doble balance es RD\\$ y US\\$",
+  "fieldCardCurrencyInUse": "Esta tarjeta tiene movimientos en esa moneda; no puedes quitarla",
+  "fieldAmountInvalid": "Monto no válido",
+  "fieldNoBalanceInCurrency": "La tarjeta no tiene balance en esa moneda",
+  "fieldMerchantRequired": "Escribe el comercio",
+  "fieldConversionInvalid": "Conversión no válida",
+  "fieldCategoryRequired": "Elige una categoría",
+  "fieldCardRequired": "Elige una tarjeta",
+  "fieldDateInFuture": "La fecha no puede ser futura",
+  "fieldCategoryNameRequired": "Escribe un nombre",
+  "fieldCategoryIconInvalid": "Ícono no válido",
+  "fieldCategoryColorInvalid": "Color no válido",
+  "fieldCategoryNameTaken": "Ya tienes una categoría así",
+  "fieldCategoryReassignOther": "Elige otra categoría",
+  "catSupermarket": "Supermercado",
+  "catFuel": "Combustible",
+  "catBarbershop": "Barbería",
+  "catSalon": "Salón",
+  "catBeauty": "Belleza",
+  "catHardware": "Ferretería",
+  "catElectricity": "Luz",
+  "catWater": "Agua",
+  "catPhone": "Teléfono",
+  "catLiquor": "Licor",
+  "catHealth": "Salud",
+  "catRestaurant": "Restaurante",
+  "catOther": "Otros",
+  "myCards": "Mis tarjetas",
+  "seeAll": "Ver todas",
+  "cardsLoadError": "No se pudieron cargar tus tarjetas",
+  "monthSummary": "Resumen de {month}",
+  "@monthSummary": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "spentThisMonth": "Gastado este mes",
+  "totalDebt": "Deuda total",
+  "debtSplit": "Tarjetas {cards} · Otras deudas {other}",
+  "@debtSplit": {
+    "placeholders": {
+      "cards": {
+        "type": "String"
+      },
+      "other": {
+        "type": "String"
+      }
+    }
+  },
+  "bestCardToday": "Mejor tarjeta hoy",
+  "bestCardEmpty": "Agrega una tarjeta para saber cuál te conviene usar hoy.",
+  "lowCredit": "Poco crédito disponible",
+  "newExpense": "Nuevo gasto",
+  "reports": "Reportes",
+  "debts": "Deudas",
+  "noCardsYet": "Aún no tienes tarjetas.",
+  "add": "Agregar",
+  "noCardsYetTitle": "Aún no tienes tarjetas",
+  "addFirstCardHint": "Agrega tu primera tarjeta para saber cuál te conviene usar cada día.",
+  "cutOn": "Corte {date}",
+  "@cutOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "availableNone": "Disponible —",
+  "availableAmount": "Disponible {amount}",
+  "@availableAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "dualBalance": "RD\\$ y US\\$",
+  "cardNotFound": "Tarjeta no encontrada",
+  "registerPayment": "Registrar pago",
+  "fieldAmountPositive": "Escribe un monto mayor que 0",
+  "amountPaid": "Monto pagado",
+  "payStatementDue": "Pagar lo de este corte: {amount}",
+  "@payStatementDue": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "paymentDate": "Fecha del pago",
+  "noteOptional": "Nota (opcional)",
+  "card": "Tarjeta",
+  "filterExpenses": "Filtrar gastos",
+  "editCard": "Editar tarjeta",
+  "movements": "Movimientos",
+  "clearFilters": "Quitar filtros",
+  "filterError": "No se pudieron filtrar los gastos",
+  "today": "Hoy",
+  "yesterday": "Ayer",
+  "nextCut": "Próximo corte",
+  "nextCutDue": "Fecha límite de ese corte",
+  "payInIfUsedToday": "Si la usas hoy, pagas en",
+  "daysCountPlain": "{count, plural, =1{1 día} other{{count} días}}",
+  "@daysCountPlain": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "creditInFavor": "Saldo a favor ({currency})",
+  "@creditInFavor": {
+    "placeholders": {
+      "currency": {
+        "type": "String"
+      }
+    }
+  },
+  "balanceIn": "Balance ({currency})",
+  "@balanceIn": {
+    "placeholders": {
+      "currency": {
+        "type": "String"
+      }
+    }
+  },
+  "availableOf": "Disponible {available} de {limit}",
+  "@availableOf": {
+    "placeholders": {
+      "available": {
+        "type": "String"
+      },
+      "limit": {
+        "type": "String"
+      }
+    }
+  },
+  "dueThisStatement": "A pagar este corte",
+  "payBefore": "Paga antes del {date}",
+  "@payBefore": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "overdueSince": "Vencido: {amount} desde el {date}",
+  "@overdueSince": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "noCategory": "Sin categoría",
+  "convertedAt": "{amount} a {rate}",
+  "@convertedAt": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "rate": {
+        "type": "String"
+      }
+    }
+  },
+  "deletePaymentTitle": "¿Eliminar este pago?",
+  "deletePaymentBody": "El balance volverá a subir {amount}.",
+  "@deletePaymentBody": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "payment": "Pago",
+  "noExpensesMatch": "Ningún gasto coincide con los filtros",
+  "noMovementsYet": "Aún no hay movimientos en esta tarjeta",
+  "tapNewExpenseHint": "Toca \"Nuevo gasto\" para registrar el primero.",
+  "cardScanNothing": "No pudimos leer la tarjeta, completa los datos manualmente",
+  "scanPurposeCard": "Lo usamos solo para leer la tarjeta en tu teléfono. La foto no se guarda ni se envía, y solo conservamos los últimos 4 dígitos.",
+  "scanPurposeReceipt": "Lo usamos solo para leer la factura con la IA. La foto se envía una sola vez para leerla y no se guarda.",
+  "archiveCardTitle": "¿Archivar esta tarjeta?",
+  "archiveCardBody": "Dejará de aparecer en tus listas y en la recomendación. Sus datos se conservan.",
+  "archive": "Archivar",
+  "newCard": "Nueva tarjeta",
+  "scanCard": "Escanear tarjeta",
+  "scanCardHint": "Leemos la foto en tu teléfono y solo guardamos los últimos 4 dígitos.",
+  "cardAliasLabel": "Nombre (ej. Gastos del mes)",
+  "detectedByPhoto": "Detectado por foto",
+  "brand": "Marca",
+  "brandOther": "Otra",
+  "last4Label": "Últimos 4 dígitos",
+  "last4Helper": "Nunca guardamos el número completo",
+  "fieldCutDay": "Escribe un día del 1 al 31",
+  "cutDayLabel": "Día de corte",
+  "cutDayHelper": "Si el mes es más corto, se usa el último día",
+  "fieldPaymentDays": "Escribe de 0 a 60 días",
+  "paymentDaysLabel": "Días para pagar después del corte",
+  "currency": "Moneda",
+  "dualBalanceOption": "RD\\$ y US\\$ (doble balance)",
+  "dualBalanceHint": "Cada gasto queda en su moneda, con un límite por moneda.",
+  "singleCurrencyHint": "Los gastos en otra moneda se convierten a esta.",
+  "fieldLimitInvalid": "Monto no válido (ej. 50000 o 50,000.00)",
+  "limitDopOptional": "Límite en RD\\$ (opcional)",
+  "creditLimitOptional": "Límite de crédito (opcional)",
+  "limitUsdOptional": "Límite en US\\$ (opcional)",
+  "color": "Color",
+  "saveChanges": "Guardar cambios",
+  "archiveCard": "Archivar tarjeta",
+  "readingCard": "Leyendo la tarjeta…",
+  "bank": "Banco",
+  "takePhoto": "Tomar foto",
+  "pickFromGallery": "Elegir de la galería",
+  "permissionAltGallery": "Puedes activarla en los ajustes o elegir una foto de la galería.",
+  "permissionAltCamera": "Puedes activarlo en los ajustes o tomar una foto con la cámara.",
+  "allowCamera": "Permite el uso de la cámara",
+  "allowPhotos": "Permite el acceso a tus fotos",
+  "openSettings": "Abrir ajustes",
+  "openSettingsHint": "Abre los ajustes del teléfono para permitirlo",
+  "expenseLoadError": "No se pudo cargar el gasto",
+  "expenseNotFound": "Gasto no encontrado",
+  "newExpenseTitle": "Nuevo gasto",
+  "editExpense": "Editar gasto",
+  "addCardFirst": "Primero agrega una tarjeta para registrar gastos.",
+  "deleteExpenseTitle": "¿Eliminar este gasto?",
+  "deleteExpenseBody": "Se quitará de la tarjeta y de los reportes.",
+  "scanReceipt": "Escanear factura (IA)",
+  "scanReceiptHint": "La IA lee la foto y propone los datos; tú los revisas antes de guardar. La foto no se guarda.",
+  "merchant": "Comercio",
+  "category": "Categoría",
+  "archivedCardExpense": "La tarjeta de este gasto está archivada: puedes eliminarlo, pero no editarlo.",
+  "expenseCurrency": "Moneda del gasto",
+  "amount": "Monto",
+  "recordedOnCardAs": "Se registra en la tarjeta como {amount}",
+  "@recordedOnCardAs": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "date": "Fecha",
+  "notesOptional": "Notas (opcional)",
+  "saveExpense": "Guardar gasto",
+  "deleteExpense": "Eliminar gasto",
+  "readingReceipt": "Leyendo factura…",
+  "aiChip": "IA",
+  "rateLoading": "Buscando la tasa de hoy…",
+  "rateOnline": "Tasa en línea de hoy. Puedes ajustarla a la de tu banco.",
+  "rateStale": "Sin conexión: última tasa conocida. Revísala.",
+  "rateUnavailable": "No se pudo obtener la tasa. Escríbela.",
+  "rateIdle": "Tasa usada en la conversión.",
+  "fieldRateRequired": "Escribe la tasa (ej. 61.40)",
+  "rateLabel": "Tasa (RD$ por US$ 1)",
+  "refreshRate": "Buscar la tasa de hoy",
+  "allDates": "Todas las fechas",
+  "merchantContains": "Comercio contiene",
+  "minAmount": "Monto mínimo",
+  "maxAmount": "Monto máximo",
+  "apply": "Aplicar",
+  "newCategory": "Nueva categoría",
+  "editCategory": "Editar categoría",
+  "noOwnCategories": "Aún no has creado categorías.",
+  "includedCategories": "Incluidas",
+  "includedCategoriesHint": "Vienen con la app y no se pueden cambiar.",
+  "categoriesLoadError": "No se pudieron cargar las categorías",
+  "categoryNotFound": "Categoría no encontrada",
+  "deleteNamedTitle": "¿Eliminar \"{name}\"?",
+  "@deleteNamedTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "categoryNoExpenses": "No tiene gastos.",
+  "categoryNameLabel": "Nombre (ej. Mascotas)",
+  "icon": "Ícono",
+  "colorNumber": "Color {n}",
+  "@colorNumber": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "createCategory": "Crear categoría",
+  "deleteCategory": "Eliminar categoría",
+  "categoryHasExpenses": "{count, plural, =1{\"{name}\" tiene 1 gasto} other{\"{name}\" tiene {count} gastos}}",
+  "@categoryHasExpenses": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reassignHint": "Para eliminarla, elige a qué categoría pasan.",
+  "moveTo": "Pasar a",
+  "moveAndDelete": "Mover y eliminar"
 }

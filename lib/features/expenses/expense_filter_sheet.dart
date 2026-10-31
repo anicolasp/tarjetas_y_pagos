@@ -4,6 +4,7 @@ import '../../core/category_icons.dart';
 import '../../core/formatters.dart';
 import '../../data/models/category.dart';
 import '../../data/repositories/expenses_repository.dart';
+import '../../l10n/l10n.dart';
 
 /// Bottom sheet to filter expenses. Returns the new filter, or null if
 /// dismissed. "Limpiar" returns a filter with only the card.
@@ -71,7 +72,9 @@ class _FilterSheetState extends State<_FilterSheet> {
 
   String? _amount(String? v) {
     if ((v ?? '').trim().isEmpty) return null;
-    return parseMoneyToCents(v!) == null ? 'Monto no válido' : null;
+    return parseMoneyToCents(v!) == null
+        ? context.l10n.fieldAmountInvalid
+        : null;
   }
 
   void _apply() {
@@ -112,9 +115,9 @@ class _FilterSheetState extends State<_FilterSheet> {
                 key: const ValueKey('expenseFilter.root'),
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text('Filtrar gastos', style: text.titleLarge),
+                  Text(context.l10n.filterExpenses, style: text.titleLarge),
                   gap,
-                  Text('Categorías', style: text.labelLarge),
+                  Text(context.l10n.sectionCategories, style: text.labelLarge),
                   const SizedBox(height: 6),
                   Wrap(
                     spacing: 8,
@@ -125,7 +128,7 @@ class _FilterSheetState extends State<_FilterSheet> {
                           key: ValueKey('expenseFilter.category.${c.name}'),
                           showCheckmark: false,
                           avatar: Icon(categoryIcon(c.icon), size: 18),
-                          label: Text(c.name),
+                          label: Text(context.l10n.categoryLabel(c)),
                           selected: _categories.contains(c.id),
                           onSelected: (on) => setState(
                             () => on
@@ -142,7 +145,7 @@ class _FilterSheetState extends State<_FilterSheet> {
                     icon: const Icon(Icons.date_range),
                     label: Text(
                       _range == null
-                          ? 'Todas las fechas'
+                          ? context.l10n.allDates
                           : '${formatShortDate(_range!.start)} – '
                                 '${formatShortDate(_range!.end)}',
                     ),
@@ -151,9 +154,9 @@ class _FilterSheetState extends State<_FilterSheet> {
                   TextFormField(
                     key: const ValueKey('expenseFilter.merchant'),
                     controller: _merchant,
-                    decoration: const InputDecoration(
-                      labelText: 'Comercio contiene',
-                      prefixIcon: Icon(Icons.search),
+                    decoration: InputDecoration(
+                      labelText: context.l10n.merchantContains,
+                      prefixIcon: const Icon(Icons.search),
                     ),
                   ),
                   gap,
@@ -176,8 +179,8 @@ class _FilterSheetState extends State<_FilterSheet> {
                                     decimal: true,
                                   ),
                               validator: _amount,
-                              decoration: const InputDecoration(
-                                labelText: 'Monto mínimo',
+                              decoration: InputDecoration(
+                                labelText: context.l10n.minAmount,
                               ),
                             ),
                           ),
@@ -191,8 +194,8 @@ class _FilterSheetState extends State<_FilterSheet> {
                                     decimal: true,
                                   ),
                               validator: _amount,
-                              decoration: const InputDecoration(
-                                labelText: 'Monto máximo',
+                              decoration: InputDecoration(
+                                labelText: context.l10n.maxAmount,
                               ),
                             ),
                           ),
@@ -204,14 +207,14 @@ class _FilterSheetState extends State<_FilterSheet> {
                   FilledButton(
                     key: const ValueKey('expenseFilter.apply'),
                     onPressed: _apply,
-                    child: const Text('Aplicar'),
+                    child: Text(context.l10n.apply),
                   ),
                   const SizedBox(height: 8),
                   TextButton(
                     key: const ValueKey('expenseFilter.clear'),
                     onPressed: () =>
                         Navigator.pop(context, widget.current.cleared()),
-                    child: const Text('Limpiar filtros'),
+                    child: Text(context.l10n.clearFilters),
                   ),
                 ],
               ),

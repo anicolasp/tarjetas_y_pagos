@@ -945,6 +945,1158 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Pregunta de seguridad guardada'**
   String get securityQuestionSaved;
+
+  /// No description provided for @greetingMorning.
+  ///
+  /// In es, this message translates to:
+  /// **'Buenos días, {name}'**
+  String greetingMorning(String name);
+
+  /// No description provided for @greetingAfternoon.
+  ///
+  /// In es, this message translates to:
+  /// **'Buenas tardes, {name}'**
+  String greetingAfternoon(String name);
+
+  /// No description provided for @greetingNight.
+  ///
+  /// In es, this message translates to:
+  /// **'Buenas noches, {name}'**
+  String greetingNight(String name);
+
+  /// No description provided for @cutsIn.
+  ///
+  /// In es, this message translates to:
+  /// **'{days, plural, =0{Corta hoy} =1{Corta mañana} other{Corta en {days} días}}'**
+  String cutsIn(int days);
+
+  /// No description provided for @recommendationLine.
+  ///
+  /// In es, this message translates to:
+  /// **'{cut} · pagas el {due} · {days} días'**
+  String recommendationLine(String cut, String due, int days);
+
+  /// No description provided for @receiptErrorOffline.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin conexión a internet. Completa el gasto a mano.'**
+  String get receiptErrorOffline;
+
+  /// No description provided for @receiptErrorTimeout.
+  ///
+  /// In es, this message translates to:
+  /// **'La IA tardó demasiado. Intenta de nuevo o completa a mano.'**
+  String get receiptErrorTimeout;
+
+  /// No description provided for @receiptErrorInvalidKey.
+  ///
+  /// In es, this message translates to:
+  /// **'La clave de la IA no es válida. Completa el gasto a mano.'**
+  String get receiptErrorInvalidKey;
+
+  /// No description provided for @receiptErrorRateLimited.
+  ///
+  /// In es, this message translates to:
+  /// **'La IA está recibiendo muchas solicitudes. Intenta en un rato.'**
+  String get receiptErrorRateLimited;
+
+  /// No description provided for @receiptErrorUnavailable.
+  ///
+  /// In es, this message translates to:
+  /// **'La IA no está disponible ahora. Completa el gasto a mano.'**
+  String get receiptErrorUnavailable;
+
+  /// No description provided for @receiptErrorImageTooLarge.
+  ///
+  /// In es, this message translates to:
+  /// **'La foto es demasiado grande. Prueba con otra.'**
+  String get receiptErrorImageTooLarge;
+
+  /// No description provided for @receiptErrorInvalidResponse.
+  ///
+  /// In es, this message translates to:
+  /// **'No pudimos leer la factura. Completa el gasto a mano.'**
+  String get receiptErrorInvalidResponse;
+
+  /// No description provided for @fieldCardAliasRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Escribe un nombre para la tarjeta'**
+  String get fieldCardAliasRequired;
+
+  /// No description provided for @fieldCardBankRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Escribe el banco'**
+  String get fieldCardBankRequired;
+
+  /// No description provided for @fieldCardLast4Invalid.
+  ///
+  /// In es, this message translates to:
+  /// **'Escribe los últimos 4 dígitos'**
+  String get fieldCardLast4Invalid;
+
+  /// No description provided for @fieldCardCutDayRange.
+  ///
+  /// In es, this message translates to:
+  /// **'El día de corte va del 1 al 31'**
+  String get fieldCardCutDayRange;
+
+  /// No description provided for @fieldCardPaymentDaysRange.
+  ///
+  /// In es, this message translates to:
+  /// **'Los días para pagar van de 0 a 60'**
+  String get fieldCardPaymentDaysRange;
+
+  /// No description provided for @fieldCardLimitInvalid.
+  ///
+  /// In es, this message translates to:
+  /// **'Límite no válido'**
+  String get fieldCardLimitInvalid;
+
+  /// No description provided for @fieldCardDualMustBeDop.
+  ///
+  /// In es, this message translates to:
+  /// **'Una tarjeta de doble balance es RD\\\$ y US\\\$'**
+  String get fieldCardDualMustBeDop;
+
+  /// No description provided for @fieldCardCurrencyInUse.
+  ///
+  /// In es, this message translates to:
+  /// **'Esta tarjeta tiene movimientos en esa moneda; no puedes quitarla'**
+  String get fieldCardCurrencyInUse;
+
+  /// No description provided for @fieldAmountInvalid.
+  ///
+  /// In es, this message translates to:
+  /// **'Monto no válido'**
+  String get fieldAmountInvalid;
+
+  /// No description provided for @fieldNoBalanceInCurrency.
+  ///
+  /// In es, this message translates to:
+  /// **'La tarjeta no tiene balance en esa moneda'**
+  String get fieldNoBalanceInCurrency;
+
+  /// No description provided for @fieldMerchantRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Escribe el comercio'**
+  String get fieldMerchantRequired;
+
+  /// No description provided for @fieldConversionInvalid.
+  ///
+  /// In es, this message translates to:
+  /// **'Conversión no válida'**
+  String get fieldConversionInvalid;
+
+  /// No description provided for @fieldCategoryRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Elige una categoría'**
+  String get fieldCategoryRequired;
+
+  /// No description provided for @fieldCardRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Elige una tarjeta'**
+  String get fieldCardRequired;
+
+  /// No description provided for @fieldDateInFuture.
+  ///
+  /// In es, this message translates to:
+  /// **'La fecha no puede ser futura'**
+  String get fieldDateInFuture;
+
+  /// No description provided for @fieldCategoryNameRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Escribe un nombre'**
+  String get fieldCategoryNameRequired;
+
+  /// No description provided for @fieldCategoryIconInvalid.
+  ///
+  /// In es, this message translates to:
+  /// **'Ícono no válido'**
+  String get fieldCategoryIconInvalid;
+
+  /// No description provided for @fieldCategoryColorInvalid.
+  ///
+  /// In es, this message translates to:
+  /// **'Color no válido'**
+  String get fieldCategoryColorInvalid;
+
+  /// No description provided for @fieldCategoryNameTaken.
+  ///
+  /// In es, this message translates to:
+  /// **'Ya tienes una categoría así'**
+  String get fieldCategoryNameTaken;
+
+  /// No description provided for @fieldCategoryReassignOther.
+  ///
+  /// In es, this message translates to:
+  /// **'Elige otra categoría'**
+  String get fieldCategoryReassignOther;
+
+  /// No description provided for @catSupermarket.
+  ///
+  /// In es, this message translates to:
+  /// **'Supermercado'**
+  String get catSupermarket;
+
+  /// No description provided for @catFuel.
+  ///
+  /// In es, this message translates to:
+  /// **'Combustible'**
+  String get catFuel;
+
+  /// No description provided for @catBarbershop.
+  ///
+  /// In es, this message translates to:
+  /// **'Barbería'**
+  String get catBarbershop;
+
+  /// No description provided for @catSalon.
+  ///
+  /// In es, this message translates to:
+  /// **'Salón'**
+  String get catSalon;
+
+  /// No description provided for @catBeauty.
+  ///
+  /// In es, this message translates to:
+  /// **'Belleza'**
+  String get catBeauty;
+
+  /// No description provided for @catHardware.
+  ///
+  /// In es, this message translates to:
+  /// **'Ferretería'**
+  String get catHardware;
+
+  /// No description provided for @catElectricity.
+  ///
+  /// In es, this message translates to:
+  /// **'Luz'**
+  String get catElectricity;
+
+  /// No description provided for @catWater.
+  ///
+  /// In es, this message translates to:
+  /// **'Agua'**
+  String get catWater;
+
+  /// No description provided for @catPhone.
+  ///
+  /// In es, this message translates to:
+  /// **'Teléfono'**
+  String get catPhone;
+
+  /// No description provided for @catLiquor.
+  ///
+  /// In es, this message translates to:
+  /// **'Licor'**
+  String get catLiquor;
+
+  /// No description provided for @catHealth.
+  ///
+  /// In es, this message translates to:
+  /// **'Salud'**
+  String get catHealth;
+
+  /// No description provided for @catRestaurant.
+  ///
+  /// In es, this message translates to:
+  /// **'Restaurante'**
+  String get catRestaurant;
+
+  /// No description provided for @catOther.
+  ///
+  /// In es, this message translates to:
+  /// **'Otros'**
+  String get catOther;
+
+  /// No description provided for @myCards.
+  ///
+  /// In es, this message translates to:
+  /// **'Mis tarjetas'**
+  String get myCards;
+
+  /// No description provided for @seeAll.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver todas'**
+  String get seeAll;
+
+  /// No description provided for @cardsLoadError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudieron cargar tus tarjetas'**
+  String get cardsLoadError;
+
+  /// No description provided for @monthSummary.
+  ///
+  /// In es, this message translates to:
+  /// **'Resumen de {month}'**
+  String monthSummary(String month);
+
+  /// No description provided for @spentThisMonth.
+  ///
+  /// In es, this message translates to:
+  /// **'Gastado este mes'**
+  String get spentThisMonth;
+
+  /// No description provided for @totalDebt.
+  ///
+  /// In es, this message translates to:
+  /// **'Deuda total'**
+  String get totalDebt;
+
+  /// No description provided for @debtSplit.
+  ///
+  /// In es, this message translates to:
+  /// **'Tarjetas {cards} · Otras deudas {other}'**
+  String debtSplit(String cards, String other);
+
+  /// No description provided for @bestCardToday.
+  ///
+  /// In es, this message translates to:
+  /// **'Mejor tarjeta hoy'**
+  String get bestCardToday;
+
+  /// No description provided for @bestCardEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'Agrega una tarjeta para saber cuál te conviene usar hoy.'**
+  String get bestCardEmpty;
+
+  /// No description provided for @lowCredit.
+  ///
+  /// In es, this message translates to:
+  /// **'Poco crédito disponible'**
+  String get lowCredit;
+
+  /// No description provided for @newExpense.
+  ///
+  /// In es, this message translates to:
+  /// **'Nuevo gasto'**
+  String get newExpense;
+
+  /// No description provided for @reports.
+  ///
+  /// In es, this message translates to:
+  /// **'Reportes'**
+  String get reports;
+
+  /// No description provided for @debts.
+  ///
+  /// In es, this message translates to:
+  /// **'Deudas'**
+  String get debts;
+
+  /// No description provided for @noCardsYet.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no tienes tarjetas.'**
+  String get noCardsYet;
+
+  /// No description provided for @add.
+  ///
+  /// In es, this message translates to:
+  /// **'Agregar'**
+  String get add;
+
+  /// No description provided for @noCardsYetTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no tienes tarjetas'**
+  String get noCardsYetTitle;
+
+  /// No description provided for @addFirstCardHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Agrega tu primera tarjeta para saber cuál te conviene usar cada día.'**
+  String get addFirstCardHint;
+
+  /// No description provided for @cutOn.
+  ///
+  /// In es, this message translates to:
+  /// **'Corte {date}'**
+  String cutOn(String date);
+
+  /// No description provided for @availableNone.
+  ///
+  /// In es, this message translates to:
+  /// **'Disponible —'**
+  String get availableNone;
+
+  /// No description provided for @availableAmount.
+  ///
+  /// In es, this message translates to:
+  /// **'Disponible {amount}'**
+  String availableAmount(String amount);
+
+  /// No description provided for @dualBalance.
+  ///
+  /// In es, this message translates to:
+  /// **'RD\\\$ y US\\\$'**
+  String get dualBalance;
+
+  /// No description provided for @cardNotFound.
+  ///
+  /// In es, this message translates to:
+  /// **'Tarjeta no encontrada'**
+  String get cardNotFound;
+
+  /// No description provided for @registerPayment.
+  ///
+  /// In es, this message translates to:
+  /// **'Registrar pago'**
+  String get registerPayment;
+
+  /// No description provided for @fieldAmountPositive.
+  ///
+  /// In es, this message translates to:
+  /// **'Escribe un monto mayor que 0'**
+  String get fieldAmountPositive;
+
+  /// No description provided for @amountPaid.
+  ///
+  /// In es, this message translates to:
+  /// **'Monto pagado'**
+  String get amountPaid;
+
+  /// No description provided for @payStatementDue.
+  ///
+  /// In es, this message translates to:
+  /// **'Pagar lo de este corte: {amount}'**
+  String payStatementDue(String amount);
+
+  /// No description provided for @paymentDate.
+  ///
+  /// In es, this message translates to:
+  /// **'Fecha del pago'**
+  String get paymentDate;
+
+  /// No description provided for @noteOptional.
+  ///
+  /// In es, this message translates to:
+  /// **'Nota (opcional)'**
+  String get noteOptional;
+
+  /// No description provided for @card.
+  ///
+  /// In es, this message translates to:
+  /// **'Tarjeta'**
+  String get card;
+
+  /// No description provided for @filterExpenses.
+  ///
+  /// In es, this message translates to:
+  /// **'Filtrar gastos'**
+  String get filterExpenses;
+
+  /// No description provided for @editCard.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar tarjeta'**
+  String get editCard;
+
+  /// No description provided for @movements.
+  ///
+  /// In es, this message translates to:
+  /// **'Movimientos'**
+  String get movements;
+
+  /// No description provided for @clearFilters.
+  ///
+  /// In es, this message translates to:
+  /// **'Quitar filtros'**
+  String get clearFilters;
+
+  /// No description provided for @filterError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudieron filtrar los gastos'**
+  String get filterError;
+
+  /// No description provided for @today.
+  ///
+  /// In es, this message translates to:
+  /// **'Hoy'**
+  String get today;
+
+  /// No description provided for @yesterday.
+  ///
+  /// In es, this message translates to:
+  /// **'Ayer'**
+  String get yesterday;
+
+  /// No description provided for @nextCut.
+  ///
+  /// In es, this message translates to:
+  /// **'Próximo corte'**
+  String get nextCut;
+
+  /// No description provided for @nextCutDue.
+  ///
+  /// In es, this message translates to:
+  /// **'Fecha límite de ese corte'**
+  String get nextCutDue;
+
+  /// No description provided for @payInIfUsedToday.
+  ///
+  /// In es, this message translates to:
+  /// **'Si la usas hoy, pagas en'**
+  String get payInIfUsedToday;
+
+  /// No description provided for @daysCountPlain.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 día} other{{count} días}}'**
+  String daysCountPlain(int count);
+
+  /// No description provided for @creditInFavor.
+  ///
+  /// In es, this message translates to:
+  /// **'Saldo a favor ({currency})'**
+  String creditInFavor(String currency);
+
+  /// No description provided for @balanceIn.
+  ///
+  /// In es, this message translates to:
+  /// **'Balance ({currency})'**
+  String balanceIn(String currency);
+
+  /// No description provided for @availableOf.
+  ///
+  /// In es, this message translates to:
+  /// **'Disponible {available} de {limit}'**
+  String availableOf(String available, String limit);
+
+  /// No description provided for @dueThisStatement.
+  ///
+  /// In es, this message translates to:
+  /// **'A pagar este corte'**
+  String get dueThisStatement;
+
+  /// No description provided for @payBefore.
+  ///
+  /// In es, this message translates to:
+  /// **'Paga antes del {date}'**
+  String payBefore(String date);
+
+  /// No description provided for @overdueSince.
+  ///
+  /// In es, this message translates to:
+  /// **'Vencido: {amount} desde el {date}'**
+  String overdueSince(String amount, String date);
+
+  /// No description provided for @noCategory.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin categoría'**
+  String get noCategory;
+
+  /// No description provided for @convertedAt.
+  ///
+  /// In es, this message translates to:
+  /// **'{amount} a {rate}'**
+  String convertedAt(String amount, String rate);
+
+  /// No description provided for @deletePaymentTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Eliminar este pago?'**
+  String get deletePaymentTitle;
+
+  /// No description provided for @deletePaymentBody.
+  ///
+  /// In es, this message translates to:
+  /// **'El balance volverá a subir {amount}.'**
+  String deletePaymentBody(String amount);
+
+  /// No description provided for @payment.
+  ///
+  /// In es, this message translates to:
+  /// **'Pago'**
+  String get payment;
+
+  /// No description provided for @noExpensesMatch.
+  ///
+  /// In es, this message translates to:
+  /// **'Ningún gasto coincide con los filtros'**
+  String get noExpensesMatch;
+
+  /// No description provided for @noMovementsYet.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no hay movimientos en esta tarjeta'**
+  String get noMovementsYet;
+
+  /// No description provided for @tapNewExpenseHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Toca \"Nuevo gasto\" para registrar el primero.'**
+  String get tapNewExpenseHint;
+
+  /// No description provided for @cardScanNothing.
+  ///
+  /// In es, this message translates to:
+  /// **'No pudimos leer la tarjeta, completa los datos manualmente'**
+  String get cardScanNothing;
+
+  /// No description provided for @scanPurposeCard.
+  ///
+  /// In es, this message translates to:
+  /// **'Lo usamos solo para leer la tarjeta en tu teléfono. La foto no se guarda ni se envía, y solo conservamos los últimos 4 dígitos.'**
+  String get scanPurposeCard;
+
+  /// No description provided for @scanPurposeReceipt.
+  ///
+  /// In es, this message translates to:
+  /// **'Lo usamos solo para leer la factura con la IA. La foto se envía una sola vez para leerla y no se guarda.'**
+  String get scanPurposeReceipt;
+
+  /// No description provided for @archiveCardTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Archivar esta tarjeta?'**
+  String get archiveCardTitle;
+
+  /// No description provided for @archiveCardBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Dejará de aparecer en tus listas y en la recomendación. Sus datos se conservan.'**
+  String get archiveCardBody;
+
+  /// No description provided for @archive.
+  ///
+  /// In es, this message translates to:
+  /// **'Archivar'**
+  String get archive;
+
+  /// No description provided for @newCard.
+  ///
+  /// In es, this message translates to:
+  /// **'Nueva tarjeta'**
+  String get newCard;
+
+  /// No description provided for @scanCard.
+  ///
+  /// In es, this message translates to:
+  /// **'Escanear tarjeta'**
+  String get scanCard;
+
+  /// No description provided for @scanCardHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Leemos la foto en tu teléfono y solo guardamos los últimos 4 dígitos.'**
+  String get scanCardHint;
+
+  /// No description provided for @cardAliasLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Nombre (ej. Gastos del mes)'**
+  String get cardAliasLabel;
+
+  /// No description provided for @detectedByPhoto.
+  ///
+  /// In es, this message translates to:
+  /// **'Detectado por foto'**
+  String get detectedByPhoto;
+
+  /// No description provided for @brand.
+  ///
+  /// In es, this message translates to:
+  /// **'Marca'**
+  String get brand;
+
+  /// No description provided for @brandOther.
+  ///
+  /// In es, this message translates to:
+  /// **'Otra'**
+  String get brandOther;
+
+  /// No description provided for @last4Label.
+  ///
+  /// In es, this message translates to:
+  /// **'Últimos 4 dígitos'**
+  String get last4Label;
+
+  /// No description provided for @last4Helper.
+  ///
+  /// In es, this message translates to:
+  /// **'Nunca guardamos el número completo'**
+  String get last4Helper;
+
+  /// No description provided for @fieldCutDay.
+  ///
+  /// In es, this message translates to:
+  /// **'Escribe un día del 1 al 31'**
+  String get fieldCutDay;
+
+  /// No description provided for @cutDayLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Día de corte'**
+  String get cutDayLabel;
+
+  /// No description provided for @cutDayHelper.
+  ///
+  /// In es, this message translates to:
+  /// **'Si el mes es más corto, se usa el último día'**
+  String get cutDayHelper;
+
+  /// No description provided for @fieldPaymentDays.
+  ///
+  /// In es, this message translates to:
+  /// **'Escribe de 0 a 60 días'**
+  String get fieldPaymentDays;
+
+  /// No description provided for @paymentDaysLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Días para pagar después del corte'**
+  String get paymentDaysLabel;
+
+  /// No description provided for @currency.
+  ///
+  /// In es, this message translates to:
+  /// **'Moneda'**
+  String get currency;
+
+  /// No description provided for @dualBalanceOption.
+  ///
+  /// In es, this message translates to:
+  /// **'RD\\\$ y US\\\$ (doble balance)'**
+  String get dualBalanceOption;
+
+  /// No description provided for @dualBalanceHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Cada gasto queda en su moneda, con un límite por moneda.'**
+  String get dualBalanceHint;
+
+  /// No description provided for @singleCurrencyHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Los gastos en otra moneda se convierten a esta.'**
+  String get singleCurrencyHint;
+
+  /// No description provided for @fieldLimitInvalid.
+  ///
+  /// In es, this message translates to:
+  /// **'Monto no válido (ej. 50000 o 50,000.00)'**
+  String get fieldLimitInvalid;
+
+  /// No description provided for @limitDopOptional.
+  ///
+  /// In es, this message translates to:
+  /// **'Límite en RD\\\$ (opcional)'**
+  String get limitDopOptional;
+
+  /// No description provided for @creditLimitOptional.
+  ///
+  /// In es, this message translates to:
+  /// **'Límite de crédito (opcional)'**
+  String get creditLimitOptional;
+
+  /// No description provided for @limitUsdOptional.
+  ///
+  /// In es, this message translates to:
+  /// **'Límite en US\\\$ (opcional)'**
+  String get limitUsdOptional;
+
+  /// No description provided for @color.
+  ///
+  /// In es, this message translates to:
+  /// **'Color'**
+  String get color;
+
+  /// No description provided for @saveChanges.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar cambios'**
+  String get saveChanges;
+
+  /// No description provided for @archiveCard.
+  ///
+  /// In es, this message translates to:
+  /// **'Archivar tarjeta'**
+  String get archiveCard;
+
+  /// No description provided for @readingCard.
+  ///
+  /// In es, this message translates to:
+  /// **'Leyendo la tarjeta…'**
+  String get readingCard;
+
+  /// No description provided for @bank.
+  ///
+  /// In es, this message translates to:
+  /// **'Banco'**
+  String get bank;
+
+  /// No description provided for @takePhoto.
+  ///
+  /// In es, this message translates to:
+  /// **'Tomar foto'**
+  String get takePhoto;
+
+  /// No description provided for @pickFromGallery.
+  ///
+  /// In es, this message translates to:
+  /// **'Elegir de la galería'**
+  String get pickFromGallery;
+
+  /// No description provided for @permissionAltGallery.
+  ///
+  /// In es, this message translates to:
+  /// **'Puedes activarla en los ajustes o elegir una foto de la galería.'**
+  String get permissionAltGallery;
+
+  /// No description provided for @permissionAltCamera.
+  ///
+  /// In es, this message translates to:
+  /// **'Puedes activarlo en los ajustes o tomar una foto con la cámara.'**
+  String get permissionAltCamera;
+
+  /// No description provided for @allowCamera.
+  ///
+  /// In es, this message translates to:
+  /// **'Permite el uso de la cámara'**
+  String get allowCamera;
+
+  /// No description provided for @allowPhotos.
+  ///
+  /// In es, this message translates to:
+  /// **'Permite el acceso a tus fotos'**
+  String get allowPhotos;
+
+  /// No description provided for @openSettings.
+  ///
+  /// In es, this message translates to:
+  /// **'Abrir ajustes'**
+  String get openSettings;
+
+  /// No description provided for @openSettingsHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Abre los ajustes del teléfono para permitirlo'**
+  String get openSettingsHint;
+
+  /// No description provided for @expenseLoadError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo cargar el gasto'**
+  String get expenseLoadError;
+
+  /// No description provided for @expenseNotFound.
+  ///
+  /// In es, this message translates to:
+  /// **'Gasto no encontrado'**
+  String get expenseNotFound;
+
+  /// No description provided for @newExpenseTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Nuevo gasto'**
+  String get newExpenseTitle;
+
+  /// No description provided for @editExpense.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar gasto'**
+  String get editExpense;
+
+  /// No description provided for @addCardFirst.
+  ///
+  /// In es, this message translates to:
+  /// **'Primero agrega una tarjeta para registrar gastos.'**
+  String get addCardFirst;
+
+  /// No description provided for @deleteExpenseTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Eliminar este gasto?'**
+  String get deleteExpenseTitle;
+
+  /// No description provided for @deleteExpenseBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Se quitará de la tarjeta y de los reportes.'**
+  String get deleteExpenseBody;
+
+  /// No description provided for @scanReceipt.
+  ///
+  /// In es, this message translates to:
+  /// **'Escanear factura (IA)'**
+  String get scanReceipt;
+
+  /// No description provided for @scanReceiptHint.
+  ///
+  /// In es, this message translates to:
+  /// **'La IA lee la foto y propone los datos; tú los revisas antes de guardar. La foto no se guarda.'**
+  String get scanReceiptHint;
+
+  /// No description provided for @merchant.
+  ///
+  /// In es, this message translates to:
+  /// **'Comercio'**
+  String get merchant;
+
+  /// No description provided for @category.
+  ///
+  /// In es, this message translates to:
+  /// **'Categoría'**
+  String get category;
+
+  /// No description provided for @archivedCardExpense.
+  ///
+  /// In es, this message translates to:
+  /// **'La tarjeta de este gasto está archivada: puedes eliminarlo, pero no editarlo.'**
+  String get archivedCardExpense;
+
+  /// No description provided for @expenseCurrency.
+  ///
+  /// In es, this message translates to:
+  /// **'Moneda del gasto'**
+  String get expenseCurrency;
+
+  /// No description provided for @amount.
+  ///
+  /// In es, this message translates to:
+  /// **'Monto'**
+  String get amount;
+
+  /// No description provided for @recordedOnCardAs.
+  ///
+  /// In es, this message translates to:
+  /// **'Se registra en la tarjeta como {amount}'**
+  String recordedOnCardAs(String amount);
+
+  /// No description provided for @date.
+  ///
+  /// In es, this message translates to:
+  /// **'Fecha'**
+  String get date;
+
+  /// No description provided for @notesOptional.
+  ///
+  /// In es, this message translates to:
+  /// **'Notas (opcional)'**
+  String get notesOptional;
+
+  /// No description provided for @saveExpense.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar gasto'**
+  String get saveExpense;
+
+  /// No description provided for @deleteExpense.
+  ///
+  /// In es, this message translates to:
+  /// **'Eliminar gasto'**
+  String get deleteExpense;
+
+  /// No description provided for @readingReceipt.
+  ///
+  /// In es, this message translates to:
+  /// **'Leyendo factura…'**
+  String get readingReceipt;
+
+  /// No description provided for @aiChip.
+  ///
+  /// In es, this message translates to:
+  /// **'IA'**
+  String get aiChip;
+
+  /// No description provided for @rateLoading.
+  ///
+  /// In es, this message translates to:
+  /// **'Buscando la tasa de hoy…'**
+  String get rateLoading;
+
+  /// No description provided for @rateOnline.
+  ///
+  /// In es, this message translates to:
+  /// **'Tasa en línea de hoy. Puedes ajustarla a la de tu banco.'**
+  String get rateOnline;
+
+  /// No description provided for @rateStale.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin conexión: última tasa conocida. Revísala.'**
+  String get rateStale;
+
+  /// No description provided for @rateUnavailable.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo obtener la tasa. Escríbela.'**
+  String get rateUnavailable;
+
+  /// No description provided for @rateIdle.
+  ///
+  /// In es, this message translates to:
+  /// **'Tasa usada en la conversión.'**
+  String get rateIdle;
+
+  /// No description provided for @fieldRateRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Escribe la tasa (ej. 61.40)'**
+  String get fieldRateRequired;
+
+  /// No description provided for @rateLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Tasa (RD\$ por US\$ 1)'**
+  String get rateLabel;
+
+  /// No description provided for @refreshRate.
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar la tasa de hoy'**
+  String get refreshRate;
+
+  /// No description provided for @allDates.
+  ///
+  /// In es, this message translates to:
+  /// **'Todas las fechas'**
+  String get allDates;
+
+  /// No description provided for @merchantContains.
+  ///
+  /// In es, this message translates to:
+  /// **'Comercio contiene'**
+  String get merchantContains;
+
+  /// No description provided for @minAmount.
+  ///
+  /// In es, this message translates to:
+  /// **'Monto mínimo'**
+  String get minAmount;
+
+  /// No description provided for @maxAmount.
+  ///
+  /// In es, this message translates to:
+  /// **'Monto máximo'**
+  String get maxAmount;
+
+  /// No description provided for @apply.
+  ///
+  /// In es, this message translates to:
+  /// **'Aplicar'**
+  String get apply;
+
+  /// No description provided for @newCategory.
+  ///
+  /// In es, this message translates to:
+  /// **'Nueva categoría'**
+  String get newCategory;
+
+  /// No description provided for @editCategory.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar categoría'**
+  String get editCategory;
+
+  /// No description provided for @noOwnCategories.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no has creado categorías.'**
+  String get noOwnCategories;
+
+  /// No description provided for @includedCategories.
+  ///
+  /// In es, this message translates to:
+  /// **'Incluidas'**
+  String get includedCategories;
+
+  /// No description provided for @includedCategoriesHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Vienen con la app y no se pueden cambiar.'**
+  String get includedCategoriesHint;
+
+  /// No description provided for @categoriesLoadError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudieron cargar las categorías'**
+  String get categoriesLoadError;
+
+  /// No description provided for @categoryNotFound.
+  ///
+  /// In es, this message translates to:
+  /// **'Categoría no encontrada'**
+  String get categoryNotFound;
+
+  /// No description provided for @deleteNamedTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Eliminar \"{name}\"?'**
+  String deleteNamedTitle(String name);
+
+  /// No description provided for @categoryNoExpenses.
+  ///
+  /// In es, this message translates to:
+  /// **'No tiene gastos.'**
+  String get categoryNoExpenses;
+
+  /// No description provided for @categoryNameLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Nombre (ej. Mascotas)'**
+  String get categoryNameLabel;
+
+  /// No description provided for @icon.
+  ///
+  /// In es, this message translates to:
+  /// **'Ícono'**
+  String get icon;
+
+  /// No description provided for @colorNumber.
+  ///
+  /// In es, this message translates to:
+  /// **'Color {n}'**
+  String colorNumber(int n);
+
+  /// No description provided for @createCategory.
+  ///
+  /// In es, this message translates to:
+  /// **'Crear categoría'**
+  String get createCategory;
+
+  /// No description provided for @deleteCategory.
+  ///
+  /// In es, this message translates to:
+  /// **'Eliminar categoría'**
+  String get deleteCategory;
+
+  /// No description provided for @categoryHasExpenses.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{\"{name}\" tiene 1 gasto} other{\"{name}\" tiene {count} gastos}}'**
+  String categoryHasExpenses(String name, int count);
+
+  /// No description provided for @reassignHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Para eliminarla, elige a qué categoría pasan.'**
+  String get reassignHint;
+
+  /// No description provided for @moveTo.
+  ///
+  /// In es, this message translates to:
+  /// **'Pasar a'**
+  String get moveTo;
+
+  /// No description provided for @moveAndDelete.
+  ///
+  /// In es, this message translates to:
+  /// **'Mover y eliminar'**
+  String get moveAndDelete;
 }
 
 class _AppLocalizationsDelegate

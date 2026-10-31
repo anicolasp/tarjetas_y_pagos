@@ -10,10 +10,12 @@ import '../../core/formatters.dart';
 import '../../core/money.dart';
 import '../../core/responsive.dart';
 import '../../core/router.dart';
+import '../../core/validators.dart';
 import '../../data/models/category.dart';
 import '../../data/models/credit_card.dart';
 import '../../data/models/expense.dart';
 import '../../data/repositories/expenses_repository.dart';
+import '../../l10n/l10n.dart';
 import '../../services/providers.dart';
 import '../../services/receipt_ai_service.dart';
 import '../auth/auth_widgets.dart';
@@ -42,13 +44,13 @@ class ExpenseFormScreen extends ConsumerWidget {
     );
 
     if (finance.hasError || categories.hasError || expense.hasError) {
-      return message('No se pudo cargar el gasto');
+      return message(context.l10n.expenseLoadError);
     }
     if (!finance.hasValue || !categories.hasValue || !expense.hasValue) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     if (expenseId != null && expense.value == null) {
-      return message('Gasto no encontrado');
+      return message(context.l10n.expenseNotFound);
     }
     final cards = finance.value!.cards;
     if (cards.isEmpty) return const _NoCards();
@@ -69,7 +71,7 @@ class _NoCards extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       key: const ValueKey('expenseForm.noCards'),
-      appBar: AppBar(title: const Text('Nuevo gasto')),
+      appBar: AppBar(title: Text(context.l10n.newExpenseTitle)),
       body: SafeArea(
         child: CenteredScrollView(
           child: ResponsiveCenter(
@@ -79,16 +81,13 @@ class _NoCards extends StatelessWidget {
               children: [
                 const Icon(Icons.credit_card_off_outlined, size: 64),
                 const SizedBox(height: 12),
-                const Text(
-                  'Primero agrega una tarjeta para registrar gastos.',
-                  textAlign: TextAlign.center,
-                ),
+                Text(context.l10n.addCardFirst, textAlign: TextAlign.center),
                 const SizedBox(height: 20),
                 FilledButton.icon(
                   key: const ValueKey('expenseForm.addCard'),
                   onPressed: () => context.pushReplacement(Routes.cardNew),
                   icon: const Icon(Icons.add),
-                  label: const Text('Agregar tarjeta'),
+                  label: Text(context.l10n.addCard),
                 ),
               ],
             ),
@@ -245,15 +244,13 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
         case ReceiptScanRead(:final data):
           _applyReceipt(data);
         case ReceiptScanFailed(:final error):
-          showErrorSnackBar(context, error.message);
+          showErrorSnackBar(context, context.l10n.receiptScanError(error));
         case ReceiptScanPermissionDenied(:final source):
           await explainPhotoPermission(
             context,
             source: source,
             keyPrefix: 'expenseForm',
-            purpose:
-                'leer la factura con la IA. La foto se envía una sola vez '
-                'para leerla y no se guarda.',
+            purpose: context.l10n.scanPurposeReceipt,
             openSettings: service.openSettings,
           );
         case ReceiptScanCancelled():
@@ -369,7 +366,9 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
 
   Future<void> _save() async {
     setState(
-      () => _categoryError = _categoryId == null ? 'Elige una categoría' : null,
+      () => _categoryError = _categoryId == null
+          ? context.l10n.fieldCategoryRequired
+          : null,
     );
     final valid = _form.currentState!.validate();
     if (_saving || !valid || _categoryError != null) return;
@@ -408,8 +407,13 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
       }
       refreshFinance(ref);
       if (mounted) context.pop();
+    } on FieldErrorException catch (e) {
+      // Business rule from the repository: show why.
+      if (mounted) {
+        showErrorSnackBar(context, context.l10n.fieldError(e.error)!);
+      }
     } catch (_) {
-      // Repository errors (ArgumentError/StateError) and I/O failures.
+      // StateError (not found) and I/O failures.
       if (mounted) showErrorSnackBar(context, unexpectedError(context));
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -420,17 +424,17 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('¿Eliminar este gasto?'),
-        content: const Text('Se quitará de la tarjeta y de los reportes.'),
+        title: Text(context.l10n.deleteExpenseTitle),
+        content: Text(context.l10n.deleteExpenseBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
+            child: Text(context.l10n.cancel),
           ),
           FilledButton(
             key: const ValueKey('expenseForm.deleteConfirm'),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Eliminar'),
+            child: Text(context.l10n.delete),
           ),
         ],
       ),
@@ -454,7 +458,11 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
 
     return Scaffold(
       key: const ValueKey('expenseForm.root'),
-      appBar: AppBar(title: Text(_editing ? 'Editar gasto' : 'Nuevo gasto')),
+      appBar: AppBar(
+        title: Text(
+          _editing ? context.l10n.editExpense : context.l10n.newExpenseTitle,
+        ),
+      ),
       body: Stack(
         fit: StackFit.expand,
         children: [
@@ -476,13 +484,12 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
                           ),
                           onPressed: _scanBusy || _saving ? null : _scanReceipt,
                           icon: const Icon(Icons.auto_awesome_outlined),
-                          label: const Text('Escanear factura (IA)'),
+                          label: Text(context.l10n.scanReceipt),
                         ),
                         Padding(
                           padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
                           child: Text(
-                            'La IA lee la foto y propone los datos; tú los '
-                            'revisas antes de guardar. La foto no se guarda.',
+                            context.l10n.scanReceiptHint,
                             style: text.bodySmall,
                           ),
                         ),
@@ -495,18 +502,18 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
                         textInputAction: TextInputAction.next,
                         maxLength: merchantMaxLength,
                         validator: (v) => (v ?? '').trim().isEmpty
-                            ? 'Escribe el comercio'
+                            ? context.l10n.fieldMerchantRequired
                             : null,
-                        decoration: const InputDecoration(
-                          labelText: 'Comercio',
-                          prefixIcon: Icon(Icons.storefront_outlined),
+                        decoration: InputDecoration(
+                          labelText: context.l10n.merchant,
+                          prefixIcon: const Icon(Icons.storefront_outlined),
                           counterText: '',
                         ),
                       ),
                       if (_isFromAi('merchant', _merchant.text))
                         const _AiChip(field: 'merchant'),
                       gap,
-                      Text('Categoría', style: text.labelLarge),
+                      Text(context.l10n.category, style: text.labelLarge),
                       const SizedBox(height: 6),
                       Wrap(
                         spacing: 8,
@@ -523,7 +530,7 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
                                 size: 18,
                                 color: Color(c.color),
                               ),
-                              label: Text(c.name),
+                              label: Text(context.l10n.categoryLabel(c)),
                               selected: _categoryId == c.id,
                               onSelected: (_) => setState(() {
                                 _categoryId = c.id;
@@ -550,8 +557,7 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
                         Padding(
                           padding: const EdgeInsets.only(bottom: 12),
                           child: Text(
-                            'La tarjeta de este gasto está archivada: puedes '
-                            'eliminarlo, pero no editarlo.',
+                            context.l10n.archivedCardExpense,
                             key: const ValueKey('expenseForm.archivedCard'),
                             style: text.bodyMedium?.copyWith(
                               color: scheme.error,
@@ -563,10 +569,10 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
                         initialValue: _cardId,
                         isExpanded: true,
                         validator: (id) =>
-                            id == null ? 'Elige una tarjeta' : null,
-                        decoration: const InputDecoration(
-                          labelText: 'Tarjeta',
-                          prefixIcon: Icon(Icons.credit_card),
+                            id == null ? context.l10n.fieldCardRequired : null,
+                        decoration: InputDecoration(
+                          labelText: context.l10n.card,
+                          prefixIcon: const Icon(Icons.credit_card),
                         ),
                         items: [
                           for (final c in widget.cards)
@@ -582,7 +588,10 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
                         onChanged: _cardArchived ? null : _selectCard,
                       ),
                       gap,
-                      Text('Moneda del gasto', style: text.labelLarge),
+                      Text(
+                        context.l10n.expenseCurrency,
+                        style: text.labelLarge,
+                      ),
                       const SizedBox(height: 6),
                       Wrap(
                         spacing: 8,
@@ -612,10 +621,10 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
                           final cents = parseMoneyToCents(v ?? '');
                           return cents != null && cents > 0
                               ? null
-                              : 'Escribe un monto mayor que 0';
+                              : context.l10n.fieldAmountPositive;
                         },
                         decoration: InputDecoration(
-                          labelText: 'Monto',
+                          labelText: context.l10n.amount,
                           prefixText: '${_currency.symbol} ',
                           prefixIcon: const Icon(Icons.payments_outlined),
                         ),
@@ -634,8 +643,9 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
                           Padding(
                             padding: const EdgeInsets.only(left: 12, top: 8),
                             child: Text(
-                              'Se registra en la tarjeta como '
-                              '${formatMoney(cents, _card!.currency)}',
+                              context.l10n.recordedOnCardAs(
+                                formatMoney(cents, _card!.currency),
+                              ),
                               key: const ValueKey(
                                 'expenseForm.convertedPreview',
                               ),
@@ -651,9 +661,9 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
                         borderRadius: BorderRadius.circular(12),
                         onTap: _pickDate,
                         child: InputDecorator(
-                          decoration: const InputDecoration(
-                            labelText: 'Fecha',
-                            prefixIcon: Icon(Icons.event_outlined),
+                          decoration: InputDecoration(
+                            labelText: context.l10n.date,
+                            prefixIcon: const Icon(Icons.event_outlined),
                           ),
                           child: Text(formatDate(_date)),
                         ),
@@ -668,16 +678,18 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
                         maxLines: 2,
                         minLines: 1,
                         textCapitalization: TextCapitalization.sentences,
-                        decoration: const InputDecoration(
-                          labelText: 'Notas (opcional)',
-                          prefixIcon: Icon(Icons.notes),
+                        decoration: InputDecoration(
+                          labelText: context.l10n.notesOptional,
+                          prefixIcon: const Icon(Icons.notes),
                         ),
                       ),
                       const SizedBox(height: 20),
                       if (!_cardArchived)
                         LoadingButton(
                           key: const ValueKey('expenseForm.save'),
-                          label: _editing ? 'Guardar cambios' : 'Guardar gasto',
+                          label: _editing
+                              ? context.l10n.saveChanges
+                              : context.l10n.saveExpense,
                           loading: _saving,
                           onPressed: _save,
                         ),
@@ -691,7 +703,7 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
                           ),
                           onPressed: _saving ? null : _delete,
                           icon: const Icon(Icons.delete_outline),
-                          label: const Text('Eliminar gasto'),
+                          label: Text(context.l10n.deleteExpense),
                         ),
                       ],
                     ],
@@ -701,9 +713,9 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
             ),
           ),
           if (_scanning)
-            const PhotoReadingOverlay(
-              key: ValueKey('expenseForm.scanning'),
-              message: 'Leyendo factura…',
+            PhotoReadingOverlay(
+              key: const ValueKey('expenseForm.scanning'),
+              message: context.l10n.readingReceipt,
             ),
         ],
       ),
@@ -720,7 +732,7 @@ class _AiChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) => FilledFromPhotoChip(
     key: ValueKey('expenseForm.ai.$field'),
-    label: 'IA',
+    label: context.l10n.aiChip,
     icon: Icons.auto_awesome_outlined,
   );
 }
@@ -741,24 +753,23 @@ class _RateField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final helper = switch (status) {
-      _RateStatus.loading => 'Buscando la tasa de hoy…',
-      _RateStatus.online =>
-        'Tasa en línea de hoy. Puedes ajustarla a la de tu banco.',
-      _RateStatus.stale => 'Sin conexión: última tasa conocida. Revísala.',
-      _RateStatus.unavailable => 'No se pudo obtener la tasa. Escríbela.',
-      _RateStatus.idle => 'Tasa usada en la conversión.',
+      _RateStatus.loading => l.rateLoading,
+      _RateStatus.online => l.rateOnline,
+      _RateStatus.stale => l.rateStale,
+      _RateStatus.unavailable => l.rateUnavailable,
+      _RateStatus.idle => l.rateIdle,
     };
     return TextFormField(
       key: const ValueKey('expenseForm.rate'),
       controller: controller,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       onChanged: (_) => onChanged(),
-      validator: (v) => parseRateMicros(v ?? '') == null
-          ? 'Escribe la tasa (ej. 61.40)'
-          : null,
+      validator: (v) =>
+          parseRateMicros(v ?? '') == null ? l.fieldRateRequired : null,
       decoration: InputDecoration(
-        labelText: 'Tasa (RD\$ por US\$ 1)',
+        labelText: l.rateLabel,
         prefixIcon: const Icon(Icons.currency_exchange),
         helperText: helper,
         helperMaxLines: 2,
@@ -772,7 +783,7 @@ class _RateField extends StatelessWidget {
               )
             : IconButton(
                 key: const ValueKey('expenseForm.rateRefresh'),
-                tooltip: 'Buscar la tasa de hoy',
+                tooltip: l.refreshRate,
                 icon: const Icon(Icons.refresh),
                 onPressed: onRetry,
               ),

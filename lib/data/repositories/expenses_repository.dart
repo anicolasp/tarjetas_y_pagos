@@ -309,10 +309,12 @@ class ExpensesRepository {
   /// Throws [ArgumentError] for invalid data.
   Future<CardPayment> addPayment(int userId, CardPayment payment) async {
     final card = await _activeCard(userId, payment.cardId);
-    if (payment.amountCents <= 0) throw ArgumentError('Monto no válido');
+    if (payment.amountCents <= 0) {
+      throw FieldErrorException(FieldError.amountInvalid);
+    }
     _checkNotFuture(payment.date);
     if (!card.currencies.contains(payment.currency)) {
-      throw ArgumentError('La tarjeta no tiene balance en esa moneda');
+      throw FieldErrorException(FieldError.noBalanceInCurrency);
     }
     final id = await _db.db.insert(
       'card_payments',
@@ -340,16 +342,18 @@ class ExpensesRepository {
 
   Future<Expense> _validated(Expense e) async {
     final merchant = e.merchant.trim();
-    if (merchant.isEmpty) throw ArgumentError('Escribe el comercio');
-    if (merchant.length > merchantMaxLength) {
-      throw ArgumentError('Máximo $merchantMaxLength caracteres');
+    if (merchant.isEmpty) {
+      throw FieldErrorException(FieldError.merchantRequired);
     }
-    if (e.amountCents <= 0) throw ArgumentError('Monto no válido');
+    if (merchant.length > merchantMaxLength) {
+      throw FieldErrorException(FieldError.merchantTooLong);
+    }
+    if (e.amountCents <= 0) throw FieldErrorException(FieldError.amountInvalid);
     _checkNotFuture(e.date);
 
     final card = await _activeCard(e.userId, e.cardId);
     if (!card.currencies.contains(e.currency)) {
-      throw ArgumentError('La tarjeta no tiene balance en esa moneda');
+      throw FieldErrorException(FieldError.noBalanceInCurrency);
     }
     // A conversion records what was paid, in another currency, and the
     // rate; otherwise none of the three is set.
@@ -363,7 +367,7 @@ class ExpensesRepository {
           e.originalCurrency == e.currency ||
           e.originalAmountCents! <= 0 ||
           e.exchangeRateMicros! <= 0) {
-        throw ArgumentError('Conversión no válida');
+        throw FieldErrorException(FieldError.conversionInvalid);
       }
     }
 
@@ -373,7 +377,9 @@ class ExpensesRepository {
       whereArgs: [e.categoryId, e.userId],
       limit: 1,
     );
-    if (category.isEmpty) throw ArgumentError('Elige una categoría');
+    if (category.isEmpty) {
+      throw FieldErrorException(FieldError.categoryRequired);
+    }
 
     return e.copyWith(
       merchant: merchant,
@@ -389,13 +395,13 @@ class ExpensesRepository {
       whereArgs: [cardId, userId],
       limit: 1,
     );
-    if (rows.isEmpty) throw ArgumentError('Elige una tarjeta');
+    if (rows.isEmpty) throw FieldErrorException(FieldError.cardRequired);
     return CreditCard.fromMap(rows.single);
   }
 
   void _checkNotFuture(DateTime date) {
     if (dateOnly(date).isAfter(dateOnly(_clock()))) {
-      throw ArgumentError('La fecha no puede ser futura');
+      throw FieldErrorException(FieldError.dateInFuture);
     }
   }
 }

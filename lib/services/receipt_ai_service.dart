@@ -36,19 +36,16 @@ class ReceiptData {
   bool get isEmpty => merchant == null && amountCents == null;
 }
 
+/// Why a receipt could not be read. The UI words it in the active language
+/// and never shows the API key or the response body.
 enum ReceiptScanError {
-  offline('Sin conexión a internet. Completa el gasto a mano.'),
-  timeout('La IA tardó demasiado. Intenta de nuevo o completa a mano.'),
-  invalidKey('La clave de la IA no es válida. Completa el gasto a mano.'),
-  rateLimited('La IA está recibiendo muchas solicitudes. Intenta en un rato.'),
-  unavailable('La IA no está disponible ahora. Completa el gasto a mano.'),
-  imageTooLarge('La foto es demasiado grande. Prueba con otra.'),
-  invalidResponse('No pudimos leer la factura. Completa el gasto a mano.');
-
-  const ReceiptScanError(this.message);
-
-  /// Shown to the user. Never includes the API key or the response body.
-  final String message;
+  offline,
+  timeout,
+  invalidKey,
+  rateLimited,
+  unavailable,
+  imageTooLarge,
+  invalidResponse,
 }
 
 sealed class ReceiptScanResult {

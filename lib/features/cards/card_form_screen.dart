@@ -11,7 +11,9 @@ import '../../core/formatters.dart';
 import '../../core/money.dart';
 import '../../core/responsive.dart';
 import '../../core/router.dart';
+import '../../core/validators.dart';
 import '../../data/models/credit_card.dart';
+import '../../l10n/l10n.dart';
 import '../../services/card_scan_service.dart';
 import '../../services/providers.dart';
 import '../auth/auth_widgets.dart';
@@ -34,7 +36,7 @@ class CardFormScreen extends ConsumerWidget {
       AsyncData(value: final card?) => _CardForm(card: card),
       AsyncData() || AsyncError() => Scaffold(
         appBar: AppBar(),
-        body: const Center(child: Text('Tarjeta no encontrada')),
+        body: Center(child: Text(context.l10n.cardNotFound)),
       ),
       _ => const Scaffold(body: Center(child: CircularProgressIndicator())),
     };
@@ -173,16 +175,14 @@ class _CardFormState extends ConsumerState<_CardForm> {
       case CardScanNothing():
         showErrorSnackBar(
           context,
-          'No pudimos leer la tarjeta, completa los datos manualmente',
+          context.l10n.cardScanNothing,
         );
       case CardScanPermissionDenied(:final source):
         await explainPhotoPermission(
           context,
           source: source,
           keyPrefix: 'cardForm',
-          purpose:
-              'leer la tarjeta en tu teléfono. La foto no se guarda ni se '
-              'envía, y solo conservamos los últimos 4 dígitos.',
+          purpose: context.l10n.scanPurposeCard,
           openSettings: service.openSettings,
         );
       case CardScanCancelled():
@@ -224,9 +224,9 @@ class _CardFormState extends ConsumerState<_CardForm> {
       refreshFinance(ref);
       // true: saved (the setup wizard moves on).
       if (mounted) context.pop(true);
-    } on ArgumentError catch (e) {
+    } on FieldErrorException catch (e) {
       // Business rule from the repository: show why.
-      if (mounted) showErrorSnackBar(context, '${e.message}');
+      if (mounted) showErrorSnackBar(context, context.l10n.fieldError(e.error)!);
     } catch (_) {
       // StateError and I/O failures.
       if (mounted) showErrorSnackBar(context, unexpectedError(context));
@@ -239,20 +239,17 @@ class _CardFormState extends ConsumerState<_CardForm> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('¿Archivar esta tarjeta?'),
-        content: const Text(
-          'Dejará de aparecer en tus listas y en la recomendación. Sus datos '
-          'se conservan.',
-        ),
+        title: Text(context.l10n.archiveCardTitle),
+        content: Text(context.l10n.archiveCardBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
+            child: Text(context.l10n.cancel),
           ),
           FilledButton(
             key: const ValueKey('cardForm.archiveConfirm'),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Archivar'),
+            child: Text(context.l10n.archive),
           ),
         ],
       ),
@@ -283,7 +280,7 @@ class _CardFormState extends ConsumerState<_CardForm> {
     return Scaffold(
       key: const ValueKey('cardForm.root'),
       appBar: AppBar(
-        title: Text(_editing ? 'Editar tarjeta' : 'Nueva tarjeta'),
+        title: Text(_editing ? context.l10n.editCard : context.l10n.newCard),
       ),
       body: Stack(
         fit: StackFit.expand,
@@ -306,13 +303,12 @@ class _CardFormState extends ConsumerState<_CardForm> {
                           ),
                           onPressed: _scanBusy || _saving ? null : _scan,
                           icon: const Icon(Icons.document_scanner_outlined),
-                          label: const Text('Escanear tarjeta'),
+                          label: Text(context.l10n.scanCard),
                         ),
                         Padding(
                           padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
                           child: Text(
-                            'Leemos la foto en tu teléfono y solo guardamos los '
-                            'últimos 4 dígitos.',
+                            context.l10n.scanCardHint,
                             style: text.bodySmall,
                           ),
                         ),
@@ -324,23 +320,23 @@ class _CardFormState extends ConsumerState<_CardForm> {
                         textCapitalization: TextCapitalization.sentences,
                         textInputAction: TextInputAction.next,
                         validator: (v) => (v ?? '').trim().isEmpty
-                            ? 'Escribe un nombre para la tarjeta'
+                            ? context.l10n.fieldCardAliasRequired
                             : null,
-                        decoration: const InputDecoration(
-                          labelText: 'Nombre (ej. Gastos del mes)',
+                        decoration: InputDecoration(
+                          labelText: context.l10n.cardAliasLabel,
                           prefixIcon: Icon(Icons.label_outline),
                         ),
                       ),
                       gap,
                       _BankField(controller: _bank),
                       if (_isDetected('bank', _bank.text))
-                        const FilledFromPhotoChip(
+                        FilledFromPhotoChip(
                           key: ValueKey('cardForm.detected.bank'),
-                          label: 'Detectado por foto',
+                          label: context.l10n.detectedByPhoto,
                           icon: Icons.photo_camera_outlined,
                         ),
                       gap,
-                      Text('Marca', style: text.labelLarge),
+                      Text(context.l10n.brand, style: text.labelLarge),
                       const SizedBox(height: 6),
                       Wrap(
                         spacing: 8,
@@ -349,16 +345,20 @@ class _CardFormState extends ConsumerState<_CardForm> {
                           for (final b in CardBrand.values)
                             ChoiceChip(
                               key: ValueKey('cardForm.brand.${b.name}'),
-                              label: Text(b.label),
+                              label: Text(
+                                b == CardBrand.other
+                                    ? context.l10n.brandOther
+                                    : b.label,
+                              ),
                               selected: _brand == b,
                               onSelected: (_) => setState(() => _brand = b),
                             ),
                         ],
                       ),
                       if (_isDetected('brand', _brand))
-                        const FilledFromPhotoChip(
+                        FilledFromPhotoChip(
                           key: ValueKey('cardForm.detected.brand'),
-                          label: 'Detectado por foto',
+                          label: context.l10n.detectedByPhoto,
                           icon: Icons.photo_camera_outlined,
                         ),
                       gap,
@@ -373,18 +373,18 @@ class _CardFormState extends ConsumerState<_CardForm> {
                         ],
                         validator: (v) => RegExp(r'^\d{4}$').hasMatch(v ?? '')
                             ? null
-                            : 'Escribe los últimos 4 dígitos',
-                        decoration: const InputDecoration(
-                          labelText: 'Últimos 4 dígitos',
+                            : context.l10n.fieldCardLast4Invalid,
+                        decoration: InputDecoration(
+                          labelText: context.l10n.last4Label,
                           prefixText: '•••• ',
                           prefixIcon: Icon(Icons.pin_outlined),
-                          helperText: 'Nunca guardamos el número completo',
+                          helperText: context.l10n.last4Helper,
                         ),
                       ),
                       if (_isDetected('last4', _last4.text))
-                        const FilledFromPhotoChip(
+                        FilledFromPhotoChip(
                           key: ValueKey('cardForm.detected.last4'),
-                          label: 'Detectado por foto',
+                          label: context.l10n.detectedByPhoto,
                           icon: Icons.photo_camera_outlined,
                         ),
                       gap,
@@ -397,12 +397,11 @@ class _CardFormState extends ConsumerState<_CardForm> {
                           FilteringTextInputFormatter.digitsOnly,
                         ],
                         validator: (v) =>
-                            _range(v, 1, 31, 'Escribe un día del 1 al 31'),
-                        decoration: const InputDecoration(
-                          labelText: 'Día de corte',
+                            _range(v, 1, 31, context.l10n.fieldCutDay),
+                        decoration: InputDecoration(
+                          labelText: context.l10n.cutDayLabel,
                           prefixIcon: Icon(Icons.event_outlined),
-                          helperText:
-                              'Si el mes es más corto, se usa el último día',
+                          helperText: context.l10n.cutDayHelper,
                         ),
                       ),
                       gap,
@@ -415,14 +414,14 @@ class _CardFormState extends ConsumerState<_CardForm> {
                           FilteringTextInputFormatter.digitsOnly,
                         ],
                         validator: (v) =>
-                            _range(v, 0, 60, 'Escribe de 0 a 60 días'),
-                        decoration: const InputDecoration(
-                          labelText: 'Días para pagar después del corte',
+                            _range(v, 0, 60, context.l10n.fieldPaymentDays),
+                        decoration: InputDecoration(
+                          labelText: context.l10n.paymentDaysLabel,
                           prefixIcon: Icon(Icons.hourglass_bottom),
                         ),
                       ),
                       gap,
-                      Text('Moneda', style: text.labelLarge),
+                      Text(context.l10n.currency, style: text.labelLarge),
                       const SizedBox(height: 6),
                       Wrap(
                         spacing: 8,
@@ -440,7 +439,7 @@ class _CardFormState extends ConsumerState<_CardForm> {
                             ),
                           ChoiceChip(
                             key: const ValueKey('cardForm.currency.DUAL'),
-                            label: const Text('RD\$ y US\$ (doble balance)'),
+                            label: Text(context.l10n.dualBalanceOption),
                             selected: _dual,
                             onSelected: (_) => setState(() {
                               _dual = true;
@@ -453,8 +452,8 @@ class _CardFormState extends ConsumerState<_CardForm> {
                         padding: const EdgeInsets.only(left: 12, top: 6),
                         child: Text(
                           _dual
-                              ? 'Cada gasto queda en su moneda, con un límite por moneda.'
-                              : 'Los gastos en otra moneda se convierten a esta.',
+                              ? context.l10n.dualBalanceHint
+                              : context.l10n.singleCurrencyHint,
                           style: text.bodySmall,
                         ),
                       ),
@@ -472,12 +471,12 @@ class _CardFormState extends ConsumerState<_CardForm> {
                           final cents = parseMoneyToCents(v!);
                           return cents != null && cents > 0
                               ? null
-                              : 'Monto no válido (ej. 50000 o 50,000.00)';
+                              : context.l10n.fieldLimitInvalid;
                         },
                         decoration: InputDecoration(
                           labelText: _dual
-                              ? 'Límite en RD\$ (opcional)'
-                              : 'Límite de crédito (opcional)',
+                              ? context.l10n.limitDopOptional
+                              : context.l10n.creditLimitOptional,
                           prefixText: '${_currency.symbol} ',
                           prefixIcon: const Icon(Icons.account_balance_wallet),
                         ),
@@ -495,17 +494,17 @@ class _CardFormState extends ConsumerState<_CardForm> {
                             final cents = parseMoneyToCents(v!);
                             return cents != null && cents > 0
                                 ? null
-                                : 'Monto no válido (ej. 50000 o 50,000.00)';
+                                : context.l10n.fieldLimitInvalid;
                           },
-                          decoration: const InputDecoration(
-                            labelText: 'Límite en US\$ (opcional)',
+                          decoration: InputDecoration(
+                            labelText: context.l10n.limitUsdOptional,
                             prefixText: 'US\$ ',
                             prefixIcon: Icon(Icons.account_balance_wallet),
                           ),
                         ),
                       ],
                       gap,
-                      Text('Color', style: text.labelLarge),
+                      Text(context.l10n.color, style: text.labelLarge),
                       const SizedBox(height: 6),
                       Wrap(
                         spacing: 10,
@@ -523,7 +522,7 @@ class _CardFormState extends ConsumerState<_CardForm> {
                       const SizedBox(height: 28),
                       LoadingButton(
                         key: const ValueKey('cardForm.save'),
-                        label: _editing ? 'Guardar cambios' : 'Agregar tarjeta',
+                        label: _editing ? context.l10n.saveChanges : context.l10n.addCard,
                         loading: _saving,
                         onPressed: _save,
                       ),
@@ -539,7 +538,7 @@ class _CardFormState extends ConsumerState<_CardForm> {
                           ),
                           onPressed: _saving ? null : _archive,
                           icon: const Icon(Icons.archive_outlined),
-                          label: const Text('Archivar tarjeta'),
+                          label: Text(context.l10n.archiveCard),
                         ),
                       ],
                     ],
@@ -549,9 +548,9 @@ class _CardFormState extends ConsumerState<_CardForm> {
             ),
           ),
           if (_scanning)
-            const PhotoReadingOverlay(
+            PhotoReadingOverlay(
               key: ValueKey('cardForm.scanning'),
-              message: 'Leyendo la tarjeta…',
+              message: context.l10n.readingCard,
             ),
         ],
       ),
@@ -596,9 +595,9 @@ class _BankFieldState extends State<_BankField> {
             textCapitalization: TextCapitalization.words,
             textInputAction: TextInputAction.next,
             validator: (v) =>
-                (v ?? '').trim().isEmpty ? 'Escribe el banco' : null,
-            decoration: const InputDecoration(
-              labelText: 'Banco',
+                (v ?? '').trim().isEmpty ? context.l10n.fieldCardBankRequired : null,
+            decoration: InputDecoration(
+              labelText: context.l10n.bank,
               prefixIcon: Icon(Icons.account_balance),
             ),
           ),

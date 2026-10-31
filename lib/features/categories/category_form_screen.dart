@@ -4,8 +4,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/category_icons.dart';
 import '../../core/responsive.dart';
+import '../../core/validators.dart';
 import '../../data/models/category.dart';
 import '../../data/repositories/categories_repository.dart';
+import '../../l10n/l10n.dart';
 import '../auth/auth_widgets.dart';
 import '../cards/cards_providers.dart';
 import '../reports/chart_colors.dart';
@@ -26,9 +28,9 @@ class CategoryFormScreen extends ConsumerWidget {
         appBar: AppBar(),
         body: Center(
           child: categories.hasError
-              ? const Text(
-                  'No se pudieron cargar las categorías',
-                  key: ValueKey('categoryForm.loadError'),
+              ? Text(
+                  context.l10n.categoriesLoadError,
+                  key: const ValueKey('categoryForm.loadError'),
                 )
               : const CircularProgressIndicator(),
         ),
@@ -38,7 +40,7 @@ class CategoryFormScreen extends ConsumerWidget {
     if (own.isEmpty) {
       return Scaffold(
         appBar: AppBar(),
-        body: const Center(child: Text('Categoría no encontrada')),
+        body: Center(child: Text(context.l10n.categoryNotFound)),
       );
     }
     return _CategoryForm(category: own.single);
@@ -90,8 +92,10 @@ class _CategoryFormState extends ConsumerState<_CategoryForm> {
       }
       refreshCategories(ref);
       if (mounted) context.pop();
-    } on ArgumentError catch (e) {
-      if (mounted) showErrorSnackBar(context, '${e.message}');
+    } on FieldErrorException catch (e) {
+      if (mounted) {
+        showErrorSnackBar(context, context.l10n.fieldError(e.error)!);
+      }
     } catch (_) {
       if (mounted) showErrorSnackBar(context, unexpectedError(context));
     } finally {
@@ -116,8 +120,8 @@ class _CategoryFormState extends ConsumerState<_CategoryForm> {
       if (count == 0) {
         final ok = await confirmDestructive(
           context,
-          title: '¿Eliminar "${c.name}"?',
-          body: 'No tiene gastos.',
+          title: context.l10n.deleteNamedTitle(c.name),
+          body: context.l10n.categoryNoExpenses,
           confirmKey: const ValueKey('categoryForm.deleteConfirm'),
         );
         if (!ok) return;
@@ -158,7 +162,9 @@ class _CategoryFormState extends ConsumerState<_CategoryForm> {
     return Scaffold(
       key: const ValueKey('categoryForm.root'),
       appBar: AppBar(
-        title: Text(_editing ? 'Editar categoría' : 'Nueva categoría'),
+        title: Text(
+          _editing ? context.l10n.editCategory : context.l10n.newCategory,
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -175,10 +181,11 @@ class _CategoryFormState extends ConsumerState<_CategoryForm> {
                     controller: _name,
                     textCapitalization: TextCapitalization.sentences,
                     maxLength: categoryNameMaxLength,
-                    validator: (v) =>
-                        (v ?? '').trim().isEmpty ? 'Escribe un nombre' : null,
+                    validator: (v) => (v ?? '').trim().isEmpty
+                        ? context.l10n.fieldCategoryNameRequired
+                        : null,
                     decoration: InputDecoration(
-                      labelText: 'Nombre (ej. Mascotas)',
+                      labelText: context.l10n.categoryNameLabel,
                       prefixIcon: Icon(
                         categoryIcon(_icon),
                         color: readableOn(
@@ -190,7 +197,7 @@ class _CategoryFormState extends ConsumerState<_CategoryForm> {
                     ),
                   ),
                   gap,
-                  Text('Ícono', style: text.labelLarge),
+                  Text(context.l10n.icon, style: text.labelLarge),
                   const SizedBox(height: 6),
                   Wrap(
                     spacing: 8,
@@ -209,7 +216,7 @@ class _CategoryFormState extends ConsumerState<_CategoryForm> {
                     ],
                   ),
                   gap,
-                  Text('Color', style: text.labelLarge),
+                  Text(context.l10n.color, style: text.labelLarge),
                   const SizedBox(height: 6),
                   Wrap(
                     spacing: 10,
@@ -219,7 +226,7 @@ class _CategoryFormState extends ConsumerState<_CategoryForm> {
                         Semantics(
                           button: true,
                           selected: _color == c,
-                          label: 'Color ${i + 1}',
+                          label: context.l10n.colorNumber(i + 1),
                           child: InkResponse(
                             key: ValueKey('categoryForm.color.$i'),
                             onTap: () => setState(() => _color = c),
@@ -248,7 +255,9 @@ class _CategoryFormState extends ConsumerState<_CategoryForm> {
                   const SizedBox(height: 28),
                   LoadingButton(
                     key: const ValueKey('categoryForm.save'),
-                    label: _editing ? 'Guardar cambios' : 'Crear categoría',
+                    label: _editing
+                        ? context.l10n.saveChanges
+                        : context.l10n.createCategory,
                     loading: _saving,
                     onPressed: _save,
                   ),
@@ -262,7 +271,7 @@ class _CategoryFormState extends ConsumerState<_CategoryForm> {
                       ),
                       onPressed: _saving ? null : _delete,
                       icon: const Icon(Icons.delete_outline),
-                      label: const Text('Eliminar categoría'),
+                      label: Text(context.l10n.deleteCategory),
                     ),
                   ],
                 ],
@@ -300,18 +309,18 @@ class _ReassignDialogState extends State<_ReassignDialog> {
     return AlertDialog(
       key: const ValueKey('categoryForm.reassignDialog'),
       scrollable: true,
-      title: Text('"${widget.name}" tiene $n ${n == 1 ? 'gasto' : 'gastos'}'),
+      title: Text(context.l10n.categoryHasExpenses(widget.name, n)),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('Para eliminarla, elige a qué categoría pasan.'),
+          Text(context.l10n.reassignHint),
           const SizedBox(height: 12),
           DropdownButtonFormField<int>(
             key: const ValueKey('categoryForm.reassignTo'),
             initialValue: _target,
             isExpanded: true,
-            decoration: const InputDecoration(labelText: 'Pasar a'),
+            decoration: InputDecoration(labelText: context.l10n.moveTo),
             items: [
               for (final c in widget.options)
                 DropdownMenuItem(
@@ -328,7 +337,10 @@ class _ReassignDialogState extends State<_ReassignDialog> {
                       ),
                       const SizedBox(width: 8),
                       Flexible(
-                        child: Text(c.name, overflow: TextOverflow.ellipsis),
+                        child: Text(
+                          context.l10n.categoryLabel(c),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ],
                   ),
@@ -341,12 +353,12 @@ class _ReassignDialogState extends State<_ReassignDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancelar'),
+          child: Text(context.l10n.cancel),
         ),
         FilledButton(
           key: const ValueKey('categoryForm.reassignConfirm'),
           onPressed: () => Navigator.pop(context, _target),
-          child: const Text('Mover y eliminar'),
+          child: Text(context.l10n.moveAndDelete),
         ),
       ],
     );
