@@ -940,12 +940,6 @@ abstract class AppLocalizations {
   /// **'Configura una pregunta para poder recuperar tu contraseña.'**
   String get securityQuestionMissing;
 
-  /// No description provided for @securityQuestionNotSet.
-  ///
-  /// In es, this message translates to:
-  /// **'Sin configurar'**
-  String get securityQuestionNotSet;
-
   /// No description provided for @securityQuestionSaved.
   ///
   /// In es, this message translates to:

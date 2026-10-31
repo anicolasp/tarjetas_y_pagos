@@ -48,6 +48,8 @@ void main() {
     expect(normalizeSecurityAnswer('  Santo   Domingo '), 'santo domingo');
     expect(normalizeSecurityAnswer('SÁNTO DOMÍNGO'), 'santo domingo');
     expect(normalizeSecurityAnswer('Peña'), 'pena');
+    // Decomposed accents (a + U+0301), as some keyboards send them.
+    expect(normalizeSecurityAnswer('Bogota\u0301'), 'bogota');
   });
 
   test('the answer is stored only as a salted hash', () async {

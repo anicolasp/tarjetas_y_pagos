@@ -104,5 +104,7 @@ String normalizeSecurityAnswer(String answer) {
   for (final ch in lower.split('')) {
     out.write(_accents[ch] ?? ch);
   }
-  return out.toString();
+  // Some keyboards send "á" as "a" + a combining accent (NFD): drop those
+  // marks too, so the answer matches however it was typed.
+  return out.toString().replaceAll(RegExp('[\u0300-\u036f]'), '');
 }

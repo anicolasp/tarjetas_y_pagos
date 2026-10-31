@@ -485,8 +485,5 @@ class AppLocalizationsFr extends AppLocalizations {
       'Configurez une question pour pouvoir récupérer votre mot de passe.';
 
   @override
-  String get securityQuestionNotSet => 'Non configurée';
-
-  @override
   String get securityQuestionSaved => 'Question de sécurité enregistrée';
 }

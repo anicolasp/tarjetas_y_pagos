@@ -163,6 +163,42 @@ void main() {
     );
   });
 
+  testWidgets('an error on the last step goes back to its step', (
+    tester,
+  ) async {
+    await seedAna();
+    await start(tester);
+    await tap(tester, 'login.forgot');
+    await tester.enterText(key('forgot.email'), 'ana@example.com');
+    await tap(tester, 'forgot.next');
+    await tester.enterText(key('forgot.answer'), 'Santo Domingo');
+    await tap(tester, 'forgot.next');
+    // The account disappears before saving (another session, a restore…).
+    await db.db.delete('users');
+    await tester.enterText(key('forgot.newPassword'), 'nueva2026');
+    await tester.enterText(key('forgot.confirm'), 'nueva2026');
+    await tap(tester, 'forgot.save');
+    expect(find.text('Paso 1 de 3'), findsOneWidget);
+    expect(
+      find.text('No encontramos una cuenta con ese correo'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('Done on the keyboard submits the registration', (tester) async {
+    await start(tester);
+    await tap(tester, 'login.register');
+    await tester.enterText(key('register.firstName'), 'Ana');
+    await tester.enterText(key('register.lastName'), 'Prueba');
+    await tester.enterText(key('register.email'), 'ana@example.com');
+    await tester.enterText(key('register.password'), 'abc12345');
+    await tester.enterText(key('register.confirm'), 'abc12345');
+    await pickSecurityQuestion(tester, 'register');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+    expect(key('setup.root'), findsOneWidget);
+  });
+
   testWidgets('back goes to the previous step, then to the login', (
     tester,
   ) async {

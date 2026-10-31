@@ -53,11 +53,16 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     try {
       switch (_step) {
         case 0:
-          _question = await _auth.securityQuestionFor(_email.text);
-          setState(() => _step = 1);
+          final question = await _auth.securityQuestionFor(_email.text);
+          if (mounted) {
+            setState(() {
+              _question = question;
+              _step = 1;
+            });
+          }
         case 1:
           await _auth.checkSecurityAnswer(_email.text, _answer.text);
-          setState(() => _step = 2);
+          if (mounted) setState(() => _step = 2);
         default:
           await _auth.resetPasswordWithAnswer(
             email: _email.text,
@@ -69,11 +74,11 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           context.pop();
       }
     } on AccountNotFoundException {
-      setState(() => _emailError = l.accountNotFound);
+      _showError(step: 0, field: () => _emailError = l.accountNotFound);
     } on NoSecurityQuestionException {
-      setState(() => _emailError = l.noSecurityQuestion);
+      _showError(step: 0, field: () => _emailError = l.noSecurityQuestion);
     } on WrongAnswerException {
-      setState(() => _answerError = l.wrongAnswer);
+      _showError(step: 1, field: () => _answerError = l.wrongAnswer);
     } on LockedOutException catch (e) {
       if (mounted) {
         showErrorSnackBar(
@@ -88,6 +93,16 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  /// Shows an error under the field of [step], going back to it if the
+  /// error comes later (e.g. the account changed before the last step).
+  void _showError({required int step, required void Function() field}) {
+    if (!mounted) return;
+    setState(() {
+      _step = step;
+      field();
+    });
   }
 
   @override
@@ -181,9 +196,10 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
     return PopScope(
       // Android back goes to the previous step, then to the login.
-      canPop: _step == 0,
+      // While a check runs, back waits: the step it answers must not move.
+      canPop: _step == 0 && !_loading,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) setState(() => _step--);
+        if (!didPop && !_loading && _step > 0) setState(() => _step--);
       },
       child: AuthScaffold(
         key: const ValueKey('forgot.root'),

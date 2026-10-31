@@ -140,6 +140,5 @@
   "noSecurityQuestion": "This account has no security question",
   "wrongAnswer": "The answer is wrong",
   "securityQuestionMissing": "Set a question so you can recover your password.",
-  "securityQuestionNotSet": "Not set",
   "securityQuestionSaved": "Security question saved"
 }

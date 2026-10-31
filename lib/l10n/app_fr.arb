@@ -140,6 +140,5 @@
   "noSecurityQuestion": "Ce compte n'a pas de question de sécurité",
   "wrongAnswer": "La réponse est incorrecte",
   "securityQuestionMissing": "Configurez une question pour pouvoir récupérer votre mot de passe.",
-  "securityQuestionNotSet": "Non configurée",
   "securityQuestionSaved": "Question de sécurité enregistrée"
 }

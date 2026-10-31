@@ -118,26 +118,17 @@ class AuthRepository {
   /// Throws [LockedOutException] or [InvalidCredentialsException].
   Future<AppUser> login(String email, String password) async {
     final normalized = normalizeEmail(email);
-    final locked = _throttle.lockedFor(normalized);
-    if (locked != null) throw LockedOutException(locked);
-
-    final user = await _findByEmail(normalized);
-    final valid = user == null
-        ? await _hasher.hash(password, _dummySalt).then((_) => false)
-        : await _hasher.verify(password, user.salt, user.passwordHash);
-
-    if (!valid) {
-      await _throttle.registerFailure(normalized);
-      final nowLocked = _throttle.lockedFor(normalized);
-      if (nowLocked != null) throw LockedOutException(nowLocked);
-      throw const InvalidCredentialsException();
-    }
-
-    await _throttle.reset(normalized);
+    AppUser? user;
+    await _throttled(normalized, const InvalidCredentialsException(), () async {
+      user = await _findByEmail(normalized);
+      return user == null
+          ? await _hasher.hash(password, _dummySalt).then((_) => false)
+          : await _hasher.verify(password, user!.salt, user!.passwordHash);
+    });
     if (_hasher.needsRehash(user!.passwordHash)) {
-      return _rehash(user, password);
+      return _rehash(user!, password);
     }
-    return user;
+    return user!;
   }
 
   Future<AppUser?> getById(int id) async {
@@ -276,29 +267,23 @@ class AuthRepository {
 
   Future<AppUser> _userWithAnswer(String email, String answer) async {
     final normalized = normalizeEmail(email);
-    final locked = _throttle.lockedFor(normalized);
-    if (locked != null) throw LockedOutException(locked);
-
-    final rows = await _db.db.query(
-      'users',
-      where: 'email = ?',
-      whereArgs: [normalized],
-      limit: 1,
-    );
-    if (rows.isEmpty) throw const AccountNotFoundException();
-    final row = rows.single;
-    final hash = row['security_answer_hash'] as String?;
-    final salt = row['security_salt'] as String?;
-    if (hash == null || salt == null) {
-      throw const NoSecurityQuestionException();
-    }
-    if (!await _hasher.verify(normalizeSecurityAnswer(answer), salt, hash)) {
-      await _throttle.registerFailure(normalized);
-      final nowLocked = _throttle.lockedFor(normalized);
-      if (nowLocked != null) throw LockedOutException(nowLocked);
-      throw const WrongAnswerException();
-    }
-    await _throttle.reset(normalized);
+    late final Map<String, Object?> row;
+    await _throttled(normalized, const WrongAnswerException(), () async {
+      final rows = await _db.db.query(
+        'users',
+        where: 'email = ?',
+        whereArgs: [normalized],
+        limit: 1,
+      );
+      if (rows.isEmpty) throw const AccountNotFoundException();
+      row = rows.single;
+      final hash = row['security_answer_hash'] as String?;
+      final salt = row['security_salt'] as String?;
+      if (hash == null || salt == null) {
+        throw const NoSecurityQuestionException();
+      }
+      return _hasher.verify(normalizeSecurityAnswer(answer), salt, hash);
+    });
     return AppUser.fromMap(row);
   }
 
@@ -343,16 +328,32 @@ class AuthRepository {
   Future<AppUser> _verifiedUser(int userId, String password) async {
     final user = await getById(userId);
     if (user == null) throw StateError('Usuario no encontrado');
-    final locked = _throttle.lockedFor(user.email);
-    if (locked != null) throw LockedOutException(locked);
-    if (!await _hasher.verify(password, user.salt, user.passwordHash)) {
-      await _throttle.registerFailure(user.email);
-      final nowLocked = _throttle.lockedFor(user.email);
-      if (nowLocked != null) throw LockedOutException(nowLocked);
-      throw const WrongPasswordException();
-    }
-    await _throttle.reset(user.email);
+    await _throttled(
+      user.email,
+      const WrongPasswordException(),
+      () => _hasher.verify(password, user.salt, user.passwordHash),
+    );
     return user;
+  }
+
+  /// One guess (password or answer) for [email], under the login's
+  /// progressive lockout: locked → [LockedOutException]; [check] false →
+  /// counts a failure and throws [wrong] (or the lockout it caused); true
+  /// → the failures are forgotten.
+  Future<void> _throttled(
+    String email,
+    Exception wrong,
+    Future<bool> Function() check,
+  ) async {
+    final locked = _throttle.lockedFor(email);
+    if (locked != null) throw LockedOutException(locked);
+    if (!await check()) {
+      await _throttle.registerFailure(email);
+      final nowLocked = _throttle.lockedFor(email);
+      if (nowLocked != null) throw LockedOutException(nowLocked);
+      throw wrong;
+    }
+    await _throttle.reset(email);
   }
 
   Future<AppUser> _update(int userId, Map<String, Object?> values) async {

@@ -169,6 +169,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   input: _security,
                   keyPrefix: 'register',
                   textInputAction: TextInputAction.done,
+                  onSubmitted: _submit,
                 ),
               ],
             ),

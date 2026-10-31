@@ -47,11 +47,15 @@ class SecurityQuestionFields extends StatefulWidget {
     required this.input,
     required this.keyPrefix,
     this.textInputAction = TextInputAction.next,
+    this.onSubmitted,
   });
 
   final SecurityQuestionInput input;
   final String keyPrefix;
   final TextInputAction textInputAction;
+
+  /// The keyboard's action on the answer, the last field.
+  final VoidCallback? onSubmitted;
 
   @override
   State<SecurityQuestionFields> createState() => _SecurityQuestionFieldsState();
@@ -129,6 +133,9 @@ class _SecurityQuestionFieldsState extends State<SecurityQuestionFields> {
           enableSuggestions: false,
           maxLength: securityAnswerMaxLength,
           validator: (v) => l.fieldError(validateSecurityAnswer(v)),
+          onFieldSubmitted: widget.onSubmitted == null
+              ? null
+              : (_) => widget.onSubmitted!(),
           decoration: InputDecoration(
             labelText: l.securityAnswerLabel,
             prefixIcon: const Icon(Icons.key_outlined),

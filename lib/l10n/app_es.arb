@@ -230,6 +230,5 @@
   "noSecurityQuestion": "Esta cuenta no tiene pregunta de seguridad",
   "wrongAnswer": "La respuesta no es correcta",
   "securityQuestionMissing": "Configura una pregunta para poder recuperar tu contraseña.",
-  "securityQuestionNotSet": "Sin configurar",
   "securityQuestionSaved": "Pregunta de seguridad guardada"
 }

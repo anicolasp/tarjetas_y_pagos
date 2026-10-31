@@ -477,8 +477,5 @@ class AppLocalizationsEn extends AppLocalizations {
       'Set a question so you can recover your password.';
 
   @override
-  String get securityQuestionNotSet => 'Not set';
-
-  @override
   String get securityQuestionSaved => 'Security question saved';
 }

@@ -379,6 +379,18 @@ class _SecurityQuestionScreenState extends ConsumerState<SecurityQuestionScreen>
     super.dispose();
   }
 
+  Future<void> _save() => submit(
+    _form,
+    () => ref
+        .read(authControllerProvider.notifier)
+        .setSecurityQuestion(
+          currentPassword: current.text,
+          question: _security.question,
+          answer: _security.answer.text,
+        ),
+    context.l10n.securityQuestionSaved,
+  );
+
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
@@ -388,17 +400,7 @@ class _SecurityQuestionScreenState extends ConsumerState<SecurityQuestionScreen>
       formKey: _form,
       saveKey: const ValueKey('securityQuestion.save'),
       saving: saving,
-      onSave: () => submit(
-        _form,
-        () => ref
-            .read(authControllerProvider.notifier)
-            .setSecurityQuestion(
-              currentPassword: current.text,
-              question: _security.question,
-              answer: _security.answer.text,
-            ),
-        l.securityQuestionSaved,
-      ),
+      onSave: _save,
       children: [
         Text(l.registerSecurityHint),
         const SizedBox(height: 14),
@@ -411,6 +413,7 @@ class _SecurityQuestionScreenState extends ConsumerState<SecurityQuestionScreen>
           label: l.currentPasswordLabel,
           textInputAction: TextInputAction.done,
           autofillHints: const [AutofillHints.password],
+          onSubmitted: (_) => _save(),
           validator: validateCurrent,
         ),
       ],
