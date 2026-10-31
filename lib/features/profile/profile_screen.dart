@@ -3,9 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/greeting.dart';
+import '../../core/language.dart';
 import '../../core/money.dart';
 import '../../core/responsive.dart';
 import '../../core/router.dart';
+import '../../core/validators.dart';
+import '../../l10n/l10n.dart';
 import '../auth/auth_controller.dart';
 import '../auth/auth_widgets.dart';
 import '../cards/cards_providers.dart';
@@ -31,10 +34,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     setState(() => _busy = true);
     try {
       await action();
-    } on ArgumentError catch (e) {
-      if (mounted) showErrorSnackBar(context, '${e.message}');
+    } on FieldErrorException catch (e) {
+      if (mounted) {
+        showErrorSnackBar(context, context.l10n.fieldError(e.error)!);
+      }
     } catch (_) {
-      if (mounted) showErrorSnackBar(context, unexpectedErrorMessage);
+      if (mounted) showErrorSnackBar(context, unexpectedError(context));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -46,23 +51,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     if (!mounted) return;
     switch (result) {
       case EnableBiometricsResult.enabled:
-        showErrorSnackBar(context, 'Listo: la app te pedirá tu huella.');
+        showErrorSnackBar(context, context.l10n.fingerprintEnabled);
       case EnableBiometricsResult.unavailable:
-        showErrorSnackBar(
-          context,
-          'Configura una huella en los ajustes del teléfono primero.',
-        );
+        showErrorSnackBar(context, context.l10n.fingerprintUnavailable);
       case EnableBiometricsResult.notConfirmed:
-        showErrorSnackBar(context, 'No se confirmó la huella.');
+        showErrorSnackBar(context, context.l10n.fingerprintNotConfirmed);
     }
   });
 
   Future<void> _logout() async {
     final confirmed = await confirmDestructive(
       context,
-      title: '¿Cerrar sesión?',
-      body: 'Tus datos quedan guardados en este teléfono.',
-      confirmLabel: 'Cerrar sesión',
+      title: context.l10n.logoutConfirmTitle,
+      body: context.l10n.logoutConfirmBody,
+      confirmLabel: context.l10n.logout,
       confirmKey: const ValueKey('profile.logoutConfirm'),
     );
     if (confirmed) await _auth.logout();
@@ -74,11 +76,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     if (user == null) return const SizedBox.shrink();
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
+    final l = context.l10n;
     const gap = SizedBox(height: 16);
 
     return Scaffold(
       key: const ValueKey('profile.root'),
-      appBar: AppBar(title: const Text('Mi perfil')),
+      appBar: AppBar(title: Text(l.profileTitle)),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(vertical: 16),
@@ -116,39 +119,37 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
                 gap,
                 _Section(
-                  title: 'Datos',
+                  title: l.sectionData,
                   children: [
                     _NavTile(
                       key: const ValueKey('profile.editName'),
                       icon: Icons.badge_outlined,
-                      title: 'Nombre y apellido',
+                      title: l.nameAndSurname,
                       onTap: () => context.push(Routes.profileName),
                     ),
                     _NavTile(
                       key: const ValueKey('profile.changeEmail'),
                       icon: Icons.alternate_email,
-                      title: 'Cambiar correo',
+                      title: l.changeEmail,
                       onTap: () => context.push(Routes.profileEmail),
                     ),
                     _NavTile(
                       key: const ValueKey('profile.changePassword'),
                       icon: Icons.password,
-                      title: 'Cambiar contraseña',
+                      title: l.changePassword,
                       onTap: () => context.push(Routes.profilePassword),
                     ),
                   ],
                 ),
                 gap,
                 _Section(
-                  title: 'Seguridad',
+                  title: l.sectionSecurity,
                   children: [
                     SwitchListTile(
                       key: const ValueKey('profile.biometric'),
                       secondary: const Icon(Icons.fingerprint),
-                      title: const Text('Entrar con huella'),
-                      subtitle: const Text(
-                        'Al abrir la app se pide tu huella.',
-                      ),
+                      title: Text(l.fingerprintLogin),
+                      subtitle: Text(l.fingerprintLoginSubtitle),
                       value: user.biometricEnabled,
                       onChanged: _busy ? null : _toggleBiometrics,
                     ),
@@ -156,8 +157,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
                 gap,
                 _Section(
-                  title: 'Apariencia',
+                  title: l.sectionAppearance,
                   children: [
+                    _FieldLabel(l.themeLabel),
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
                       child: Wrap(
@@ -165,12 +167,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         spacing: 8,
                         runSpacing: 8,
                         children: [
-                          for (final (mode, label, icon) in const [
-                            (ThemeMode.light, 'Claro', Icons.light_mode),
-                            (ThemeMode.dark, 'Oscuro', Icons.dark_mode),
+                          for (final (mode, label, icon) in [
+                            (ThemeMode.light, l.themeLight, Icons.light_mode),
+                            (ThemeMode.dark, l.themeDark, Icons.dark_mode),
                             (
                               ThemeMode.system,
-                              'Sistema',
+                              l.themeSystem,
                               Icons.brightness_auto,
                             ),
                           ])
@@ -187,19 +189,41 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         ],
                       ),
                     ),
+                    _FieldLabel(l.languageLabel),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                      child: Wrap(
+                        key: const ValueKey('profile.language'),
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          for (final language in AppLanguage.values)
+                            ChoiceChip(
+                              key: ValueKey(
+                                'profile.language.${language.code}',
+                              ),
+                              // Each language in its own words, so anyone can
+                              // find theirs.
+                              label: Text(language.nativeName),
+                              selected: user.language == language,
+                              onSelected: (_) => user.language == language
+                                  ? null
+                                  : _run(
+                                      () => _auth.updatePreferences(
+                                        language: language,
+                                      ),
+                                    ),
+                            ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
                 gap,
                 _Section(
-                  title: 'Preferencias',
+                  title: l.sectionPreferences,
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-                      child: Text(
-                        'Moneda predeterminada',
-                        style: text.bodyLarge,
-                      ),
-                    ),
+                    _FieldLabel(l.defaultCurrency),
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
                       child: Wrap(
@@ -232,12 +256,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
                 gap,
                 _Section(
-                  title: 'Categorías',
+                  title: l.sectionCategories,
                   children: [
                     _NavTile(
                       key: const ValueKey('profile.categories'),
                       icon: Icons.category_outlined,
-                      title: 'Mis categorías',
+                      title: l.myCategories,
                       onTap: () => context.push(Routes.categories),
                     ),
                   ],
@@ -251,13 +275,28 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                   onPressed: _logout,
                   icon: const Icon(Icons.logout),
-                  label: const Text('Cerrar sesión'),
+                  label: Text(l.logout),
                 ),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+/// The label above a group of chips inside a section.
+class _FieldLabel extends StatelessWidget {
+  const _FieldLabel(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      child: Text(text, style: Theme.of(context).textTheme.bodyLarge),
     );
   }
 }
@@ -330,7 +369,7 @@ class _NotifyDays extends StatelessWidget {
         alignment: WrapAlignment.spaceBetween,
         spacing: 8,
         children: [
-          Text('Avisarme antes de', style: text.bodyLarge),
+          Text(context.l10n.notifyBefore, style: text.bodyLarge),
           NoticeDaysStepper(
             days: days,
             onChanged: onChanged,

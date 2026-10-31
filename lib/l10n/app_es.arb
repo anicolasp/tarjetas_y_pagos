@@ -1,0 +1,201 @@
+{
+  "@@locale": "es",
+  "appTitle": "Tarjetas y Pagos",
+  "appTagline": "Tus tarjetas, gastos y deudas en un solo lugar",
+  "retry": "Reintentar",
+  "databaseOpenError": "No se pudo abrir la base de datos",
+  "skip": "Omitir",
+  "next": "Siguiente",
+  "getStarted": "Empezar",
+  "save": "Guardar",
+  "cancel": "Cancelar",
+  "delete": "Eliminar",
+  "back": "Atrás",
+  "notNow": "Ahora no",
+  "activate": "Activar",
+  "unexpectedError": "Ocurrió un error. Intenta de nuevo.",
+  "showPassword": "Mostrar contraseña",
+  "hidePassword": "Ocultar contraseña",
+  "emailLabel": "Correo",
+  "passwordLabel": "Contraseña",
+  "firstNameLabel": "Nombre",
+  "lastNameLabel": "Apellido",
+  "passwordRulesHint": "Mínimo {min} caracteres, con letras y números",
+  "@passwordRulesHint": {
+    "placeholders": {
+      "min": {
+        "type": "int"
+      }
+    }
+  },
+  "tooManyAttemptsWait": "Demasiados intentos. Espera {wait}.",
+  "@tooManyAttemptsWait": {
+    "placeholders": {
+      "wait": {
+        "type": "String"
+      }
+    }
+  },
+  "fingerprintUnavailable": "Configura una huella en los ajustes del teléfono primero.",
+  "fingerprintNotConfirmed": "No se confirmó la huella.",
+  "onboardingCardsTitle": "Tus tarjetas",
+  "onboardingCardsBody": "Registra tus tarjetas de crédito con una foto. Solo guardamos los últimos 4 dígitos.",
+  "onboardingAiTitle": "Gastos con IA",
+  "onboardingAiBody": "Toma una foto de la factura y la app llena el gasto por ti.",
+  "onboardingBestCardTitle": "Mejor tarjeta hoy",
+  "onboardingBestCardBody": "Te decimos qué tarjeta usar según su fecha de corte para pagar más tarde.",
+  "onboardingReportsTitle": "Reportes",
+  "onboardingReportsBody": "Filtra por fecha, tarjeta, categoría o comercio y mira en qué se va tu dinero.",
+  "loginTitle": "Iniciar sesión",
+  "loginSubtitle": "Entra para ver tus tarjetas y gastos",
+  "wrongCredentials": "Correo o contraseña incorrectos",
+  "tooManyAttemptsRetryIn": "Demasiados intentos. Intenta de nuevo en {wait}.",
+  "@tooManyAttemptsRetryIn": {
+    "placeholders": {
+      "wait": {
+        "type": "String"
+      }
+    }
+  },
+  "fingerprintVerifyFailed": "No se pudo verificar tu huella",
+  "loginWithFingerprintAs": "Entrar con huella como {name}",
+  "@loginWithFingerprintAs": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "noAccount": "¿No tienes cuenta?",
+  "createAccount": "Crear cuenta",
+  "registerSubtitle": "Tus datos se guardan solo en este teléfono",
+  "confirmPasswordLabel": "Confirmar contraseña",
+  "emailAlreadyRegistered": "Este correo ya está registrado",
+  "unlockHello": "Hola, {name}",
+  "@unlockHello": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "unlockPrompt": "Usa tu huella para entrar",
+  "unlockFailed": "No se pudo verificar tu huella. Intenta de nuevo o usa tu contraseña.",
+  "unlockBlocked": "No pudimos verificar tu huella. Entra con tu contraseña.",
+  "unlockWithFingerprint": "Desbloquear con huella",
+  "usePassword": "Usar contraseña",
+  "loginWithPassword": "Entrar con contraseña",
+  "biometricReasonUnlock": "Confirma tu identidad para entrar",
+  "biometricReasonEnable": "Confirma tu huella para activarla",
+  "fieldEmailRequired": "Escribe tu correo",
+  "fieldEmailInvalid": "Correo no válido",
+  "fieldPasswordRequired": "Escribe tu contraseña",
+  "fieldPasswordTooShort": "Mínimo {min} caracteres",
+  "@fieldPasswordTooShort": {
+    "placeholders": {
+      "min": {
+        "type": "int"
+      }
+    }
+  },
+  "fieldTooLong": "Máximo {max} caracteres",
+  "@fieldTooLong": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "fieldPasswordLettersDigits": "Debe tener letras y números",
+  "fieldConfirmRequired": "Confirma tu contraseña",
+  "fieldPasswordMismatch": "Las contraseñas no coinciden",
+  "fieldFirstNameRequired": "Escribe tu nombre",
+  "fieldLastNameRequired": "Escribe tu apellido",
+  "fieldSamePassword": "Debe ser distinta de la actual",
+  "fieldNotifyDaysRange": "Escribe de {min} a {max} días",
+  "@fieldNotifyDaysRange": {
+    "placeholders": {
+      "min": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "profileTitle": "Mi perfil",
+  "sectionData": "Datos",
+  "nameAndSurname": "Nombre y apellido",
+  "changeEmail": "Cambiar correo",
+  "changePassword": "Cambiar contraseña",
+  "sectionSecurity": "Seguridad",
+  "fingerprintLogin": "Entrar con huella",
+  "fingerprintLoginSubtitle": "Al abrir la app se pide tu huella.",
+  "fingerprintEnabled": "Listo: la app te pedirá tu huella.",
+  "sectionAppearance": "Apariencia",
+  "themeLabel": "Tema",
+  "themeLight": "Claro",
+  "themeDark": "Oscuro",
+  "themeSystem": "Sistema",
+  "languageLabel": "Idioma",
+  "sectionPreferences": "Preferencias",
+  "defaultCurrency": "Moneda predeterminada",
+  "notifyBefore": "Avisarme antes de",
+  "sectionCategories": "Categorías",
+  "myCategories": "Mis categorías",
+  "logout": "Cerrar sesión",
+  "logoutConfirmTitle": "¿Cerrar sesión?",
+  "logoutConfirmBody": "Tus datos quedan guardados en este teléfono.",
+  "fewerDays": "Menos días",
+  "moreDays": "Más días",
+  "daysCount": "{count, plural, =1{1 día} other{{count} días}}",
+  "@daysCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "currentPasswordRequired": "Escribe tu contraseña actual",
+  "currentPasswordWrong": "La contraseña actual no es correcta",
+  "emailHasAccount": "Ese correo ya tiene una cuenta",
+  "emailUpdated": "Correo actualizado",
+  "currentEmail": "Correo actual: {email}",
+  "@currentEmail": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "newEmailLabel": "Correo nuevo",
+  "currentPasswordLabel": "Contraseña actual",
+  "newPasswordLabel": "Contraseña nueva",
+  "confirmNewPasswordLabel": "Confirmar contraseña nueva",
+  "passwordUpdated": "Contraseña actualizada",
+  "setupTitle": "Configura tu cuenta",
+  "stepOf": "Paso {step} de {total}",
+  "@stepOf": {
+    "placeholders": {
+      "step": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "setupCurrencyTitle": "¿En qué moneda gastas más?",
+  "setupCurrencyBody": "Será la moneda que aparece primero en gastos y deudas nuevos.",
+  "setupCardTitle": "Agrega tu primera tarjeta",
+  "setupCardBody": "Solo guardamos los últimos 4 dígitos.",
+  "setupFingerprintTitle": "Entra con tu huella",
+  "setupFingerprintBody": "Al abrir la app se pedirá tu huella en vez de la contraseña.",
+  "setupRemindersTitle": "Recordatorios",
+  "setupRemindersBody": "Te avisamos antes del corte de tus tarjetas, de la fecha límite de pago y de las deudas por vencer.",
+  "addCard": "Agregar tarjeta",
+  "illDoItLater": "Lo haré después",
+  "enableReminders": "Activar recordatorios",
+  "cardAdded": "Tarjeta agregada",
+  "notificationsDenied": "Sin permiso no podremos avisarte. Puedes darlo luego en los ajustes del teléfono."
+}

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/router.dart';
 import '../../core/validators.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../../l10n/l10n.dart';
 import 'auth_controller.dart';
 import 'auth_widgets.dart';
 
@@ -47,17 +48,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           .login(_email.text, _password.text);
     } on InvalidCredentialsException {
       if (mounted) {
-        showErrorSnackBar(context, 'Correo o contraseña incorrectos');
+        showErrorSnackBar(context, context.l10n.wrongCredentials);
       }
     } on LockedOutException catch (e) {
       if (mounted) {
         showErrorSnackBar(
           context,
-          'Demasiados intentos. Intenta de nuevo en ${formatWait(e.remaining)}.',
+          context.l10n.tooManyAttemptsRetryIn(formatWait(e.remaining)),
         );
       }
     } on Exception {
-      if (mounted) showErrorSnackBar(context, unexpectedErrorMessage);
+      if (mounted) showErrorSnackBar(context, unexpectedError(context));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -68,7 +69,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         .read(authControllerProvider.notifier)
         .loginWithBiometrics();
     if (!ok && mounted) {
-      showErrorSnackBar(context, 'No se pudo verificar tu huella');
+      showErrorSnackBar(context, context.l10n.fingerprintVerifyFailed);
     }
   }
 
@@ -76,11 +77,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final auth = ref.watch(authControllerProvider);
     final biometricUser = auth is AuthLoggedOut ? auth.biometricUser : null;
+    final l = context.l10n;
 
     return AuthScaffold(
       key: const ValueKey('login.root'),
-      title: 'Iniciar sesión',
-      subtitle: 'Entra para ver tus tarjetas y gastos',
+      title: l.loginTitle,
+      subtitle: l.loginSubtitle,
       children: [
         Form(
           key: _form,
@@ -95,10 +97,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   textInputAction: TextInputAction.next,
                   autocorrect: false,
                   autofillHints: const [AutofillHints.email],
-                  validator: validateEmail,
-                  decoration: const InputDecoration(
-                    labelText: 'Correo',
-                    prefixIcon: Icon(Icons.mail_outline),
+                  validator: (v) => l.fieldError(validateEmail(v)),
+                  decoration: InputDecoration(
+                    labelText: l.emailLabel,
+                    prefixIcon: const Icon(Icons.mail_outline),
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -106,14 +108,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   key: const ValueKey('login.password'),
                   toggleKey: const ValueKey('login.togglePassword'),
                   controller: _password,
-                  label: 'Contraseña',
+                  label: l.passwordLabel,
                   textInputAction: TextInputAction.done,
                   autofillHints: const [AutofillHints.password],
                   onSubmitted: (_) => _submit(),
                   // Login only checks it is not empty; the rules apply when
                   // registering.
-                  validator: (v) =>
-                      (v ?? '').isEmpty ? 'Escribe tu contraseña' : null,
+                  validator: (v) => l.fieldError(
+                    (v ?? '').isEmpty ? FieldError.passwordRequired : null,
+                  ),
                 ),
               ],
             ),
@@ -122,7 +125,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         const SizedBox(height: 24),
         LoadingButton(
           key: const ValueKey('login.submit'),
-          label: 'Iniciar sesión',
+          label: l.loginTitle,
           loading: _loading,
           onPressed: _submit,
         ),
@@ -135,7 +138,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ),
             onPressed: _loading ? null : _biometric,
             icon: const Icon(Icons.fingerprint),
-            label: Text('Entrar con huella como ${biometricUser.firstName}'),
+            label: Text(l.loginWithFingerprintAs(biometricUser.firstName)),
           ),
         ],
         const SizedBox(height: 12),
@@ -143,11 +146,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           alignment: WrapAlignment.center,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            const Text('¿No tienes cuenta?'),
+            Text(l.noAccount),
             TextButton(
               key: const ValueKey('login.register'),
               onPressed: _loading ? null : () => context.push(Routes.register),
-              child: const Text('Crear cuenta'),
+              child: Text(l.createAccount),
             ),
           ],
         ),

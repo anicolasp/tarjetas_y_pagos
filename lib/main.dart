@@ -17,7 +17,8 @@ Future<void> main() async {
     WidgetsFlutterBinding.ensureInitialized();
   }
   Intl.defaultLocale = appLocale;
-  await initializeDateFormatting(appLocale);
+  // Every supported language: the user can switch at any time.
+  await initializeDateFormatting();
   final prefs = await SharedPreferences.getInstance();
 
   final app = ProviderScope(

@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
+import '../../core/language.dart';
 import '../../core/money.dart';
-
 import '../../data/models/app_user.dart';
 import '../../data/providers.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../../l10n/l10n.dart';
+import '../../services/app_prefs.dart';
 import '../../services/providers.dart';
 
 sealed class AuthState {
@@ -58,16 +61,42 @@ final themeModeProvider = Provider<ThemeMode>((ref) {
   };
 });
 
+/// The app language: the user's choice, or the last user's before login.
+final languageProvider = Provider<AppLanguage>(
+  (ref) => _languageFor(
+    ref.watch(authControllerProvider),
+    ref.watch(appPrefsProvider),
+  ),
+);
+
+AppLanguage _languageFor(AuthState auth, AppPrefs prefs) => switch (auth) {
+  AuthLoggedIn(:final user) || AuthNeedsUnlock(:final user) => user.language,
+  _ => prefs.lastLanguage,
+};
+
 enum EnableBiometricsResult { enabled, unavailable, notConfirmed }
 
 class AuthController extends Notifier<AuthState> {
-  static const biometricReason = 'Confirma tu identidad para entrar';
+  /// Texts in the app language, for the system biometric prompt. Same
+  /// rule as [languageProvider], from this notifier's own state (reading
+  /// that provider here would be a circular dependency).
+  AppLocalizations get _l10n =>
+      l10nFor(_languageFor(state, ref.read(appPrefsProvider)));
 
   @override
   AuthState build() {
+    // Dates (`core/formatters.dart`) read the global Intl locale. Set it
+    // the moment the session changes, before any screen rebuilds: a screen
+    // that does not depend on the locale (Home, today) would otherwise
+    // keep dates in the previous language.
+    listenSelf((_, next) => _applyDateLocale(next));
+    _applyDateLocale(const AuthLoading());
     _restoreSession();
     return const AuthLoading();
   }
+
+  void _applyDateLocale(AuthState auth) =>
+      Intl.defaultLocale = _languageFor(auth, ref.read(appPrefsProvider)).code;
 
   Future<AuthRepository> get _repo => ref.read(authRepositoryProvider.future);
 
@@ -129,6 +158,8 @@ class AuthController extends Notifier<AuthState> {
       lastName: lastName,
       email: email,
       password: password,
+      // The language the register screen was shown in.
+      language: _languageFor(state, ref.read(appPrefsProvider)),
     );
     // Before the session starts, so the router goes straight to the wizard.
     await ref.read(setupPendingProvider.notifier).start(user.id!);
@@ -141,7 +172,7 @@ class AuthController extends Notifier<AuthState> {
     if (current is! AuthNeedsUnlock) return false;
     final ok = await ref
         .read(biometricServiceProvider)
-        .authenticate(biometricReason);
+        .authenticate(_l10n.biometricReasonUnlock);
     // The user may have chosen "Usar contraseña" while the prompt was open.
     if (!ok || !identical(state, current)) return false;
     _setUser(current.user);
@@ -156,7 +187,7 @@ class AuthController extends Notifier<AuthState> {
     }
     final ok = await ref
         .read(biometricServiceProvider)
-        .authenticate(biometricReason);
+        .authenticate(_l10n.biometricReasonUnlock);
     if (!ok || !identical(state, current)) return false;
     final user = current.biometricUser!;
     // A verified fingerprint clears earlier password typos for this email.
@@ -181,7 +212,9 @@ class AuthController extends Notifier<AuthState> {
   /// The logged-in user after a change: every screen sees it at once.
   void _setUser(AppUser user) {
     state = AuthLoggedIn(user);
-    ref.read(appPrefsProvider).setLastThemeMode(user.themeMode);
+    ref.read(appPrefsProvider)
+      ..setLastThemeMode(user.themeMode)
+      ..setLastLanguage(user.language);
   }
 
   /// [user] after a profile edit, unless the session ended (logout) or
@@ -233,12 +266,14 @@ class AuthController extends Notifier<AuthState> {
     ThemeMode? themeMode,
     Currency? defaultCurrency,
     int? notifyDaysBefore,
+    AppLanguage? language,
   }) async => _updateUser(
     await (await _repo).updatePreferences(
       _user.id!,
       themeMode: themeMode,
       defaultCurrency: defaultCurrency,
       notifyDaysBefore: notifyDaysBefore,
+      language: language,
     ),
   );
 
@@ -248,7 +283,7 @@ class AuthController extends Notifier<AuthState> {
     final userId = _user.id!;
     final bio = ref.read(biometricServiceProvider);
     if (!await bio.isAvailable()) return EnableBiometricsResult.unavailable;
-    if (!await bio.authenticate('Confirma tu huella para activarla')) {
+    if (!await bio.authenticate(_l10n.biometricReasonEnable)) {
       return EnableBiometricsResult.notConfirmed;
     }
     _updateUser(

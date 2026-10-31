@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../data/repositories/auth_repository.dart' show notifyDaysRange;
+import '../../l10n/l10n.dart';
 
 /// − N días + for the reminders' notice (0–30). Keys are
 /// `<keyPrefix>`, `<keyPrefix>.minus` and `<keyPrefix>.plus`.
@@ -23,20 +24,25 @@ class NoticeDaysStepper extends StatelessWidget {
       children: [
         IconButton(
           key: ValueKey('$keyPrefix.minus'),
-          tooltip: 'Menos días',
+          tooltip: context.l10n.fewerDays,
           onPressed: onChanged == null || days <= notifyDaysRange.min
               ? null
               : () => onChanged!(days - 1),
           icon: const Icon(Icons.remove),
         ),
-        Text(
-          days == 1 ? '1 día' : '$days días',
-          key: ValueKey(keyPrefix),
-          style: Theme.of(context).textTheme.titleMedium,
+        // Wraps instead of overflowing: "3 jours avant" is much longer than
+        // "3 días" on a small phone.
+        Flexible(
+          child: Text(
+            context.l10n.daysCount(days),
+            key: ValueKey(keyPrefix),
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
         ),
         IconButton(
           key: ValueKey('$keyPrefix.plus'),
-          tooltip: 'Más días',
+          tooltip: context.l10n.moreDays,
           onPressed: onChanged == null || days >= notifyDaysRange.max
               ? null
               : () => onChanged!(days + 1),

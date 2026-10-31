@@ -65,6 +65,8 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   sqflite_common_ffi: ^2.4.4
 flutter:
+  # Generates lib/l10n/app_localizations*.dart from the ARB files.
+  generate: true
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

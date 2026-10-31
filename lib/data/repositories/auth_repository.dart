@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart' show ThemeMode;
 import 'package:sqflite/sqflite.dart';
 
+import '../../core/language.dart';
 import '../../core/money.dart';
 
 import '../../core/validators.dart';
@@ -56,13 +57,14 @@ class AuthRepository {
     required String lastName,
     required String email,
     required String password,
+    AppLanguage language = AppLanguage.es,
   }) async {
     final error =
-        validateName(firstName, field: 'nombre') ??
-        validateName(lastName, field: 'apellido') ??
+        validateName(firstName, field: NameField.first) ??
+        validateName(lastName, field: NameField.last) ??
         validateEmail(email) ??
         validatePassword(password);
-    if (error != null) throw ArgumentError(error);
+    if (error != null) throw FieldErrorException(error);
 
     final normalized = normalizeEmail(email);
     if (await _findByEmail(normalized) != null) {
@@ -76,6 +78,7 @@ class AuthRepository {
       email: normalized,
       passwordHash: await _hasher.hash(password, salt),
       salt: salt,
+      language: language,
       createdAt: _clock(),
     );
     try {
@@ -127,9 +130,9 @@ class AuthRepository {
 
   Future<AppUser> updateName(int userId, String firstName, String lastName) {
     final error =
-        validateName(firstName, field: 'nombre') ??
-        validateName(lastName, field: 'apellido');
-    if (error != null) throw ArgumentError(error);
+        validateName(firstName, field: NameField.first) ??
+        validateName(lastName, field: NameField.last);
+    if (error != null) throw FieldErrorException(error);
     return _update(userId, {
       'first_name': firstName.trim(),
       'last_name': lastName.trim(),
@@ -144,7 +147,7 @@ class AuthRepository {
     required String newEmail,
   }) async {
     final error = validateEmail(newEmail);
-    if (error != null) throw ArgumentError(error);
+    if (error != null) throw FieldErrorException(error);
     final user = await _verifiedUser(userId, currentPassword);
     final normalized = normalizeEmail(newEmail);
     if (normalized == user.email) return user;
@@ -167,10 +170,10 @@ class AuthRepository {
     required String newPassword,
   }) async {
     final error = validatePassword(newPassword);
-    if (error != null) throw ArgumentError(error);
+    if (error != null) throw FieldErrorException(error);
     final user = await _verifiedUser(userId, currentPassword);
     if (newPassword == currentPassword) {
-      throw ArgumentError('La nueva contraseña debe ser distinta');
+      throw FieldErrorException(FieldError.samePassword);
     }
     final salt = _hasher.newSalt();
     return _update(user.id!, {
@@ -186,18 +189,24 @@ class AuthRepository {
     Currency? defaultCurrency,
     int? notifyDaysBefore,
     bool? biometricEnabled,
+    AppLanguage? language,
   }) {
     if (notifyDaysBefore != null &&
         (notifyDaysBefore < notifyDaysRange.min ||
             notifyDaysBefore > notifyDaysRange.max)) {
-      throw ArgumentError(
-        'Escribe de ${notifyDaysRange.min} a ${notifyDaysRange.max} días',
+      // The UI stepper never goes out of range: a programming error.
+      throw RangeError.range(
+        notifyDaysBefore,
+        notifyDaysRange.min,
+        notifyDaysRange.max,
+        'notifyDaysBefore',
       );
     }
     return _update(userId, {
       'theme_mode': ?themeMode?.name,
       'default_currency': ?defaultCurrency?.code,
       'notify_days_before': ?notifyDaysBefore,
+      'language': ?language?.code,
       if (biometricEnabled != null)
         'biometric_enabled': biometricEnabled ? 1 : 0,
     });

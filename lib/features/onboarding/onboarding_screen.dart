@@ -2,38 +2,39 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/responsive.dart';
+import '../../l10n/l10n.dart';
 import '../../services/providers.dart';
 
 class _Slide {
   const _Slide(this.icon, this.title, this.body);
 
   final IconData icon;
-  final String title;
-  final String body;
+
+  /// Texts in the active language.
+  final String Function(AppLocalizations l) title;
+  final String Function(AppLocalizations l) body;
 }
 
-const _slides = [
+final _slides = [
   _Slide(
     Icons.credit_card,
-    'Tus tarjetas',
-    'Registra tus tarjetas de crédito con una foto. Solo guardamos los '
-        'últimos 4 dígitos.',
+    (l) => l.onboardingCardsTitle,
+    (l) => l.onboardingCardsBody,
   ),
   _Slide(
     Icons.receipt_long,
-    'Gastos con IA',
-    'Toma una foto de la factura y la app llena el gasto por ti.',
+    (l) => l.onboardingAiTitle,
+    (l) => l.onboardingAiBody,
   ),
   _Slide(
     Icons.event_available,
-    'Mejor tarjeta hoy',
-    'Te decimos qué tarjeta usar según su fecha de corte para pagar más tarde.',
+    (l) => l.onboardingBestCardTitle,
+    (l) => l.onboardingBestCardBody,
   ),
   _Slide(
     Icons.insights,
-    'Reportes',
-    'Filtra por fecha, tarjeta, categoría o comercio y mira en qué se va tu '
-        'dinero.',
+    (l) => l.onboardingReportsTitle,
+    (l) => l.onboardingReportsBody,
   ),
 ];
 
@@ -80,7 +81,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 child: TextButton(
                   key: const ValueKey('onboarding.skip'),
                   onPressed: _finish,
-                  child: const Text('Omitir'),
+                  child: Text(context.l10n.skip),
                 ),
               ),
             ),
@@ -125,7 +126,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         _isLast ? 'onboarding.start' : 'onboarding.next',
                       ),
                       onPressed: _isLast ? _finish : _next,
-                      child: Text(_isLast ? 'Empezar' : 'Siguiente'),
+                      child: Text(
+                        _isLast ? context.l10n.getStarted : context.l10n.next,
+                      ),
                     ),
                   ],
                 ),
@@ -170,13 +173,13 @@ class _SlideView extends StatelessWidget {
             ),
             const SizedBox(height: 28),
             Text(
-              slide.title,
+              slide.title(context.l10n),
               textAlign: TextAlign.center,
               style: text.headlineSmall?.copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 12),
             Text(
-              slide.body,
+              slide.body(context.l10n),
               textAlign: TextAlign.center,
               style: text.bodyLarge?.copyWith(color: scheme.onSurfaceVariant),
             ),

@@ -93,7 +93,7 @@ class _CategoryFormState extends ConsumerState<_CategoryForm> {
     } on ArgumentError catch (e) {
       if (mounted) showErrorSnackBar(context, '${e.message}');
     } catch (_) {
-      if (mounted) showErrorSnackBar(context, unexpectedErrorMessage);
+      if (mounted) showErrorSnackBar(context, unexpectedError(context));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -145,7 +145,7 @@ class _CategoryFormState extends ConsumerState<_CategoryForm> {
       // Expenses were added meanwhile: ask again.
       if (mounted) _delete();
     } catch (_) {
-      if (mounted) showErrorSnackBar(context, unexpectedErrorMessage);
+      if (mounted) showErrorSnackBar(context, unexpectedError(context));
     }
   }
 

@@ -147,7 +147,7 @@ class _CardFormState extends ConsumerState<_CardForm> {
         },
       );
     } catch (_) {
-      if (mounted) showErrorSnackBar(context, unexpectedErrorMessage);
+      if (mounted) showErrorSnackBar(context, unexpectedError(context));
       return;
     } finally {
       if (mounted) {
@@ -229,7 +229,7 @@ class _CardFormState extends ConsumerState<_CardForm> {
       if (mounted) showErrorSnackBar(context, '${e.message}');
     } catch (_) {
       // StateError and I/O failures.
-      if (mounted) showErrorSnackBar(context, unexpectedErrorMessage);
+      if (mounted) showErrorSnackBar(context, unexpectedError(context));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -266,7 +266,7 @@ class _CardFormState extends ConsumerState<_CardForm> {
       if (mounted) context.go(Routes.cards);
     } catch (_) {
       // Repository errors (StateError/ArgumentError) and I/O failures.
-      if (mounted) showErrorSnackBar(context, unexpectedErrorMessage);
+      if (mounted) showErrorSnackBar(context, unexpectedError(context));
     }
   }
 

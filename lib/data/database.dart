@@ -48,7 +48,7 @@ class AppDatabase {
 
 typedef _Migration = Future<void> Function(Database db);
 
-final List<_Migration> _migrations = [_v1, _v2];
+final List<_Migration> _migrations = [_v1, _v2, _v3];
 
 /// Base categories available to every user (`user_id IS NULL`).
 /// `icon` is a key resolved to a Material icon by the UI layer.
@@ -220,4 +220,13 @@ Future<void> _v2(Database db) async {
     'CREATE INDEX idx_card_payments_card_date ON card_payments(card_id, date)',
   );
   await batch.commit(noResult: true);
+}
+
+/// v3 (#26): the user's language. Existing users stay in Spanish. No CHECK
+/// on the codes: adding a language must not need a table rebuild, and an
+/// unknown code is read as Spanish (`AppLanguage.fromCode`).
+Future<void> _v3(Database db) async {
+  await db.execute(
+    "ALTER TABLE users ADD COLUMN language TEXT NOT NULL DEFAULT 'es'",
+  );
 }

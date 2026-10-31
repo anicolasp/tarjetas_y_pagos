@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/validators.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../../l10n/l10n.dart';
 import 'auth_controller.dart';
 import 'auth_widgets.dart';
 
@@ -48,10 +49,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           );
     } on EmailTakenException {
       if (mounted) {
-        setState(() => _emailError = 'Este correo ya está registrado');
+        setState(() => _emailError = context.l10n.emailAlreadyRegistered);
       }
     } on Exception {
-      if (mounted) showErrorSnackBar(context, unexpectedErrorMessage);
+      if (mounted) showErrorSnackBar(context, unexpectedError(context));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -59,12 +60,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     return AuthScaffold(
       key: const ValueKey('register.root'),
       appBar: AppBar(),
       icon: Icons.person_add_alt_1,
-      title: 'Crear cuenta',
-      subtitle: 'Tus datos se guardan solo en este teléfono',
+      title: l.createAccount,
+      subtitle: l.registerSubtitle,
       children: [
         Form(
           key: _form,
@@ -78,10 +80,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   textCapitalization: TextCapitalization.words,
                   textInputAction: TextInputAction.next,
                   autofillHints: const [AutofillHints.givenName],
-                  validator: (v) => validateName(v, field: 'nombre'),
-                  decoration: const InputDecoration(
-                    labelText: 'Nombre',
-                    prefixIcon: Icon(Icons.person_outline),
+                  validator: (v) =>
+                      l.fieldError(validateName(v, field: NameField.first)),
+                  decoration: InputDecoration(
+                    labelText: l.firstNameLabel,
+                    prefixIcon: const Icon(Icons.person_outline),
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -91,10 +94,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   textCapitalization: TextCapitalization.words,
                   textInputAction: TextInputAction.next,
                   autofillHints: const [AutofillHints.familyName],
-                  validator: (v) => validateName(v, field: 'apellido'),
-                  decoration: const InputDecoration(
-                    labelText: 'Apellido',
-                    prefixIcon: Icon(Icons.badge_outlined),
+                  validator: (v) =>
+                      l.fieldError(validateName(v, field: NameField.last)),
+                  decoration: InputDecoration(
+                    labelText: l.lastNameLabel,
+                    prefixIcon: const Icon(Icons.badge_outlined),
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -105,12 +109,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   textInputAction: TextInputAction.next,
                   autocorrect: false,
                   autofillHints: const [AutofillHints.email],
-                  validator: validateEmail,
+                  validator: (v) => l.fieldError(validateEmail(v)),
                   onChanged: (_) {
                     if (_emailError != null) setState(() => _emailError = null);
                   },
                   decoration: InputDecoration(
-                    labelText: 'Correo',
+                    labelText: l.emailLabel,
                     prefixIcon: const Icon(Icons.mail_outline),
                     errorText: _emailError,
                   ),
@@ -120,14 +124,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   key: const ValueKey('register.password'),
                   toggleKey: const ValueKey('register.togglePassword'),
                   controller: _password,
-                  label: 'Contraseña',
+                  label: l.passwordLabel,
                   autofillHints: const [AutofillHints.newPassword],
-                  validator: validatePassword,
+                  validator: (v) => l.fieldError(validatePassword(v)),
                 ),
                 Padding(
                   padding: const EdgeInsets.only(left: 12, top: 6),
                   child: Text(
-                    'Mínimo $passwordMinLength caracteres, con letras y números',
+                    l.passwordRulesHint(passwordMinLength),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
@@ -138,11 +142,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   key: const ValueKey('register.confirm'),
                   toggleKey: const ValueKey('register.toggleConfirm'),
                   controller: _confirm,
-                  label: 'Confirmar contraseña',
+                  label: l.confirmPasswordLabel,
                   textInputAction: TextInputAction.done,
                   onSubmitted: (_) => _submit(),
-                  validator: (v) =>
-                      validatePasswordConfirmation(v, _password.text),
+                  validator: (v) => l.fieldError(
+                    validatePasswordConfirmation(v, _password.text),
+                  ),
                 ),
               ],
             ),
@@ -151,7 +156,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         const SizedBox(height: 24),
         LoadingButton(
           key: const ValueKey('register.submit'),
-          label: 'Crear cuenta',
+          label: l.createAccount,
           loading: _loading,
           onPressed: _submit,
         ),

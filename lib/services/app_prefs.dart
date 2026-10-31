@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart' show ThemeMode;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../core/language.dart';
+
 /// Non-sensitive app flags.
 class AppPrefs {
   const AppPrefs(this._prefs);
@@ -8,6 +10,7 @@ class AppPrefs {
   static const _onboardingSeenKey = 'onboarding_seen';
   static const _lastThemeKey = 'last_theme_mode';
   static const _setupPendingKey = 'setup_pending_user';
+  static const _lastLanguageKey = 'last_language';
 
   final SharedPreferences _prefs;
 
@@ -24,6 +27,13 @@ class AppPrefs {
 
   Future<void> setLastThemeMode(ThemeMode mode) =>
       _prefs.setString(_lastThemeKey, mode.name);
+
+  /// The language of the last user, for the screens before login.
+  AppLanguage get lastLanguage =>
+      AppLanguage.fromCode(_prefs.getString(_lastLanguageKey));
+
+  Future<void> setLastLanguage(AppLanguage language) =>
+      _prefs.setString(_lastLanguageKey, language.code);
 
   /// The user who registered and has not finished (or skipped) the setup
   /// wizard yet.
