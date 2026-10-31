@@ -5,9 +5,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:tarjetas_y_pagos/core/formatters.dart';
+import 'package:tarjetas_y_pagos/core/language.dart';
 import 'package:tarjetas_y_pagos/core/money.dart';
 import 'package:tarjetas_y_pagos/data/database.dart';
 import 'package:tarjetas_y_pagos/data/repositories/expenses_repository.dart';
+import 'package:tarjetas_y_pagos/l10n/l10n.dart';
 import 'package:tarjetas_y_pagos/services/receipt_ai_service.dart';
 
 import '../helpers/fakes.dart';
@@ -179,7 +181,12 @@ void main() {
     ai.result = const ReceiptScanFailed(ReceiptScanError.offline);
     await open(tester);
     await scanFrom(tester, 'gallery');
-    expect(find.text(ReceiptScanError.offline.message), findsOneWidget);
+    expect(
+      find.text(
+        l10nFor(AppLanguage.es).receiptScanError(ReceiptScanError.offline),
+      ),
+      findsOneWidget,
+    );
     expect(key('expenseForm.scanning'), findsNothing);
     // The snackbar goes away on its own (it covers the bottom meanwhile).
     await tester.pump(const Duration(seconds: 5));
@@ -225,8 +232,11 @@ void main() {
   });
 
   testWidgets('every error has a message the user can read', (tester) async {
-    for (final error in ReceiptScanError.values) {
-      expect(error.message, isNotEmpty);
+    for (final language in AppLanguage.values) {
+      final l = l10nFor(language);
+      for (final error in ReceiptScanError.values) {
+        expect(l.receiptScanError(error), isNotEmpty);
+      }
     }
   });
 

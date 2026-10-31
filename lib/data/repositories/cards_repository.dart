@@ -1,4 +1,5 @@
 import '../../core/money.dart';
+import '../../core/validators.dart';
 import '../database.dart';
 import '../models/credit_card.dart';
 import '../models/db_codec.dart';
@@ -73,10 +74,8 @@ class CardsRepository {
           row['currency'] as String,
     ];
     if (dropped.isNotEmpty) {
-      throw ArgumentError(
-        'Esta tarjeta tiene movimientos en ${dropped.join(' y ')}; '
-        'no puedes quitar esa moneda',
-      );
+      // Its movements in that currency would be left without a balance.
+      throw FieldErrorException(FieldError.cardCurrencyInUse);
     }
     final count = await _db.db.update(
       'cards',
@@ -104,22 +103,22 @@ class CardsRepository {
   CreditCard _validated(CreditCard card) {
     final alias = card.alias.trim();
     final bank = card.bank.trim();
-    if (alias.isEmpty) throw ArgumentError('Escribe un nombre para la tarjeta');
-    if (bank.isEmpty) throw ArgumentError('Escribe el banco');
+    if (alias.isEmpty) throw FieldErrorException(FieldError.cardAliasRequired);
+    if (bank.isEmpty) throw FieldErrorException(FieldError.cardBankRequired);
     if (!_last4Pattern.hasMatch(card.last4)) {
-      throw ArgumentError('Escribe los últimos 4 dígitos');
+      throw FieldErrorException(FieldError.cardLast4Invalid);
     }
     if (card.cutDay < 1 || card.cutDay > 31) {
-      throw ArgumentError('El día de corte va del 1 al 31');
+      throw FieldErrorException(FieldError.cardCutDayRange);
     }
     if (card.paymentDays < 0 || card.paymentDays > 60) {
-      throw ArgumentError('Los días para pagar van de 0 a 60');
+      throw FieldErrorException(FieldError.cardPaymentDaysRange);
     }
     if (card.creditLimitCents < 0 || card.secondaryLimitCents < 0) {
-      throw ArgumentError('Límite no válido');
+      throw FieldErrorException(FieldError.cardLimitInvalid);
     }
     if (card.dualCurrency && card.currency != Currency.dop) {
-      throw ArgumentError('Una tarjeta de doble balance es RD\$ y US\$');
+      throw FieldErrorException(FieldError.cardDualMustBeDop);
     }
     return card.copyWith(
       alias: alias,

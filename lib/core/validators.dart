@@ -31,6 +31,31 @@ enum FieldError {
   answerRequired,
   answerTooShort,
   answerTooLong,
+  // Cards (#28)
+  cardAliasRequired,
+  cardBankRequired,
+  cardLast4Invalid,
+  cardCutDayRange,
+  cardPaymentDaysRange,
+  cardLimitInvalid,
+  cardDualMustBeDop,
+  cardCurrencyInUse,
+  // Expenses and payments (#28)
+  amountInvalid,
+  noBalanceInCurrency,
+  merchantRequired,
+  merchantTooLong,
+  conversionInvalid,
+  categoryRequired,
+  cardRequired,
+  dateInFuture,
+  // Categories (#28)
+  categoryNameRequired,
+  categoryNameTooLong,
+  categoryIconInvalid,
+  categoryColorInvalid,
+  categoryNameTaken,
+  categoryReassignOther,
 }
 
 /// A business rule broken in a repository call. Still an [ArgumentError],

@@ -1,14 +1,17 @@
 import '../../core/billing_cycle.dart';
 import '../../core/formatters.dart';
+import '../../l10n/l10n.dart';
 
-/// "Corta en 28 días · pagas el 15/dic · 52 días"
-String explainRecommendation(CardRecommendation r, DateTime today) {
+/// "Corta en 28 días · pagas el 15/dic · 52 días", in the active language.
+String explainRecommendation(
+  AppLocalizations l,
+  CardRecommendation r,
+  DateTime today,
+) {
   final cutIn = r.nextCut.difference(dateOnly(today)).inDays;
-  final cut = switch (cutIn) {
-    0 => 'Corta hoy',
-    1 => 'Corta mañana',
-    _ => 'Corta en $cutIn días',
-  };
-  return '$cut · pagas el ${formatDayMonth(r.dueDate)} · '
-      '${r.financingDays} días';
+  return l.recommendationLine(
+    l.cutsIn(cutIn),
+    formatDayMonth(r.dueDate),
+    l.daysCountPlain(r.financingDays),
+  );
 }

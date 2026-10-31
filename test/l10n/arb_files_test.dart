@@ -38,4 +38,13 @@ void main() {
       }
     });
   }
+
+  // A `\$` copied from Dart source would show up as a literal backslash.
+  for (final language in AppLanguage.values) {
+    test('${language.code} texts have no stray backslashes', () {
+      for (final MapEntry(:key, :value) in texts(language).entries) {
+        expect(value, isNot(contains(r'\')), reason: key);
+      }
+    });
+  }
 }

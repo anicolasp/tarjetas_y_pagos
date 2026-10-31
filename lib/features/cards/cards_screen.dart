@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/responsive.dart';
-import '../../core/router.dart';
 import '../../core/billing_cycle.dart';
 import '../../core/clock.dart';
+import '../../core/responsive.dart';
+import '../../core/router.dart';
+import '../../l10n/l10n.dart';
 import 'cards_providers.dart';
 import 'widgets/credit_card_tile.dart';
 
@@ -22,20 +23,20 @@ class CardsScreen extends ConsumerWidget {
 
     return Scaffold(
       key: const ValueKey('cards.root'),
-      appBar: AppBar(title: const Text('Mis tarjetas')),
+      appBar: AppBar(title: Text(context.l10n.myCards)),
       floatingActionButton: (ranking.value?.isEmpty ?? true)
           ? null
           : FloatingActionButton.extended(
               key: const ValueKey('cards.add'),
               onPressed: () => context.push(Routes.cardNew),
               icon: const Icon(Icons.add),
-              label: const Text('Agregar'),
+              label: Text(context.l10n.add),
             ),
       body: SafeArea(
         child: switch (ranking) {
-          AsyncError() => const _Message(
+          AsyncError() => _Message(
             icon: Icons.error_outline,
-            text: 'No se pudieron cargar tus tarjetas',
+            text: context.l10n.cardsLoadError,
           ),
           AsyncData(value: final list) when list.isEmpty => const _Empty(),
           AsyncData(value: final list) => _List(items: list),
@@ -94,14 +95,13 @@ class _Empty extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Aún no tienes tarjetas',
+              context.l10n.noCardsYetTitle,
               textAlign: TextAlign.center,
               style: text.titleLarge,
             ),
             const SizedBox(height: 8),
             Text(
-              'Agrega tu primera tarjeta para saber cuál te conviene usar '
-              'cada día.',
+              context.l10n.addFirstCardHint,
               textAlign: TextAlign.center,
               style: text.bodyMedium,
             ),
@@ -110,7 +110,7 @@ class _Empty extends StatelessWidget {
               key: const ValueKey('cards.emptyAdd'),
               onPressed: () => context.push(Routes.cardNew),
               icon: const Icon(Icons.add),
-              label: const Text('Agregar tarjeta'),
+              label: Text(context.l10n.addCard),
             ),
           ],
         ),

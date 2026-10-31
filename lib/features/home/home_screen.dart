@@ -11,6 +11,7 @@ import '../../core/responsive.dart';
 import '../../core/router.dart';
 import '../../data/finance_snapshot.dart';
 import '../../data/models/app_user.dart';
+import '../../l10n/l10n.dart';
 import '../cards/cards_providers.dart';
 import '../cards/recommendation_text.dart';
 import '../cards/widgets/credit_card_tile.dart';
@@ -83,7 +84,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     children: [
                       Expanded(
                         child: Text(
-                          'Mis tarjetas',
+                          context.l10n.myCards,
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                       ),
@@ -91,7 +92,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         TextButton(
                           key: const ValueKey('home.seeAllCards'),
                           onPressed: () => context.push(Routes.cards),
-                          child: const Text('Ver todas'),
+                          child: Text(context.l10n.seeAll),
                         ),
                     ],
                   ),
@@ -122,7 +123,7 @@ class _LoadError extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'No se pudieron cargar tus tarjetas',
+              context.l10n.cardsLoadError,
               style: Theme.of(context).textTheme.titleMedium
                   ?.copyWith(color: scheme.onErrorContainer),
             ),
@@ -131,7 +132,7 @@ class _LoadError extends ConsumerWidget {
               key: const ValueKey('home.retry'),
               onPressed: () => refreshFinance(ref),
               icon: const Icon(Icons.refresh),
-              label: const Text('Reintentar'),
+              label: Text(context.l10n.retry),
             ),
           ],
         ),
@@ -154,7 +155,7 @@ class _Header extends StatelessWidget {
       children: [
         Expanded(
           child: Text(
-            '${greetingFor(now)}, ${user.firstName}',
+            context.l10n.greeting(greetingFor(now), user.firstName),
             key: const ValueKey('home.greeting'),
             style: text.headlineSmall?.copyWith(fontWeight: FontWeight.w600),
           ),
@@ -162,7 +163,7 @@ class _Header extends StatelessWidget {
         const SizedBox(width: 12),
         Semantics(
           button: true,
-          label: 'Mi perfil',
+          label: context.l10n.profileTitle,
           child: InkWell(
             key: const ValueKey('home.avatar'),
             customBorder: const CircleBorder(),
@@ -220,19 +221,22 @@ class _MonthSummary extends StatelessWidget {
           // amount to the right.
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Resumen de ${formatMonthName(now)}', style: text.titleMedium),
+            Text(
+              context.l10n.monthSummary(formatMonthName(now)),
+              style: text.titleMedium,
+            ),
             const SizedBox(height: 12),
             for (final c in currencies)
               _SummaryRow(
                 key: ValueKey('home.spent.${c.code}'),
-                label: 'Gastado este mes',
+                label: context.l10n.spentThisMonth,
                 cents: spent[c] ?? 0,
                 currency: c,
               ),
             for (final c in currencies) ...[
               _SummaryRow(
                 key: ValueKey('home.debt.${c.code}'),
-                label: 'Deuda total',
+                label: context.l10n.totalDebt,
                 cents: debt[c] ?? 0,
                 currency: c,
               ),
@@ -241,8 +245,10 @@ class _MonthSummary extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.only(bottom: 6),
                   child: Text(
-                    'Tarjetas ${formatMoney(cardDebt[c] ?? 0, c)} · '
-                    'Otras deudas ${formatMoney(otherDebt[c]!, c)}',
+                    context.l10n.debtSplit(
+                      formatMoney(cardDebt[c] ?? 0, c),
+                      formatMoney(otherDebt[c]!, c),
+                    ),
                     key: ValueKey('home.debtSplit.${c.code}'),
                     style: text.bodySmall?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -314,7 +320,7 @@ class _BestCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Mejor tarjeta hoy',
+                    context.l10n.bestCardToday,
                     style: text.titleMedium?.copyWith(
                       color: scheme.onPrimaryContainer,
                     ),
@@ -325,7 +331,7 @@ class _BestCard extends StatelessWidget {
             const SizedBox(height: 10),
             if (ranked.isEmpty) ...[
               Text(
-                'Agrega una tarjeta para saber cuál te conviene usar hoy.',
+                context.l10n.bestCardEmpty,
                 style: text.bodyMedium?.copyWith(
                   color: scheme.onPrimaryContainer,
                 ),
@@ -337,7 +343,7 @@ class _BestCard extends StatelessWidget {
                   key: const ValueKey('home.addFirstCard'),
                   onPressed: () => context.push(Routes.cardNew),
                   icon: const Icon(Icons.add),
-                  label: const Text('Agregar tarjeta'),
+                  label: Text(context.l10n.addCard),
                 ),
               ),
             ] else ...[
@@ -388,7 +394,7 @@ class _RankRow extends StatelessWidget {
             ),
           ),
           Text(
-            explainRecommendation(r, today),
+            explainRecommendation(context.l10n, r, today),
             style: text.bodySmall?.copyWith(color: scheme.onPrimaryContainer),
           ),
           if (r.lowCredit)
@@ -404,7 +410,7 @@ class _RankRow extends StatelessWidget {
                   const SizedBox(width: 4),
                   Flexible(
                     child: Text(
-                      'Poco crédito disponible',
+                      context.l10n.lowCredit,
                       key: ValueKey('home.lowCredit.${r.card.id}'),
                       style: text.bodySmall?.copyWith(color: scheme.error),
                     ),
@@ -427,25 +433,25 @@ class _QuickAccess extends StatelessWidget {
       (
         key: 'home.quick.cards',
         icon: Icons.credit_card,
-        label: 'Mis tarjetas',
+        label: context.l10n.myCards,
         onTap: () => context.push(Routes.cards),
       ),
       (
         key: 'home.quick.expense',
         icon: Icons.add_card,
-        label: 'Nuevo gasto',
+        label: context.l10n.newExpense,
         onTap: () => context.push(Routes.expenseNew()),
       ),
       (
         key: 'home.quick.reports',
         icon: Icons.insights,
-        label: 'Reportes',
+        label: context.l10n.reports,
         onTap: () => context.push(Routes.reports),
       ),
       (
         key: 'home.quick.debts',
         icon: Icons.account_balance_wallet_outlined,
-        label: 'Deudas',
+        label: context.l10n.debts,
         onTap: () => context.push(Routes.debts),
       ),
     ];
@@ -539,7 +545,7 @@ class _Carousel extends StatelessWidget {
     if (cards.isEmpty) {
       return ResponsiveCenter(
         child: Text(
-          'Aún no tienes tarjetas.',
+          context.l10n.noCardsYet,
           key: const ValueKey('home.carouselEmpty'),
           style: Theme.of(context).textTheme.bodyMedium,
         ),

@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart' show StringCharacters;
 
 import '../../core/category_icons.dart';
+import '../../core/validators.dart';
 import '../database.dart';
 import '../models/category.dart';
 
@@ -85,7 +86,7 @@ class CategoriesRepository {
       if (count > 0) {
         if (reassignTo == null) throw CategoryInUseException(count);
         if (reassignTo == categoryId) {
-          throw ArgumentError('Elige otra categoría');
+          throw FieldErrorException(FieldError.categoryReassignOther);
         }
         final target = await txn.query(
           'categories',
@@ -127,23 +128,25 @@ class CategoriesRepository {
     required int? exceptId,
   }) async {
     final name = c.name.trim();
-    if (name.isEmpty) throw ArgumentError('Escribe un nombre');
+    if (name.isEmpty) {
+      throw FieldErrorException(FieldError.categoryNameRequired);
+    }
     // Characters as the text field counts them (an emoji is one).
     if (name.characters.length > categoryNameMaxLength) {
-      throw ArgumentError('Máximo $categoryNameMaxLength caracteres');
+      throw FieldErrorException(FieldError.categoryNameTooLong);
     }
     if (!categoryIcons.containsKey(c.icon)) {
-      throw ArgumentError('Ícono no válido');
+      throw FieldErrorException(FieldError.categoryIconInvalid);
     }
     if (!categoryColors.contains(c.color)) {
-      throw ArgumentError('Color no válido');
+      throw FieldErrorException(FieldError.categoryColorInvalid);
     }
     // Compared in Dart: SQLite's NOCASE only folds ASCII, so "EDUCACIÓN"
     // would not clash with "Educación".
     final key = name.toLowerCase();
     final clash = (await list(userId))
         .any((o) => o.id != exceptId && o.name.toLowerCase() == key);
-    if (clash) throw ArgumentError('Ya tienes una categoría así');
+    if (clash) throw FieldErrorException(FieldError.categoryNameTaken);
     return c.copyWith(name: name);
   }
 }

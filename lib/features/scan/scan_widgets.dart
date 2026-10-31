@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../l10n/l10n.dart';
 import '../auth/auth_widgets.dart';
 
 /// Shared UI for filling a form from a photo (card scan, receipt scan).
@@ -20,13 +21,13 @@ Future<ImageSource?> showPhotoSourceSheet(
         ListTile(
           key: ValueKey('$keyPrefix.camera'),
           leading: const Icon(Icons.photo_camera_outlined),
-          title: const Text('Tomar foto'),
+          title: Text(context.l10n.takePhoto),
           onTap: () => Navigator.pop(context, ImageSource.camera),
         ),
         ListTile(
           key: ValueKey('$keyPrefix.gallery'),
           leading: const Icon(Icons.photo_library_outlined),
-          title: const Text('Elegir de la galería'),
+          title: Text(context.l10n.pickFromGallery),
           onTap: () => Navigator.pop(context, ImageSource.gallery),
         ),
       ],
@@ -35,7 +36,8 @@ Future<ImageSource?> showPhotoSourceSheet(
 );
 
 /// Explains why the camera (or the photos) is needed, with "Abrir ajustes".
-/// [purpose] completes "Lo usamos solo para …".
+/// [purpose] is the full sentence saying what the photo is used for, in
+/// the active language.
 Future<void> explainPhotoPermission(
   BuildContext context, {
   required ImageSource source,
@@ -45,8 +47,8 @@ Future<void> explainPhotoPermission(
 }) async {
   final camera = source == ImageSource.camera;
   final alternative = camera
-      ? 'Puedes activarla en los ajustes o elegir una foto de la galería.'
-      : 'Puedes activarlo en los ajustes o tomar una foto con la cámara.';
+      ? context.l10n.permissionAltGallery
+      : context.l10n.permissionAltCamera;
   final open = await showDialog<bool>(
     context: context,
     builder: (context) => AlertDialog(
@@ -55,21 +57,17 @@ Future<void> explainPhotoPermission(
       icon: Icon(
         camera ? Icons.no_photography_outlined : Icons.hide_image_outlined,
       ),
-      title: Text(
-        camera
-            ? 'Permite el uso de la cámara'
-            : 'Permite el acceso a tus fotos',
-      ),
-      content: Text('Lo usamos solo para $purpose $alternative'),
+      title: Text(camera ? context.l10n.allowCamera : context.l10n.allowPhotos),
+      content: Text('$purpose $alternative'),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context, false),
-          child: const Text('Ahora no'),
+          child: Text(context.l10n.notNow),
         ),
         FilledButton(
           key: ValueKey('$keyPrefix.openSettings'),
           onPressed: () => Navigator.pop(context, true),
-          child: const Text('Abrir ajustes'),
+          child: Text(context.l10n.openSettings),
         ),
       ],
     ),
@@ -80,10 +78,7 @@ Future<void> explainPhotoPermission(
   } catch (_) {
     // No settings channel on this platform.
     if (context.mounted) {
-      showErrorSnackBar(
-        context,
-        'Abre los ajustes del teléfono para permitirlo',
-      );
+      showErrorSnackBar(context, context.l10n.openSettingsHint);
     }
   }
 }

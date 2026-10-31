@@ -475,4 +475,672 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get securityQuestionSaved => 'Pregunta de seguridad guardada';
+
+  @override
+  String greetingMorning(String name) {
+    return 'Buenos días, $name';
+  }
+
+  @override
+  String greetingAfternoon(String name) {
+    return 'Buenas tardes, $name';
+  }
+
+  @override
+  String greetingNight(String name) {
+    return 'Buenas noches, $name';
+  }
+
+  @override
+  String cutsIn(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'Corta en $days días',
+      one: 'Corta mañana',
+      zero: 'Corta hoy',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String recommendationLine(String cut, String due, String days) {
+    return '$cut · pagas el $due · $days';
+  }
+
+  @override
+  String get receiptErrorOffline =>
+      'Sin conexión a internet. Completa el gasto a mano.';
+
+  @override
+  String get receiptErrorTimeout =>
+      'La IA tardó demasiado. Intenta de nuevo o completa a mano.';
+
+  @override
+  String get receiptErrorInvalidKey =>
+      'La clave de la IA no es válida. Completa el gasto a mano.';
+
+  @override
+  String get receiptErrorRateLimited =>
+      'La IA está recibiendo muchas solicitudes. Intenta en un rato.';
+
+  @override
+  String get receiptErrorUnavailable =>
+      'La IA no está disponible ahora. Completa el gasto a mano.';
+
+  @override
+  String get receiptErrorImageTooLarge =>
+      'La foto es demasiado grande. Prueba con otra.';
+
+  @override
+  String get receiptErrorInvalidResponse =>
+      'No pudimos leer la factura. Completa el gasto a mano.';
+
+  @override
+  String get fieldCardAliasRequired => 'Escribe un nombre para la tarjeta';
+
+  @override
+  String get fieldCardBankRequired => 'Escribe el banco';
+
+  @override
+  String get fieldCardLast4Invalid => 'Escribe los últimos 4 dígitos';
+
+  @override
+  String get fieldCardCutDayRange => 'El día de corte va del 1 al 31';
+
+  @override
+  String get fieldCardPaymentDaysRange => 'Los días para pagar van de 0 a 60';
+
+  @override
+  String get fieldCardLimitInvalid => 'Límite no válido';
+
+  @override
+  String get fieldCardDualMustBeDop =>
+      'Una tarjeta de doble balance es RD\$ y US\$';
+
+  @override
+  String get fieldCardCurrencyInUse =>
+      'Esta tarjeta tiene movimientos en esa moneda; no puedes quitarla';
+
+  @override
+  String get fieldAmountInvalid => 'Monto no válido';
+
+  @override
+  String get fieldNoBalanceInCurrency =>
+      'La tarjeta no tiene balance en esa moneda';
+
+  @override
+  String get fieldMerchantRequired => 'Escribe el comercio';
+
+  @override
+  String get fieldConversionInvalid => 'Conversión no válida';
+
+  @override
+  String get fieldCategoryRequired => 'Elige una categoría';
+
+  @override
+  String get fieldCardRequired => 'Elige una tarjeta';
+
+  @override
+  String get fieldDateInFuture => 'La fecha no puede ser futura';
+
+  @override
+  String get fieldCategoryNameRequired => 'Escribe un nombre';
+
+  @override
+  String get fieldCategoryIconInvalid => 'Ícono no válido';
+
+  @override
+  String get fieldCategoryColorInvalid => 'Color no válido';
+
+  @override
+  String get fieldCategoryNameTaken => 'Ya tienes una categoría así';
+
+  @override
+  String get fieldCategoryReassignOther => 'Elige otra categoría';
+
+  @override
+  String get catSupermarket => 'Supermercado';
+
+  @override
+  String get catFuel => 'Combustible';
+
+  @override
+  String get catBarbershop => 'Barbería';
+
+  @override
+  String get catSalon => 'Salón';
+
+  @override
+  String get catBeauty => 'Belleza';
+
+  @override
+  String get catHardware => 'Ferretería';
+
+  @override
+  String get catElectricity => 'Luz';
+
+  @override
+  String get catWater => 'Agua';
+
+  @override
+  String get catPhone => 'Teléfono';
+
+  @override
+  String get catLiquor => 'Licor';
+
+  @override
+  String get catHealth => 'Salud';
+
+  @override
+  String get catRestaurant => 'Restaurante';
+
+  @override
+  String get catOther => 'Otros';
+
+  @override
+  String get myCards => 'Mis tarjetas';
+
+  @override
+  String get seeAll => 'Ver todas';
+
+  @override
+  String get cardsLoadError => 'No se pudieron cargar tus tarjetas';
+
+  @override
+  String monthSummary(String month) {
+    return 'Resumen de $month';
+  }
+
+  @override
+  String get spentThisMonth => 'Gastado este mes';
+
+  @override
+  String get totalDebt => 'Deuda total';
+
+  @override
+  String debtSplit(String cards, String other) {
+    return 'Tarjetas $cards · Otras deudas $other';
+  }
+
+  @override
+  String get bestCardToday => 'Mejor tarjeta hoy';
+
+  @override
+  String get bestCardEmpty =>
+      'Agrega una tarjeta para saber cuál te conviene usar hoy.';
+
+  @override
+  String get lowCredit => 'Poco crédito disponible';
+
+  @override
+  String get newExpense => 'Nuevo gasto';
+
+  @override
+  String get reports => 'Reportes';
+
+  @override
+  String get debts => 'Deudas';
+
+  @override
+  String get noCardsYet => 'Aún no tienes tarjetas.';
+
+  @override
+  String get add => 'Agregar';
+
+  @override
+  String get noCardsYetTitle => 'Aún no tienes tarjetas';
+
+  @override
+  String get addFirstCardHint =>
+      'Agrega tu primera tarjeta para saber cuál te conviene usar cada día.';
+
+  @override
+  String cutOn(String date) {
+    return 'Corte $date';
+  }
+
+  @override
+  String get availableNone => 'Disponible —';
+
+  @override
+  String availableAmount(String amount) {
+    return 'Disponible $amount';
+  }
+
+  @override
+  String get dualBalance => 'RD\$ y US\$';
+
+  @override
+  String get cardNotFound => 'Tarjeta no encontrada';
+
+  @override
+  String get registerPayment => 'Registrar pago';
+
+  @override
+  String get fieldAmountPositive => 'Escribe un monto mayor que 0';
+
+  @override
+  String get amountPaid => 'Monto pagado';
+
+  @override
+  String payStatementDue(String amount) {
+    return 'Pagar lo de este corte: $amount';
+  }
+
+  @override
+  String get paymentDate => 'Fecha del pago';
+
+  @override
+  String get noteOptional => 'Nota (opcional)';
+
+  @override
+  String get card => 'Tarjeta';
+
+  @override
+  String get filterExpenses => 'Filtrar gastos';
+
+  @override
+  String get editCard => 'Editar tarjeta';
+
+  @override
+  String get movements => 'Movimientos';
+
+  @override
+  String get clearFilters => 'Quitar filtros';
+
+  @override
+  String get filterError => 'No se pudieron filtrar los gastos';
+
+  @override
+  String get today => 'Hoy';
+
+  @override
+  String get yesterday => 'Ayer';
+
+  @override
+  String get nextCut => 'Próximo corte';
+
+  @override
+  String get nextCutDue => 'Fecha límite de ese corte';
+
+  @override
+  String get payInIfUsedToday => 'Si la usas hoy, pagas en';
+
+  @override
+  String daysCountPlain(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count días',
+      one: '1 día',
+      zero: '0 días',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String creditInFavor(String currency) {
+    return 'Saldo a favor ($currency)';
+  }
+
+  @override
+  String balanceIn(String currency) {
+    return 'Balance ($currency)';
+  }
+
+  @override
+  String availableOf(String available, String limit) {
+    return 'Disponible $available de $limit';
+  }
+
+  @override
+  String get dueThisStatement => 'A pagar este corte';
+
+  @override
+  String payBefore(String date) {
+    return 'Paga antes del $date';
+  }
+
+  @override
+  String overdueSince(String amount, String date) {
+    return 'Vencido: $amount desde el $date';
+  }
+
+  @override
+  String get noCategory => 'Sin categoría';
+
+  @override
+  String convertedAt(String amount, String rate) {
+    return '$amount a $rate';
+  }
+
+  @override
+  String get deletePaymentTitle => '¿Eliminar este pago?';
+
+  @override
+  String deletePaymentBody(String amount) {
+    return 'El balance volverá a subir $amount.';
+  }
+
+  @override
+  String get payment => 'Pago';
+
+  @override
+  String get noExpensesMatch => 'Ningún gasto coincide con los filtros';
+
+  @override
+  String get noMovementsYet => 'Aún no hay movimientos en esta tarjeta';
+
+  @override
+  String get tapNewExpenseHint =>
+      'Toca \"Nuevo gasto\" para registrar el primero.';
+
+  @override
+  String get cardScanNothing =>
+      'No pudimos leer la tarjeta, completa los datos manualmente';
+
+  @override
+  String get scanPurposeCard =>
+      'Lo usamos solo para leer la tarjeta en tu teléfono. La foto no se guarda ni se envía, y solo conservamos los últimos 4 dígitos.';
+
+  @override
+  String get scanPurposeReceipt =>
+      'Lo usamos solo para leer la factura con la IA. La foto se envía una sola vez para leerla y no se guarda.';
+
+  @override
+  String get archiveCardTitle => '¿Archivar esta tarjeta?';
+
+  @override
+  String get archiveCardBody =>
+      'Dejará de aparecer en tus listas y en la recomendación. Sus datos se conservan.';
+
+  @override
+  String get archive => 'Archivar';
+
+  @override
+  String get newCard => 'Nueva tarjeta';
+
+  @override
+  String get scanCard => 'Escanear tarjeta';
+
+  @override
+  String get scanCardHint =>
+      'Leemos la foto en tu teléfono y solo guardamos los últimos 4 dígitos.';
+
+  @override
+  String get cardAliasLabel => 'Nombre (ej. Gastos del mes)';
+
+  @override
+  String get detectedByPhoto => 'Detectado por foto';
+
+  @override
+  String get brand => 'Marca';
+
+  @override
+  String get brandOther => 'Otra';
+
+  @override
+  String get last4Label => 'Últimos 4 dígitos';
+
+  @override
+  String get last4Helper => 'Nunca guardamos el número completo';
+
+  @override
+  String get fieldCutDay => 'Escribe un día del 1 al 31';
+
+  @override
+  String get cutDayLabel => 'Día de corte';
+
+  @override
+  String get cutDayHelper => 'Si el mes es más corto, se usa el último día';
+
+  @override
+  String get fieldPaymentDays => 'Escribe de 0 a 60 días';
+
+  @override
+  String get paymentDaysLabel => 'Días para pagar después del corte';
+
+  @override
+  String get currency => 'Moneda';
+
+  @override
+  String get dualBalanceOption => 'RD\$ y US\$ (doble balance)';
+
+  @override
+  String get dualBalanceHint =>
+      'Cada gasto queda en su moneda, con un límite por moneda.';
+
+  @override
+  String get singleCurrencyHint =>
+      'Los gastos en otra moneda se convierten a esta.';
+
+  @override
+  String get fieldLimitInvalid => 'Monto no válido (ej. 50000 o 50,000.00)';
+
+  @override
+  String get limitDopOptional => 'Límite en RD\$ (opcional)';
+
+  @override
+  String get creditLimitOptional => 'Límite de crédito (opcional)';
+
+  @override
+  String get limitUsdOptional => 'Límite en US\$ (opcional)';
+
+  @override
+  String get color => 'Color';
+
+  @override
+  String get saveChanges => 'Guardar cambios';
+
+  @override
+  String get archiveCard => 'Archivar tarjeta';
+
+  @override
+  String get readingCard => 'Leyendo la tarjeta…';
+
+  @override
+  String get bank => 'Banco';
+
+  @override
+  String get takePhoto => 'Tomar foto';
+
+  @override
+  String get pickFromGallery => 'Elegir de la galería';
+
+  @override
+  String get permissionAltGallery =>
+      'Puedes activarla en los ajustes o elegir una foto de la galería.';
+
+  @override
+  String get permissionAltCamera =>
+      'Puedes activarlo en los ajustes o tomar una foto con la cámara.';
+
+  @override
+  String get allowCamera => 'Permite el uso de la cámara';
+
+  @override
+  String get allowPhotos => 'Permite el acceso a tus fotos';
+
+  @override
+  String get openSettings => 'Abrir ajustes';
+
+  @override
+  String get openSettingsHint =>
+      'Abre los ajustes del teléfono para permitirlo';
+
+  @override
+  String get expenseLoadError => 'No se pudo cargar el gasto';
+
+  @override
+  String get expenseNotFound => 'Gasto no encontrado';
+
+  @override
+  String get newExpenseTitle => 'Nuevo gasto';
+
+  @override
+  String get editExpense => 'Editar gasto';
+
+  @override
+  String get addCardFirst =>
+      'Primero agrega una tarjeta para registrar gastos.';
+
+  @override
+  String get deleteExpenseTitle => '¿Eliminar este gasto?';
+
+  @override
+  String get deleteExpenseBody => 'Se quitará de la tarjeta y de los reportes.';
+
+  @override
+  String get scanReceipt => 'Escanear factura (IA)';
+
+  @override
+  String get scanReceiptHint =>
+      'La IA lee la foto y propone los datos; tú los revisas antes de guardar. La foto no se guarda.';
+
+  @override
+  String get merchant => 'Comercio';
+
+  @override
+  String get category => 'Categoría';
+
+  @override
+  String get archivedCardExpense =>
+      'La tarjeta de este gasto está archivada: puedes eliminarlo, pero no editarlo.';
+
+  @override
+  String get expenseCurrency => 'Moneda del gasto';
+
+  @override
+  String get amount => 'Monto';
+
+  @override
+  String recordedOnCardAs(String amount) {
+    return 'Se registra en la tarjeta como $amount';
+  }
+
+  @override
+  String get date => 'Fecha';
+
+  @override
+  String get notesOptional => 'Notas (opcional)';
+
+  @override
+  String get saveExpense => 'Guardar gasto';
+
+  @override
+  String get deleteExpense => 'Eliminar gasto';
+
+  @override
+  String get readingReceipt => 'Leyendo factura…';
+
+  @override
+  String get aiChip => 'IA';
+
+  @override
+  String get rateLoading => 'Buscando la tasa de hoy…';
+
+  @override
+  String get rateOnline =>
+      'Tasa en línea de hoy. Puedes ajustarla a la de tu banco.';
+
+  @override
+  String get rateStale => 'Sin conexión: última tasa conocida. Revísala.';
+
+  @override
+  String get rateUnavailable => 'No se pudo obtener la tasa. Escríbela.';
+
+  @override
+  String get rateIdle => 'Tasa usada en la conversión.';
+
+  @override
+  String get fieldRateRequired => 'Escribe la tasa (ej. 61.40)';
+
+  @override
+  String get rateLabel => 'Tasa (RD\$ por US\$ 1)';
+
+  @override
+  String get refreshRate => 'Buscar la tasa de hoy';
+
+  @override
+  String get allDates => 'Todas las fechas';
+
+  @override
+  String get merchantContains => 'Comercio contiene';
+
+  @override
+  String get minAmount => 'Monto mínimo';
+
+  @override
+  String get maxAmount => 'Monto máximo';
+
+  @override
+  String get apply => 'Aplicar';
+
+  @override
+  String get newCategory => 'Nueva categoría';
+
+  @override
+  String get editCategory => 'Editar categoría';
+
+  @override
+  String get noOwnCategories => 'Aún no has creado categorías.';
+
+  @override
+  String get includedCategories => 'Incluidas';
+
+  @override
+  String get includedCategoriesHint =>
+      'Vienen con la app y no se pueden cambiar.';
+
+  @override
+  String get categoriesLoadError => 'No se pudieron cargar las categorías';
+
+  @override
+  String get categoryNotFound => 'Categoría no encontrada';
+
+  @override
+  String deleteNamedTitle(String name) {
+    return '¿Eliminar \"$name\"?';
+  }
+
+  @override
+  String get categoryNoExpenses => 'No tiene gastos.';
+
+  @override
+  String get categoryNameLabel => 'Nombre (ej. Mascotas)';
+
+  @override
+  String get icon => 'Ícono';
+
+  @override
+  String colorNumber(int n) {
+    return 'Color $n';
+  }
+
+  @override
+  String get createCategory => 'Crear categoría';
+
+  @override
+  String get deleteCategory => 'Eliminar categoría';
+
+  @override
+  String categoryHasExpenses(String name, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '\"$name\" tiene $count gastos',
+      one: '\"$name\" tiene 1 gasto',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reassignHint => 'Para eliminarla, elige a qué categoría pasan.';
+
+  @override
+  String get moveTo => 'Pasar a';
+
+  @override
+  String get moveAndDelete => 'Mover y eliminar';
 }

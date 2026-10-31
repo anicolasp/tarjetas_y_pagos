@@ -6,8 +6,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:tarjetas_y_pagos/core/language.dart';
 import 'package:tarjetas_y_pagos/core/money.dart';
 import 'package:tarjetas_y_pagos/data/models/category.dart';
+import 'package:tarjetas_y_pagos/l10n/l10n.dart';
 import 'package:tarjetas_y_pagos/services/receipt_ai_service.dart';
 
 const _key = 'sk-ant-test-SECRET-123';
@@ -294,9 +296,12 @@ void main() {
   });
 
   test('the key never appears in any error message', () {
-    for (final e in ReceiptScanError.values) {
-      expect(e.message, isNot(contains(_key)));
-      expect(e.message, isNot(contains('sk-ant')));
+    for (final language in AppLanguage.values) {
+      for (final e in ReceiptScanError.values) {
+        final message = l10nFor(language).receiptScanError(e);
+        expect(message, isNot(contains(_key)));
+        expect(message, isNot(contains('sk-ant')));
+      }
     }
   });
 
