@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/router.dart';
@@ -14,9 +13,9 @@ class TarjetasApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(remindersProvider);
+    // The date locale (Intl.defaultLocale) is kept in step by the
+    // AuthController, before any screen rebuilds.
     final language = ref.watch(languageProvider);
-    // Dates (`core/formatters.dart`) read it; set before the tree builds.
-    Intl.defaultLocale = language.code;
     return MaterialApp.router(
       title: 'Tarjetas y Pagos',
       debugShowCheckedModeBanner: false,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../core/language.dart';
 import '../../core/money.dart';
@@ -84,9 +85,18 @@ class AuthController extends Notifier<AuthState> {
 
   @override
   AuthState build() {
+    // Dates (`core/formatters.dart`) read the global Intl locale. Set it
+    // the moment the session changes, before any screen rebuilds: a screen
+    // that does not depend on the locale (Home, today) would otherwise
+    // keep dates in the previous language.
+    listenSelf((_, next) => _applyDateLocale(next));
+    _applyDateLocale(const AuthLoading());
     _restoreSession();
     return const AuthLoading();
   }
+
+  void _applyDateLocale(AuthState auth) =>
+      Intl.defaultLocale = _languageFor(auth, ref.read(appPrefsProvider)).code;
 
   Future<AuthRepository> get _repo => ref.read(authRepositoryProvider.future);
 

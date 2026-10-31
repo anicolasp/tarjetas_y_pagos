@@ -145,6 +145,24 @@ void main() {
     expect(formatMoney(125000, .dop), r'RD$ 1,250.00');
   });
 
+  testWidgets('dates are in the language from the first frame', (tester) async {
+    // Home is not translated yet (#28) and does not depend on the locale,
+    // so it must not be built before the date locale is set.
+    await setLanguage('fr');
+    await start(tester);
+    expect(find.textContaining('octobre'), findsOneWidget);
+  });
+
+  testWidgets('screens already open switch their dates too', (tester) async {
+    await start(tester);
+    expect(find.textContaining('octubre'), findsOneWidget);
+    await tap(tester, 'home.avatar');
+    await tap(tester, 'profile.language.fr');
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('octobre'), findsOneWidget);
+  });
+
   testWidgets('validation messages follow the language', (tester) async {
     store.values.clear();
     await start(tester, prefs: {'last_language': 'en'});
