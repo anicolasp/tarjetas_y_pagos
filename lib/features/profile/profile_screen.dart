@@ -206,10 +206,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               // find theirs.
                               label: Text(language.nativeName),
                               selected: user.language == language,
-                              onSelected: (_) => _run(
-                                () =>
-                                    _auth.updatePreferences(language: language),
-                              ),
+                              onSelected: (_) => user.language == language
+                                  ? null
+                                  : _run(
+                                      () => _auth.updatePreferences(
+                                        language: language,
+                                      ),
+                                    ),
                             ),
                         ],
                       ),

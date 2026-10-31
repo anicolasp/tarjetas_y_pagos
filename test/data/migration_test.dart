@@ -105,7 +105,7 @@ void main() {
     await db.close();
   });
 
-  test('v2 → v3 keeps users in Spanish and only allows es/en/fr', () async {
+  test('v2 → v3 keeps users in Spanish', () async {
     final v2 = await openAt(2);
     final userId = await v2.db.insert('users', {
       'first_name': 'Ana',
@@ -121,10 +121,6 @@ void main() {
     final user = (await v3.db.query('users')).single;
     expect(user['id'], userId);
     expect(user['language'], 'es');
-    expect(
-      () => v3.db.update('users', {'language': 'de'}),
-      throwsA(isA<DatabaseException>()),
-    );
     await v3.db.update('users', {'language': 'fr'});
     expect((await v3.db.query('users')).single['language'], 'fr');
     await v3.close();

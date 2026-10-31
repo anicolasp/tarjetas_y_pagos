@@ -7,6 +7,7 @@ import '../../data/models/app_user.dart';
 import '../../data/providers.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../l10n/l10n.dart';
+import '../../services/app_prefs.dart';
 import '../../services/providers.dart';
 
 sealed class AuthState {
@@ -60,12 +61,17 @@ final themeModeProvider = Provider<ThemeMode>((ref) {
 });
 
 /// The app language: the user's choice, or the last user's before login.
-final languageProvider = Provider<AppLanguage>((ref) {
-  return switch (ref.watch(authControllerProvider)) {
-    AuthLoggedIn(:final user) || AuthNeedsUnlock(:final user) => user.language,
-    _ => ref.watch(appPrefsProvider).lastLanguage,
-  };
-});
+final languageProvider = Provider<AppLanguage>(
+  (ref) => _languageFor(
+    ref.watch(authControllerProvider),
+    ref.watch(appPrefsProvider),
+  ),
+);
+
+AppLanguage _languageFor(AuthState auth, AppPrefs prefs) => switch (auth) {
+  AuthLoggedIn(:final user) || AuthNeedsUnlock(:final user) => user.language,
+  _ => prefs.lastLanguage,
+};
 
 enum EnableBiometricsResult { enabled, unavailable, notConfirmed }
 
@@ -73,10 +79,8 @@ class AuthController extends Notifier<AuthState> {
   /// Texts in the app language, for the system biometric prompt. Same
   /// rule as [languageProvider], from this notifier's own state (reading
   /// that provider here would be a circular dependency).
-  AppLocalizations get _l10n => l10nFor(switch (state) {
-    AuthLoggedIn(:final user) || AuthNeedsUnlock(:final user) => user.language,
-    _ => ref.read(appPrefsProvider).lastLanguage,
-  });
+  AppLocalizations get _l10n =>
+      l10nFor(_languageFor(state, ref.read(appPrefsProvider)));
 
   @override
   AuthState build() {
@@ -144,6 +148,8 @@ class AuthController extends Notifier<AuthState> {
       lastName: lastName,
       email: email,
       password: password,
+      // The language the register screen was shown in.
+      language: _languageFor(state, ref.read(appPrefsProvider)),
     );
     // Before the session starts, so the router goes straight to the wizard.
     await ref.read(setupPendingProvider.notifier).start(user.id!);

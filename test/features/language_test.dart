@@ -113,6 +113,28 @@ void main() {
     expect(await storedLanguage(), 'fr');
   });
 
+  testWidgets('registering on an English screen creates an English user', (
+    tester,
+  ) async {
+    store.values.clear();
+    await start(tester, prefs: {'last_language': 'en'});
+    await tap(tester, 'login.register');
+    await tester.enterText(key('register.firstName'), 'Luis');
+    await tester.enterText(key('register.lastName'), 'Ficticio');
+    await tester.enterText(key('register.email'), 'luis@example.com');
+    await tester.enterText(key('register.password'), 'abc12345');
+    await tester.enterText(key('register.confirm'), 'abc12345');
+    await tap(tester, 'register.submit');
+    // The setup wizard that follows stays in English.
+    expect(find.text('Set up your account'), findsOneWidget);
+    final row = (await db.db.query(
+      'users',
+      where: 'email = ?',
+      whereArgs: ['luis@example.com'],
+    )).single;
+    expect(row['language'], 'en');
+  });
+
   testWidgets('dates follow the language; money keeps its format', (
     tester,
   ) async {

@@ -114,8 +114,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   onSubmitted: (_) => _submit(),
                   // Login only checks it is not empty; the rules apply when
                   // registering.
-                  validator: (v) =>
-                      (v ?? '').isEmpty ? l.fieldPasswordRequired : null,
+                  validator: (v) => l.fieldError(
+                    (v ?? '').isEmpty ? FieldError.passwordRequired : null,
+                  ),
                 ),
               ],
             ),

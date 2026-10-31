@@ -222,10 +222,11 @@ Future<void> _v2(Database db) async {
   await batch.commit(noResult: true);
 }
 
-/// v3 (#26): the user's language. Existing users stay in Spanish.
+/// v3 (#26): the user's language. Existing users stay in Spanish. No CHECK
+/// on the codes: adding a language must not need a table rebuild, and an
+/// unknown code is read as Spanish (`AppLanguage.fromCode`).
 Future<void> _v3(Database db) async {
   await db.execute(
-    "ALTER TABLE users ADD COLUMN language TEXT NOT NULL DEFAULT 'es' "
-    "CHECK (language IN ('es', 'en', 'fr'))",
+    "ALTER TABLE users ADD COLUMN language TEXT NOT NULL DEFAULT 'es'",
   );
 }

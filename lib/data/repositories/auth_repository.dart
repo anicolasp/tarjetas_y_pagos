@@ -57,6 +57,7 @@ class AuthRepository {
     required String lastName,
     required String email,
     required String password,
+    AppLanguage language = AppLanguage.es,
   }) async {
     final error =
         validateName(firstName, field: NameField.first) ??
@@ -77,6 +78,7 @@ class AuthRepository {
       email: normalized,
       passwordHash: await _hasher.hash(password, salt),
       salt: salt,
+      language: language,
       createdAt: _clock(),
     );
     try {
