@@ -789,6 +789,168 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Sin permiso no podremos avisarte. Puedes darlo luego en los ajustes del teléfono.'**
   String get notificationsDenied;
+
+  /// No description provided for @secQFirstPet.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Cómo se llamaba tu primera mascota?'**
+  String get secQFirstPet;
+
+  /// No description provided for @secQBirthCity.
+  ///
+  /// In es, this message translates to:
+  /// **'¿En qué ciudad naciste?'**
+  String get secQBirthCity;
+
+  /// No description provided for @secQPrimarySchool.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Cómo se llamaba tu escuela primaria?'**
+  String get secQPrimarySchool;
+
+  /// No description provided for @secQChildhoodFriend.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Cómo se llamaba tu mejor amigo de la infancia?'**
+  String get secQChildhoodFriend;
+
+  /// No description provided for @secQFirstJob.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Dónde fue tu primer trabajo?'**
+  String get secQFirstJob;
+
+  /// No description provided for @secQCustom.
+  ///
+  /// In es, this message translates to:
+  /// **'Escribir mi propia pregunta'**
+  String get secQCustom;
+
+  /// No description provided for @securityQuestionLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Pregunta de seguridad'**
+  String get securityQuestionLabel;
+
+  /// No description provided for @customQuestionLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu pregunta'**
+  String get customQuestionLabel;
+
+  /// No description provided for @securityAnswerLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Respuesta'**
+  String get securityAnswerLabel;
+
+  /// No description provided for @securityAnswerHint.
+  ///
+  /// In es, this message translates to:
+  /// **'No importan las mayúsculas ni las tildes.'**
+  String get securityAnswerHint;
+
+  /// No description provided for @registerSecurityHint.
+  ///
+  /// In es, this message translates to:
+  /// **'La usarás si olvidas tu contraseña.'**
+  String get registerSecurityHint;
+
+  /// No description provided for @fieldQuestionChoose.
+  ///
+  /// In es, this message translates to:
+  /// **'Elige una pregunta'**
+  String get fieldQuestionChoose;
+
+  /// No description provided for @fieldQuestionRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Escribe tu pregunta'**
+  String get fieldQuestionRequired;
+
+  /// No description provided for @fieldAnswerRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Escribe tu respuesta'**
+  String get fieldAnswerRequired;
+
+  /// No description provided for @fieldAnswerTooShort.
+  ///
+  /// In es, this message translates to:
+  /// **'Mínimo {min} caracteres'**
+  String fieldAnswerTooShort(int min);
+
+  /// No description provided for @forgotPasswordLink.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Olvidaste tu contraseña?'**
+  String get forgotPasswordLink;
+
+  /// No description provided for @forgotTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Recuperar contraseña'**
+  String get forgotTitle;
+
+  /// No description provided for @forgotEmailSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Escribe el correo de tu cuenta.'**
+  String get forgotEmailSubtitle;
+
+  /// No description provided for @forgotAnswerSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Responde tu pregunta de seguridad.'**
+  String get forgotAnswerSubtitle;
+
+  /// No description provided for @forgotNewPasswordSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Crea una contraseña nueva.'**
+  String get forgotNewPasswordSubtitle;
+
+  /// No description provided for @continueLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Continuar'**
+  String get continueLabel;
+
+  /// No description provided for @accountNotFound.
+  ///
+  /// In es, this message translates to:
+  /// **'No encontramos una cuenta con ese correo'**
+  String get accountNotFound;
+
+  /// No description provided for @noSecurityQuestion.
+  ///
+  /// In es, this message translates to:
+  /// **'Esta cuenta no tiene pregunta de seguridad'**
+  String get noSecurityQuestion;
+
+  /// No description provided for @wrongAnswer.
+  ///
+  /// In es, this message translates to:
+  /// **'La respuesta no es correcta'**
+  String get wrongAnswer;
+
+  /// No description provided for @securityQuestionMissing.
+  ///
+  /// In es, this message translates to:
+  /// **'Configura una pregunta para poder recuperar tu contraseña.'**
+  String get securityQuestionMissing;
+
+  /// No description provided for @securityQuestionNotSet.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin configurar'**
+  String get securityQuestionNotSet;
+
+  /// No description provided for @securityQuestionSaved.
+  ///
+  /// In es, this message translates to:
+  /// **'Pregunta de seguridad guardada'**
+  String get securityQuestionSaved;
 }
 
 class _AppLocalizationsDelegate

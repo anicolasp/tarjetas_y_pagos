@@ -8,6 +8,7 @@ import '../../data/repositories/auth_repository.dart';
 import '../../l10n/l10n.dart';
 import '../auth/auth_controller.dart';
 import '../auth/auth_widgets.dart';
+import '../auth/security_question_fields.dart';
 import '../cards/cards_providers.dart';
 
 /// A small account form page: [children] above a save button.
@@ -349,6 +350,68 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen>
           textInputAction: TextInputAction.done,
           validator: (v) =>
               l.fieldError(validatePasswordConfirmation(v, _new.text)),
+        ),
+      ],
+    );
+  }
+}
+
+/// Set or change the security question (#27); asks for the current
+/// password like the email and password forms.
+class SecurityQuestionScreen extends ConsumerStatefulWidget {
+  const SecurityQuestionScreen({super.key});
+
+  @override
+  ConsumerState<SecurityQuestionScreen> createState() =>
+      _SecurityQuestionScreenState();
+}
+
+class _SecurityQuestionScreenState extends ConsumerState<SecurityQuestionScreen>
+    with _CurrentPassword {
+  final _form = GlobalKey<FormState>();
+  late final _security = SecurityQuestionInput(
+    initial: ref.read(currentUserProvider)?.securityQuestion,
+  );
+
+  @override
+  void dispose() {
+    _security.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    return _AccountForm(
+      rootKey: const ValueKey('securityQuestion.root'),
+      title: l.securityQuestionLabel,
+      formKey: _form,
+      saveKey: const ValueKey('securityQuestion.save'),
+      saving: saving,
+      onSave: () => submit(
+        _form,
+        () => ref
+            .read(authControllerProvider.notifier)
+            .setSecurityQuestion(
+              currentPassword: current.text,
+              question: _security.question,
+              answer: _security.answer.text,
+            ),
+        l.securityQuestionSaved,
+      ),
+      children: [
+        Text(l.registerSecurityHint),
+        const SizedBox(height: 14),
+        SecurityQuestionFields(input: _security, keyPrefix: 'securityQuestion'),
+        const SizedBox(height: 14),
+        PasswordField(
+          key: const ValueKey('securityQuestion.current'),
+          toggleKey: const ValueKey('securityQuestion.toggleCurrent'),
+          controller: current,
+          label: l.currentPasswordLabel,
+          textInputAction: TextInputAction.done,
+          autofillHints: const [AutofillHints.password],
+          validator: validateCurrent,
         ),
       ],
     );

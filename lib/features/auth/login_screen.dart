@@ -122,7 +122,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ),
           ),
         ),
-        const SizedBox(height: 24),
+        Align(
+          alignment: AlignmentDirectional.centerEnd,
+          child: TextButton(
+            key: const ValueKey('login.forgot'),
+            onPressed: _loading
+                ? null
+                : () => context.push(Routes.forgotPassword),
+            child: Text(l.forgotPasswordLink),
+          ),
+        ),
+        const SizedBox(height: 8),
         LoadingButton(
           key: const ValueKey('login.submit'),
           label: l.loginTitle,

@@ -3,7 +3,7 @@ import 'package:sqflite/sqflite.dart';
 
 import '../../core/language.dart';
 import '../../core/money.dart';
-
+import '../../core/security_question.dart';
 import '../../core/validators.dart';
 import '../../services/login_throttle.dart';
 import '../../services/password_hasher.dart';
@@ -28,6 +28,21 @@ class LockedOutException implements Exception {
 /// The current password given to confirm a change is wrong.
 class WrongPasswordException implements Exception {
   const WrongPasswordException();
+}
+
+/// No account uses that email (password recovery, #27).
+class AccountNotFoundException implements Exception {
+  const AccountNotFoundException();
+}
+
+/// The account was created before #27 and has no security question.
+class NoSecurityQuestionException implements Exception {
+  const NoSecurityQuestionException();
+}
+
+/// The answer to the security question is wrong.
+class WrongAnswerException implements Exception {
+  const WrongAnswerException();
 }
 
 /// Days of notice before cuts, due dates and debts (#10).
@@ -58,12 +73,17 @@ class AuthRepository {
     required String email,
     required String password,
     AppLanguage language = AppLanguage.es,
+    SecurityQuestion? securityQuestion,
+    String? securityAnswer,
   }) async {
     final error =
         validateName(firstName, field: NameField.first) ??
         validateName(lastName, field: NameField.last) ??
         validateEmail(email) ??
-        validatePassword(password);
+        validatePassword(password) ??
+        (securityQuestion == null
+            ? null
+            : _validateQuestion(securityQuestion, securityAnswer));
     if (error != null) throw FieldErrorException(error);
 
     final normalized = normalizeEmail(email);
@@ -79,10 +99,14 @@ class AuthRepository {
       passwordHash: await _hasher.hash(password, salt),
       salt: salt,
       language: language,
+      securityQuestion: securityQuestion,
       createdAt: _clock(),
     );
     try {
-      final id = await _db.db.insert('users', user.toMap());
+      final id = await _db.db.insert('users', {
+        ...user.toMap(),
+        if (securityQuestion != null) ...await _answerColumns(securityAnswer!),
+      });
       return user.copyWith(id: id);
     } on DatabaseException catch (e) {
       // Lost a race with another registration of the same email.
@@ -210,6 +234,108 @@ class AuthRepository {
       if (biometricEnabled != null)
         'biometric_enabled': biometricEnabled ? 1 : 0,
     });
+  }
+
+  // ------------------------------------------------------ recovery (#27)
+
+  /// The question to show for [email]. Throws [AccountNotFoundException]
+  /// or [NoSecurityQuestionException].
+  Future<SecurityQuestion> securityQuestionFor(String email) async {
+    final user = await _findByEmail(normalizeEmail(email));
+    if (user == null) throw const AccountNotFoundException();
+    return user.securityQuestion ?? (throw const NoSecurityQuestionException());
+  }
+
+  /// A new password for whoever answers the security question. Wrong
+  /// answers count against the same per-email throttle as the login; the
+  /// right one resets it. Data and biometrics are untouched. Throws
+  /// [AccountNotFoundException], [NoSecurityQuestionException],
+  /// [LockedOutException], [WrongAnswerException] or [FieldErrorException].
+  Future<AppUser> resetPasswordWithAnswer({
+    required String email,
+    required String answer,
+    required String newPassword,
+  }) async {
+    final error = validatePassword(newPassword);
+    if (error != null) throw FieldErrorException(error);
+    final user = await _userWithAnswer(email, answer);
+    if (await _hasher.verify(newPassword, user.salt, user.passwordHash)) {
+      throw FieldErrorException(FieldError.samePassword);
+    }
+    final newSalt = _hasher.newSalt();
+    return _update(user.id!, {
+      'salt': newSalt,
+      'password_hash': await _hasher.hash(newPassword, newSalt),
+    });
+  }
+
+  /// Checks the answer before the new password is asked for (same
+  /// throttle and exceptions as [resetPasswordWithAnswer]).
+  Future<void> checkSecurityAnswer(String email, String answer) =>
+      _userWithAnswer(email, answer);
+
+  Future<AppUser> _userWithAnswer(String email, String answer) async {
+    final normalized = normalizeEmail(email);
+    final locked = _throttle.lockedFor(normalized);
+    if (locked != null) throw LockedOutException(locked);
+
+    final rows = await _db.db.query(
+      'users',
+      where: 'email = ?',
+      whereArgs: [normalized],
+      limit: 1,
+    );
+    if (rows.isEmpty) throw const AccountNotFoundException();
+    final row = rows.single;
+    final hash = row['security_answer_hash'] as String?;
+    final salt = row['security_salt'] as String?;
+    if (hash == null || salt == null) {
+      throw const NoSecurityQuestionException();
+    }
+    if (!await _hasher.verify(normalizeSecurityAnswer(answer), salt, hash)) {
+      await _throttle.registerFailure(normalized);
+      final nowLocked = _throttle.lockedFor(normalized);
+      if (nowLocked != null) throw LockedOutException(nowLocked);
+      throw const WrongAnswerException();
+    }
+    await _throttle.reset(normalized);
+    return AppUser.fromMap(row);
+  }
+
+  /// Sets or changes the security question; needs the current password.
+  /// Throws [WrongPasswordException], [LockedOutException] or
+  /// [FieldErrorException].
+  Future<AppUser> setSecurityQuestion(
+    int userId, {
+    required String currentPassword,
+    required SecurityQuestion question,
+    required String answer,
+  }) async {
+    final error = _validateQuestion(question, answer);
+    if (error != null) throw FieldErrorException(error);
+    await _verifiedUser(userId, currentPassword);
+    return _update(userId, {
+      'security_question': question.encode(),
+      ...await _answerColumns(answer),
+    });
+  }
+
+  FieldError? _validateQuestion(SecurityQuestion question, String? answer) =>
+      (question is CustomQuestion
+          ? validateCustomQuestion(question.text)
+          : null) ??
+      validateSecurityAnswer(answer);
+
+  /// The answer, normalized and hashed with its own salt.
+  Future<Map<String, Object?>> _answerColumns(String answer) async {
+    final salt = _hasher.newSalt();
+    return {
+      'security_salt': salt,
+      'security_answer_hash': await _hasher.hash(
+        normalizeSecurityAnswer(answer),
+        salt,
+      ),
+    };
   }
 
   /// The user, once [password] is confirmed. Wrong guesses count against

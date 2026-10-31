@@ -6,6 +6,7 @@ import '../../data/repositories/auth_repository.dart';
 import '../../l10n/l10n.dart';
 import 'auth_controller.dart';
 import 'auth_widgets.dart';
+import 'security_question_fields.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -21,6 +22,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _email = TextEditingController();
   final _password = TextEditingController();
   final _confirm = TextEditingController();
+  final _security = SecurityQuestionInput();
   var _loading = false;
 
   /// Server-side style error shown under the email field.
@@ -31,6 +33,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     for (final c in [_firstName, _lastName, _email, _password, _confirm]) {
       c.dispose();
     }
+    _security.dispose();
     super.dispose();
   }
 
@@ -46,6 +49,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             lastName: _lastName.text,
             email: _email.text,
             password: _password.text,
+            securityQuestion: _security.question,
+            securityAnswer: _security.answer.text,
           );
     } on EmailTakenException {
       if (mounted) {
@@ -143,11 +148,27 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   toggleKey: const ValueKey('register.toggleConfirm'),
                   controller: _confirm,
                   label: l.confirmPasswordLabel,
-                  textInputAction: TextInputAction.done,
-                  onSubmitted: (_) => _submit(),
                   validator: (v) => l.fieldError(
                     validatePasswordConfirmation(v, _password.text),
                   ),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  l.securityQuestionLabel,
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  l.registerSecurityHint,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SecurityQuestionFields(
+                  input: _security,
+                  keyPrefix: 'register',
+                  textInputAction: TextInputAction.done,
                 ),
               ],
             ),

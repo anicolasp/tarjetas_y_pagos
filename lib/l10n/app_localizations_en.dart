@@ -394,4 +394,91 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get notificationsDenied =>
       'Without permission we can\'t remind you. You can allow it later in your phone settings.';
+
+  @override
+  String get secQFirstPet => 'What was the name of your first pet?';
+
+  @override
+  String get secQBirthCity => 'In what city were you born?';
+
+  @override
+  String get secQPrimarySchool =>
+      'What was the name of your elementary school?';
+
+  @override
+  String get secQChildhoodFriend =>
+      'What was the name of your best childhood friend?';
+
+  @override
+  String get secQFirstJob => 'Where was your first job?';
+
+  @override
+  String get secQCustom => 'Write my own question';
+
+  @override
+  String get securityQuestionLabel => 'Security question';
+
+  @override
+  String get customQuestionLabel => 'Your question';
+
+  @override
+  String get securityAnswerLabel => 'Answer';
+
+  @override
+  String get securityAnswerHint => 'Capitals and accents don\'t matter.';
+
+  @override
+  String get registerSecurityHint =>
+      'You\'ll use it if you forget your password.';
+
+  @override
+  String get fieldQuestionChoose => 'Choose a question';
+
+  @override
+  String get fieldQuestionRequired => 'Write your question';
+
+  @override
+  String get fieldAnswerRequired => 'Enter your answer';
+
+  @override
+  String fieldAnswerTooShort(int min) {
+    return 'At least $min characters';
+  }
+
+  @override
+  String get forgotPasswordLink => 'Forgot your password?';
+
+  @override
+  String get forgotTitle => 'Recover password';
+
+  @override
+  String get forgotEmailSubtitle => 'Enter your account email.';
+
+  @override
+  String get forgotAnswerSubtitle => 'Answer your security question.';
+
+  @override
+  String get forgotNewPasswordSubtitle => 'Create a new password.';
+
+  @override
+  String get continueLabel => 'Continue';
+
+  @override
+  String get accountNotFound => 'We couldn\'t find an account with that email';
+
+  @override
+  String get noSecurityQuestion => 'This account has no security question';
+
+  @override
+  String get wrongAnswer => 'The answer is wrong';
+
+  @override
+  String get securityQuestionMissing =>
+      'Set a question so you can recover your password.';
+
+  @override
+  String get securityQuestionNotSet => 'Not set';
+
+  @override
+  String get securityQuestionSaved => 'Security question saved';
 }

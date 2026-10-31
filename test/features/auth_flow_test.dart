@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tarjetas_y_pagos/data/database.dart';
 
 import '../helpers/fakes.dart';
+import '../helpers/security.dart';
 import '../helpers/test_db.dart';
 
 /// End-to-end auth flows through the real app, router, repository and an
@@ -49,6 +50,7 @@ void main() {
     await tester.enterText(key('register.email'), email);
     await tester.enterText(key('register.password'), 'abc12345');
     await tester.enterText(key('register.confirm'), 'abc12345');
+    await pickSecurityQuestion(tester, 'register');
     await tester.ensureVisible(key('register.submit'));
     await tester.tap(key('register.submit'));
     await tester.pumpAndSettle();

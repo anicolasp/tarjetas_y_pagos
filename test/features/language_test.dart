@@ -9,6 +9,7 @@ import 'package:tarjetas_y_pagos/data/models/app_user.dart';
 
 import '../helpers/fakes.dart';
 import '../helpers/screen_sizes.dart';
+import '../helpers/security.dart';
 import '../helpers/seed.dart';
 import '../helpers/test_db.dart';
 
@@ -124,6 +125,7 @@ void main() {
     await tester.enterText(key('register.email'), 'luis@example.com');
     await tester.enterText(key('register.password'), 'abc12345');
     await tester.enterText(key('register.confirm'), 'abc12345');
+    await pickSecurityQuestion(tester, 'register');
     await tap(tester, 'register.submit');
     // The setup wizard that follows stays in English.
     expect(find.text('Set up your account'), findsOneWidget);

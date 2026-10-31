@@ -197,5 +197,39 @@
   "illDoItLater": "Lo haré después",
   "enableReminders": "Activar recordatorios",
   "cardAdded": "Tarjeta agregada",
-  "notificationsDenied": "Sin permiso no podremos avisarte. Puedes darlo luego en los ajustes del teléfono."
+  "notificationsDenied": "Sin permiso no podremos avisarte. Puedes darlo luego en los ajustes del teléfono.",
+  "secQFirstPet": "¿Cómo se llamaba tu primera mascota?",
+  "secQBirthCity": "¿En qué ciudad naciste?",
+  "secQPrimarySchool": "¿Cómo se llamaba tu escuela primaria?",
+  "secQChildhoodFriend": "¿Cómo se llamaba tu mejor amigo de la infancia?",
+  "secQFirstJob": "¿Dónde fue tu primer trabajo?",
+  "secQCustom": "Escribir mi propia pregunta",
+  "securityQuestionLabel": "Pregunta de seguridad",
+  "customQuestionLabel": "Tu pregunta",
+  "securityAnswerLabel": "Respuesta",
+  "securityAnswerHint": "No importan las mayúsculas ni las tildes.",
+  "registerSecurityHint": "La usarás si olvidas tu contraseña.",
+  "fieldQuestionChoose": "Elige una pregunta",
+  "fieldQuestionRequired": "Escribe tu pregunta",
+  "fieldAnswerRequired": "Escribe tu respuesta",
+  "fieldAnswerTooShort": "Mínimo {min} caracteres",
+  "@fieldAnswerTooShort": {
+    "placeholders": {
+      "min": {
+        "type": "int"
+      }
+    }
+  },
+  "forgotPasswordLink": "¿Olvidaste tu contraseña?",
+  "forgotTitle": "Recuperar contraseña",
+  "forgotEmailSubtitle": "Escribe el correo de tu cuenta.",
+  "forgotAnswerSubtitle": "Responde tu pregunta de seguridad.",
+  "forgotNewPasswordSubtitle": "Crea una contraseña nueva.",
+  "continueLabel": "Continuar",
+  "accountNotFound": "No encontramos una cuenta con ese correo",
+  "noSecurityQuestion": "Esta cuenta no tiene pregunta de seguridad",
+  "wrongAnswer": "La respuesta no es correcta",
+  "securityQuestionMissing": "Configura una pregunta para poder recuperar tu contraseña.",
+  "securityQuestionNotSet": "Sin configurar",
+  "securityQuestionSaved": "Pregunta de seguridad guardada"
 }

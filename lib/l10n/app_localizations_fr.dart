@@ -401,4 +401,92 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get notificationsDenied =>
       'Sans autorisation, nous ne pourrons pas vous prévenir. Vous pourrez l\'accorder plus tard dans les réglages du téléphone.';
+
+  @override
+  String get secQFirstPet =>
+      'Comment s\'appelait votre premier animal de compagnie ?';
+
+  @override
+  String get secQBirthCity => 'Dans quelle ville êtes-vous né(e) ?';
+
+  @override
+  String get secQPrimarySchool => 'Comment s\'appelait votre école primaire ?';
+
+  @override
+  String get secQChildhoodFriend =>
+      'Comment s\'appelait votre meilleur ami d\'enfance ?';
+
+  @override
+  String get secQFirstJob => 'Où était votre premier emploi ?';
+
+  @override
+  String get secQCustom => 'Écrire ma propre question';
+
+  @override
+  String get securityQuestionLabel => 'Question de sécurité';
+
+  @override
+  String get customQuestionLabel => 'Votre question';
+
+  @override
+  String get securityAnswerLabel => 'Réponse';
+
+  @override
+  String get securityAnswerHint =>
+      'Les majuscules et les accents ne comptent pas.';
+
+  @override
+  String get registerSecurityHint =>
+      'Vous l\'utiliserez si vous oubliez votre mot de passe.';
+
+  @override
+  String get fieldQuestionChoose => 'Choisissez une question';
+
+  @override
+  String get fieldQuestionRequired => 'Saisissez votre question';
+
+  @override
+  String get fieldAnswerRequired => 'Saisissez votre réponse';
+
+  @override
+  String fieldAnswerTooShort(int min) {
+    return 'Au moins $min caractères';
+  }
+
+  @override
+  String get forgotPasswordLink => 'Mot de passe oublié ?';
+
+  @override
+  String get forgotTitle => 'Récupérer le mot de passe';
+
+  @override
+  String get forgotEmailSubtitle => 'Saisissez l\'e-mail de votre compte.';
+
+  @override
+  String get forgotAnswerSubtitle => 'Répondez à votre question de sécurité.';
+
+  @override
+  String get forgotNewPasswordSubtitle => 'Créez un nouveau mot de passe.';
+
+  @override
+  String get continueLabel => 'Continuer';
+
+  @override
+  String get accountNotFound => 'Aucun compte trouvé avec cet e-mail';
+
+  @override
+  String get noSecurityQuestion => 'Ce compte n\'a pas de question de sécurité';
+
+  @override
+  String get wrongAnswer => 'La réponse est incorrecte';
+
+  @override
+  String get securityQuestionMissing =>
+      'Configurez une question pour pouvoir récupérer votre mot de passe.';
+
+  @override
+  String get securityQuestionNotSet => 'Non configurée';
+
+  @override
+  String get securityQuestionSaved => 'Question de sécurité enregistrée';
 }
