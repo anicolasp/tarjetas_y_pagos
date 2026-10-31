@@ -1057,7 +1057,7 @@ abstract class AppLocalizations {
   /// No description provided for @fieldCardDualMustBeDop.
   ///
   /// In es, this message translates to:
-  /// **'Una tarjeta de doble balance es RD\\\$ y US\\\$'**
+  /// **'Una tarjeta de doble balance es RD\$ y US\$'**
   String get fieldCardDualMustBeDop;
 
   /// No description provided for @fieldCardCurrencyInUse.
@@ -1339,7 +1339,7 @@ abstract class AppLocalizations {
   /// No description provided for @dualBalance.
   ///
   /// In es, this message translates to:
-  /// **'RD\\\$ y US\\\$'**
+  /// **'RD\$ y US\$'**
   String get dualBalance;
 
   /// No description provided for @cardNotFound.
@@ -1669,7 +1669,7 @@ abstract class AppLocalizations {
   /// No description provided for @dualBalanceOption.
   ///
   /// In es, this message translates to:
-  /// **'RD\\\$ y US\\\$ (doble balance)'**
+  /// **'RD\$ y US\$ (doble balance)'**
   String get dualBalanceOption;
 
   /// No description provided for @dualBalanceHint.
@@ -1693,7 +1693,7 @@ abstract class AppLocalizations {
   /// No description provided for @limitDopOptional.
   ///
   /// In es, this message translates to:
-  /// **'Límite en RD\\\$ (opcional)'**
+  /// **'Límite en RD\$ (opcional)'**
   String get limitDopOptional;
 
   /// No description provided for @creditLimitOptional.
@@ -1705,7 +1705,7 @@ abstract class AppLocalizations {
   /// No description provided for @limitUsdOptional.
   ///
   /// In es, this message translates to:
-  /// **'Límite en US\\\$ (opcional)'**
+  /// **'Límite en US\$ (opcional)'**
   String get limitUsdOptional;
 
   /// No description provided for @color.

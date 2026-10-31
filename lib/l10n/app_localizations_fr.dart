@@ -567,7 +567,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get fieldCardDualMustBeDop =>
-      'Une carte à double solde est en RD\\\$ et US\\\$';
+      'Une carte à double solde est en RD\$ et US\$';
 
   @override
   String get fieldCardCurrencyInUse =>
@@ -720,7 +720,7 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get dualBalance => 'RD\\\$ et US\\\$';
+  String get dualBalance => 'RD\$ et US\$';
 
   @override
   String get cardNotFound => 'Carte introuvable';
@@ -918,7 +918,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get currency => 'Devise';
 
   @override
-  String get dualBalanceOption => 'RD\\\$ et US\\\$ (double solde)';
+  String get dualBalanceOption => 'RD\$ et US\$ (double solde)';
 
   @override
   String get dualBalanceHint =>
@@ -932,13 +932,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get fieldLimitInvalid => 'Montant invalide (ex. 50000 ou 50,000.00)';
 
   @override
-  String get limitDopOptional => 'Plafond en RD\\\$ (facultatif)';
+  String get limitDopOptional => 'Plafond en RD\$ (facultatif)';
 
   @override
   String get creditLimitOptional => 'Plafond de crédit (facultatif)';
 
   @override
-  String get limitUsdOptional => 'Plafond en US\\\$ (facultatif)';
+  String get limitUsdOptional => 'Plafond en US\$ (facultatif)';
 
   @override
   String get color => 'Couleur';

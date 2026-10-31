@@ -558,8 +558,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fieldCardLimitInvalid => 'Invalid limit';
 
   @override
-  String get fieldCardDualMustBeDop =>
-      'A dual-balance card is RD\\\$ and US\\\$';
+  String get fieldCardDualMustBeDop => 'A dual-balance card is RD\$ and US\$';
 
   @override
   String get fieldCardCurrencyInUse =>
@@ -712,7 +711,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get dualBalance => 'RD\\\$ and US\\\$';
+  String get dualBalance => 'RD\$ and US\$';
 
   @override
   String get cardNotFound => 'Card not found';
@@ -908,7 +907,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get currency => 'Currency';
 
   @override
-  String get dualBalanceOption => 'RD\\\$ and US\\\$ (dual balance)';
+  String get dualBalanceOption => 'RD\$ and US\$ (dual balance)';
 
   @override
   String get dualBalanceHint =>
@@ -922,13 +921,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fieldLimitInvalid => 'Invalid amount (e.g. 50000 or 50,000.00)';
 
   @override
-  String get limitDopOptional => 'Limit in RD\\\$ (optional)';
+  String get limitDopOptional => 'Limit in RD\$ (optional)';
 
   @override
   String get creditLimitOptional => 'Credit limit (optional)';
 
   @override
-  String get limitUsdOptional => 'Limit in US\\\$ (optional)';
+  String get limitUsdOptional => 'Limit in US\$ (optional)';
 
   @override
   String get color => 'Color';
