@@ -30,10 +30,15 @@ class NoticeDaysStepper extends StatelessWidget {
               : () => onChanged!(days - 1),
           icon: const Icon(Icons.remove),
         ),
-        Text(
-          context.l10n.daysCount(days),
-          key: ValueKey(keyPrefix),
-          style: Theme.of(context).textTheme.titleMedium,
+        // Wraps instead of overflowing: "3 jours avant" is much longer than
+        // "3 días" on a small phone.
+        Flexible(
+          child: Text(
+            context.l10n.daysCount(days),
+            key: ValueKey(keyPrefix),
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
         ),
         IconButton(
           key: ValueKey('$keyPrefix.plus'),
