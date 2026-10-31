@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart' show ThemeMode;
 
+import '../../core/language.dart';
 import '../../core/money.dart';
 import 'db_codec.dart';
 
@@ -15,6 +16,7 @@ class AppUser {
     this.themeMode = ThemeMode.system,
     this.defaultCurrency = Currency.dop,
     this.notifyDaysBefore = 3,
+    this.language = AppLanguage.es,
     required this.createdAt,
   });
 
@@ -28,6 +30,7 @@ class AppUser {
   final ThemeMode themeMode;
   final Currency defaultCurrency;
   final int notifyDaysBefore;
+  final AppLanguage language;
   final DateTime createdAt;
 
   factory AppUser.fromMap(Map<String, Object?> m) => AppUser(
@@ -41,6 +44,7 @@ class AppUser {
     themeMode: ThemeMode.values.byName(m['theme_mode'] as String),
     defaultCurrency: Currency.fromCode(m['default_currency'] as String),
     notifyDaysBefore: m['notify_days_before'] as int,
+    language: AppLanguage.fromCode(m['language'] as String?),
     createdAt: decodeTimestamp(m['created_at'] as String),
   );
 
@@ -55,6 +59,7 @@ class AppUser {
     'theme_mode': themeMode.name,
     'default_currency': defaultCurrency.code,
     'notify_days_before': notifyDaysBefore,
+    'language': language.code,
     'created_at': encodeTimestamp(createdAt),
   };
 
@@ -69,6 +74,7 @@ class AppUser {
     ThemeMode? themeMode,
     Currency? defaultCurrency,
     int? notifyDaysBefore,
+    AppLanguage? language,
   }) => AppUser(
     id: id ?? this.id,
     firstName: firstName ?? this.firstName,
@@ -80,6 +86,7 @@ class AppUser {
     themeMode: themeMode ?? this.themeMode,
     defaultCurrency: defaultCurrency ?? this.defaultCurrency,
     notifyDaysBefore: notifyDaysBefore ?? this.notifyDaysBefore,
+    language: language ?? this.language,
     createdAt: createdAt,
   );
 }

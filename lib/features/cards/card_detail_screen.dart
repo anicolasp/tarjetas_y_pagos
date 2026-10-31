@@ -471,7 +471,7 @@ class _PaymentTile extends ConsumerWidget {
       refreshFinance(ref);
     } catch (_) {
       if (context.mounted) {
-        showErrorSnackBar(context, unexpectedErrorMessage);
+        showErrorSnackBar(context, unexpectedError(context));
       }
     }
   }

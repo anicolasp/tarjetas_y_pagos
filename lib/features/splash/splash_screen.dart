@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/responsive.dart';
 import '../../data/providers.dart';
+import '../../l10n/l10n.dart';
 import '../auth/auth_controller.dart';
 
 /// Shown while the app opens the database and decides the initial route.
@@ -42,7 +43,7 @@ class SplashScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    'Tarjetas y Pagos',
+                    context.l10n.appTitle,
                     textAlign: TextAlign.center,
                     style: text.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w600,
@@ -50,7 +51,7 @@ class SplashScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Tus tarjetas, gastos y deudas en un solo lugar',
+                    context.l10n.appTagline,
                     textAlign: TextAlign.center,
                     style: text.bodyMedium?.copyWith(
                       color: scheme.onSurfaceVariant,
@@ -61,7 +62,7 @@ class SplashScreen extends ConsumerWidget {
                   // only show it once loading has finished.
                   if (db.hasError && !db.isLoading) ...[
                     Text(
-                      'No se pudo abrir la base de datos',
+                      context.l10n.databaseOpenError,
                       key: const ValueKey('splash.error'),
                       textAlign: TextAlign.center,
                       style: text.bodyMedium?.copyWith(color: scheme.error),
@@ -74,7 +75,7 @@ class SplashScreen extends ConsumerWidget {
                         // Restores the session once the database opens.
                         ..invalidate(authControllerProvider),
                       icon: const Icon(Icons.refresh),
-                      label: const Text('Reintentar'),
+                      label: Text(context.l10n.retry),
                     ),
                   ] else
                     const SizedBox.square(

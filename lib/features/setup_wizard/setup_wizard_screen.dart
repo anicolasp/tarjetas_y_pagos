@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/money.dart';
 import '../../core/responsive.dart';
 import '../../core/router.dart';
+import '../../l10n/l10n.dart';
 import '../../services/providers.dart';
 import '../auth/auth_controller.dart';
 import '../auth/auth_widgets.dart';
@@ -41,7 +42,7 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
     try {
       await action();
     } catch (_) {
-      if (mounted) showErrorSnackBar(context, unexpectedErrorMessage);
+      if (mounted) showErrorSnackBar(context, unexpectedError(context));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -62,12 +63,9 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
       case EnableBiometricsResult.enabled:
         _next();
       case EnableBiometricsResult.unavailable:
-        showErrorSnackBar(
-          context,
-          'Configura una huella en los ajustes del teléfono primero.',
-        );
+        showErrorSnackBar(context, context.l10n.fingerprintUnavailable);
       case EnableBiometricsResult.notConfirmed:
-        showErrorSnackBar(context, 'No se confirmó la huella.');
+        showErrorSnackBar(context, context.l10n.fingerprintNotConfirmed);
     }
   });
 
@@ -77,11 +75,7 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
         .requestPermission();
     if (!mounted) return;
     if (!granted) {
-      showErrorSnackBar(
-        context,
-        'Sin permiso no podremos avisarte. Puedes darlo luego en los '
-        'ajustes del teléfono.',
-      );
+      showErrorSnackBar(context, context.l10n.notificationsDenied);
     }
     await _finish();
   });
@@ -90,30 +84,18 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
   Widget build(BuildContext context) {
     final user = ref.watch(currentUserProvider);
     if (user == null) return const SizedBox.shrink();
+    final l = context.l10n;
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
 
     final (icon, title, body) = switch (_step) {
-      0 => (
-        Icons.payments_outlined,
-        '¿En qué moneda gastas más?',
-        'Será la moneda que aparece primero en gastos y deudas nuevos.',
-      ),
-      1 => (
-        Icons.credit_card,
-        'Agrega tu primera tarjeta',
-        'Solo guardamos los últimos 4 dígitos.',
-      ),
-      2 => (
-        Icons.fingerprint,
-        'Entra con tu huella',
-        'Al abrir la app se pedirá tu huella en vez de la contraseña.',
-      ),
+      0 => (Icons.payments_outlined, l.setupCurrencyTitle, l.setupCurrencyBody),
+      1 => (Icons.credit_card, l.setupCardTitle, l.setupCardBody),
+      2 => (Icons.fingerprint, l.setupFingerprintTitle, l.setupFingerprintBody),
       _ => (
         Icons.notifications_outlined,
-        'Recordatorios',
-        'Te avisamos antes del corte de tus tarjetas, de la fecha límite '
-            'de pago y de las deudas por vencer.',
+        l.setupRemindersTitle,
+        l.setupRemindersBody,
       ),
     };
 
@@ -140,20 +122,16 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
     };
 
     final (primaryKey, primaryLabel, onPrimary) = switch (_step) {
-      0 => ('setup.next', 'Siguiente', _next),
-      1 => ('setup.addCard', 'Agregar tarjeta', _addCard),
-      2 => ('setup.biometricOn', 'Activar', _enableBiometrics),
-      _ => (
-        'setup.notificationsOn',
-        'Activar recordatorios',
-        _enableNotifications,
-      ),
+      0 => ('setup.next', l.next, _next),
+      1 => ('setup.addCard', l.addCard, _addCard),
+      2 => ('setup.biometricOn', l.activate, _enableBiometrics),
+      _ => ('setup.notificationsOn', l.enableReminders, _enableNotifications),
     };
     final (laterKey, laterLabel, onLater) = switch (_step) {
       0 => (null, null, null),
-      1 => ('setup.cardLater', 'Lo haré después', _next),
-      2 => ('setup.biometricLater', 'Ahora no', _next),
-      _ => ('setup.notificationsLater', 'Ahora no', () => _run(_finish)),
+      1 => ('setup.cardLater', l.illDoItLater, _next),
+      2 => ('setup.biometricLater', l.notNow, _next),
+      _ => ('setup.notificationsLater', l.notNow, () => _run(_finish)),
     };
 
     return PopScope(
@@ -165,13 +143,13 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
       child: Scaffold(
         key: const ValueKey('setup.root'),
         appBar: AppBar(
-          title: const Text('Configura tu cuenta'),
+          title: Text(l.setupTitle),
           automaticallyImplyLeading: false,
           leading: _step == 0
               ? null
               : IconButton(
                   key: const ValueKey('setup.back'),
-                  tooltip: 'Atrás',
+                  tooltip: l.back,
                   onPressed: () => setState(() => _step--),
                   icon: const Icon(Icons.arrow_back),
                 ),
@@ -179,7 +157,7 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
             TextButton(
               key: const ValueKey('setup.skip'),
               onPressed: _busy ? null : () => _run(_finish),
-              child: const Text('Omitir'),
+              child: Text(l.skip),
             ),
           ],
         ),
@@ -194,7 +172,7 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Semantics(
-                      label: 'Paso ${_step + 1} de $_steps',
+                      label: l.stepOf(_step + 1, _steps),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(4),
                         child: LinearProgressIndicator(
@@ -207,7 +185,7 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Paso ${_step + 1} de $_steps',
+                      l.stepOf(_step + 1, _steps),
                       key: const ValueKey('setup.stepLabel'),
                       style: text.labelMedium?.copyWith(
                         color: scheme.onSurfaceVariant,
@@ -253,7 +231,7 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
                         children: [
                           Icon(Icons.check_circle, color: scheme.primary),
                           const SizedBox(width: 6),
-                          const Text('Tarjeta agregada'),
+                          Text(l.cardAdded),
                         ],
                       ),
                     ],
@@ -313,7 +291,7 @@ class _NoticeDays extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     return Column(
       children: [
-        Text('Avisarme antes de', style: text.bodyLarge),
+        Text(context.l10n.notifyBefore, style: text.bodyLarge),
         NoticeDaysStepper(
           days: days,
           onChanged: onChanged,

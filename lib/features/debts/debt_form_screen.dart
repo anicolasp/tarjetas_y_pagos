@@ -120,7 +120,7 @@ class _DebtFormState extends ConsumerState<_DebtForm> {
       // Business rule from the repository: show why.
       if (mounted) showErrorSnackBar(context, '${e.message}');
     } catch (_) {
-      if (mounted) showErrorSnackBar(context, unexpectedErrorMessage);
+      if (mounted) showErrorSnackBar(context, unexpectedError(context));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -140,7 +140,7 @@ class _DebtFormState extends ConsumerState<_DebtForm> {
       refreshFinance(ref);
       if (mounted) context.go(Routes.debts);
     } catch (_) {
-      if (mounted) showErrorSnackBar(context, unexpectedErrorMessage);
+      if (mounted) showErrorSnackBar(context, unexpectedError(context));
     }
   }
 

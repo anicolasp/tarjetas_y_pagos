@@ -103,7 +103,7 @@ class _PaymentFormState extends ConsumerState<_PaymentForm> {
       refreshFinance(ref);
       if (mounted) context.pop();
     } catch (_) {
-      if (mounted) showErrorSnackBar(context, unexpectedErrorMessage);
+      if (mounted) showErrorSnackBar(context, unexpectedError(context));
     } finally {
       if (mounted) setState(() => _saving = false);
     }

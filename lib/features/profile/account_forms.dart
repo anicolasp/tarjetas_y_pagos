@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/responsive.dart';
 import '../../core/validators.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../../l10n/l10n.dart';
 import '../auth/auth_controller.dart';
 import '../auth/auth_widgets.dart';
 import '../cards/cards_providers.dart';
@@ -49,7 +50,7 @@ class _AccountForm extends StatelessWidget {
                     const SizedBox(height: 20),
                     LoadingButton(
                       key: saveKey,
-                      label: 'Guardar',
+                      label: context.l10n.save,
                       loading: saving,
                       onPressed: onSave,
                     ),
@@ -72,8 +73,8 @@ mixin _CurrentPassword<T extends ConsumerStatefulWidget> on ConsumerState<T> {
   var saving = false;
 
   String? validateCurrent(String? v) {
-    if ((v ?? '').isEmpty) return 'Escribe tu contraseña actual';
-    if (v == _wrongValue) return 'La contraseña actual no es correcta';
+    if ((v ?? '').isEmpty) return context.l10n.currentPasswordRequired;
+    if (v == _wrongValue) return context.l10n.currentPasswordWrong;
     return null;
   }
 
@@ -97,17 +98,19 @@ mixin _CurrentPassword<T extends ConsumerStatefulWidget> on ConsumerState<T> {
       if (mounted) {
         showErrorSnackBar(
           context,
-          'Demasiados intentos. Espera ${formatWait(e.remaining)}.',
+          context.l10n.tooManyAttemptsWait(formatWait(e.remaining)),
         );
       }
     } on EmailTakenException {
       if (mounted) {
-        showErrorSnackBar(context, 'Ese correo ya tiene una cuenta');
+        showErrorSnackBar(context, context.l10n.emailHasAccount);
       }
-    } on ArgumentError catch (e) {
-      if (mounted) showErrorSnackBar(context, '${e.message}');
+    } on FieldErrorException catch (e) {
+      if (mounted) {
+        showErrorSnackBar(context, context.l10n.fieldError(e.error)!);
+      }
     } catch (_) {
-      if (mounted) showErrorSnackBar(context, unexpectedErrorMessage);
+      if (mounted) showErrorSnackBar(context, unexpectedError(context));
     } finally {
       if (mounted) setState(() => saving = false);
     }
@@ -152,10 +155,12 @@ class _EditNameScreenState extends ConsumerState<EditNameScreen> {
           .read(authControllerProvider.notifier)
           .updateName(_first.text, _last.text);
       if (mounted) context.pop();
-    } on ArgumentError catch (e) {
-      if (mounted) showErrorSnackBar(context, '${e.message}');
+    } on FieldErrorException catch (e) {
+      if (mounted) {
+        showErrorSnackBar(context, context.l10n.fieldError(e.error)!);
+      }
     } catch (_) {
-      if (mounted) showErrorSnackBar(context, unexpectedErrorMessage);
+      if (mounted) showErrorSnackBar(context, unexpectedError(context));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -163,9 +168,10 @@ class _EditNameScreenState extends ConsumerState<EditNameScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     return _AccountForm(
       rootKey: const ValueKey('editName.root'),
-      title: 'Nombre y apellido',
+      title: l.nameAndSurname,
       formKey: _form,
       saveKey: const ValueKey('editName.save'),
       saving: _saving,
@@ -177,10 +183,11 @@ class _EditNameScreenState extends ConsumerState<EditNameScreen> {
           textCapitalization: TextCapitalization.words,
           textInputAction: TextInputAction.next,
           autofillHints: const [AutofillHints.givenName],
-          validator: (v) => validateName(v, field: 'nombre'),
-          decoration: const InputDecoration(
-            labelText: 'Nombre',
-            prefixIcon: Icon(Icons.person_outline),
+          validator: (v) =>
+              l.fieldError(validateName(v, field: NameField.first)),
+          decoration: InputDecoration(
+            labelText: l.firstNameLabel,
+            prefixIcon: const Icon(Icons.person_outline),
           ),
         ),
         const SizedBox(height: 14),
@@ -189,10 +196,11 @@ class _EditNameScreenState extends ConsumerState<EditNameScreen> {
           controller: _last,
           textCapitalization: TextCapitalization.words,
           autofillHints: const [AutofillHints.familyName],
-          validator: (v) => validateName(v, field: 'apellido'),
-          decoration: const InputDecoration(
-            labelText: 'Apellido',
-            prefixIcon: Icon(Icons.person_outline),
+          validator: (v) =>
+              l.fieldError(validateName(v, field: NameField.last)),
+          decoration: InputDecoration(
+            labelText: l.lastNameLabel,
+            prefixIcon: const Icon(Icons.person_outline),
           ),
         ),
       ],
@@ -221,9 +229,10 @@ class _ChangeEmailScreenState extends ConsumerState<ChangeEmailScreen>
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(currentUserProvider);
+    final l = context.l10n;
     return _AccountForm(
       rootKey: const ValueKey('changeEmail.root'),
-      title: 'Cambiar correo',
+      title: l.changeEmail,
       formKey: _form,
       saveKey: const ValueKey('changeEmail.save'),
       saving: saving,
@@ -232,10 +241,10 @@ class _ChangeEmailScreenState extends ConsumerState<ChangeEmailScreen>
         () => ref
             .read(authControllerProvider.notifier)
             .changeEmail(currentPassword: current.text, newEmail: _email.text),
-        'Correo actualizado',
+        l.emailUpdated,
       ),
       children: [
-        Text('Correo actual: ${user?.email ?? ''}'),
+        Text(l.currentEmail(user?.email ?? '')),
         const SizedBox(height: 14),
         TextFormField(
           key: const ValueKey('changeEmail.email'),
@@ -243,10 +252,10 @@ class _ChangeEmailScreenState extends ConsumerState<ChangeEmailScreen>
           keyboardType: TextInputType.emailAddress,
           textInputAction: TextInputAction.next,
           autofillHints: const [AutofillHints.email],
-          validator: validateEmail,
-          decoration: const InputDecoration(
-            labelText: 'Correo nuevo',
-            prefixIcon: Icon(Icons.alternate_email),
+          validator: (v) => l.fieldError(validateEmail(v)),
+          decoration: InputDecoration(
+            labelText: l.newEmailLabel,
+            prefixIcon: const Icon(Icons.alternate_email),
           ),
         ),
         const SizedBox(height: 14),
@@ -254,7 +263,7 @@ class _ChangeEmailScreenState extends ConsumerState<ChangeEmailScreen>
           key: const ValueKey('changeEmail.current'),
           toggleKey: const ValueKey('changeEmail.toggleCurrent'),
           controller: current,
-          label: 'Contraseña actual',
+          label: l.currentPasswordLabel,
           textInputAction: TextInputAction.done,
           autofillHints: const [AutofillHints.password],
           validator: validateCurrent,
@@ -289,9 +298,10 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen>
   Widget build(BuildContext context) {
     final muted = Theme.of(context).textTheme.bodySmall
         ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant);
+    final l = context.l10n;
     return _AccountForm(
       rootKey: const ValueKey('changePassword.root'),
-      title: 'Cambiar contraseña',
+      title: l.changePassword,
       formKey: _form,
       saveKey: const ValueKey('changePassword.save'),
       saving: saving,
@@ -303,14 +313,14 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen>
               currentPassword: current.text,
               newPassword: _new.text,
             ),
-        'Contraseña actualizada',
+        l.passwordUpdated,
       ),
       children: [
         PasswordField(
           key: const ValueKey('changePassword.current'),
           toggleKey: const ValueKey('changePassword.toggleCurrent'),
           controller: current,
-          label: 'Contraseña actual',
+          label: l.currentPasswordLabel,
           autofillHints: const [AutofillHints.password],
           validator: validateCurrent,
         ),
@@ -319,27 +329,26 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen>
           key: const ValueKey('changePassword.new'),
           toggleKey: const ValueKey('changePassword.toggleNew'),
           controller: _new,
-          label: 'Contraseña nueva',
+          label: l.newPasswordLabel,
           autofillHints: const [AutofillHints.newPassword],
-          validator: (v) =>
-              validatePassword(v) ??
-              (v == current.text ? 'Debe ser distinta de la actual' : null),
+          validator: (v) => l.fieldError(
+            validatePassword(v) ??
+                (v == current.text ? FieldError.samePassword : null),
+          ),
         ),
         Padding(
           padding: const EdgeInsets.only(left: 12, top: 6),
-          child: Text(
-            'Mínimo $passwordMinLength caracteres, con letras y números',
-            style: muted,
-          ),
+          child: Text(l.passwordRulesHint(passwordMinLength), style: muted),
         ),
         const SizedBox(height: 14),
         PasswordField(
           key: const ValueKey('changePassword.confirm'),
           toggleKey: const ValueKey('changePassword.toggleConfirm'),
           controller: _confirm,
-          label: 'Confirmar contraseña nueva',
+          label: l.confirmNewPasswordLabel,
           textInputAction: TextInputAction.done,
-          validator: (v) => validatePasswordConfirmation(v, _new.text),
+          validator: (v) =>
+              l.fieldError(validatePasswordConfirmation(v, _new.text)),
         ),
       ],
     );

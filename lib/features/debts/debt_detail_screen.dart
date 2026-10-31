@@ -39,7 +39,7 @@ class DebtDetailScreen extends ConsumerWidget {
       await repo.deletePayment(user.id!, payment.id!);
       refreshFinance(ref);
     } catch (_) {
-      if (context.mounted) showErrorSnackBar(context, unexpectedErrorMessage);
+      if (context.mounted) showErrorSnackBar(context, unexpectedError(context));
     }
   }
 

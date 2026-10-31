@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/responsive.dart';
+import '../../l10n/l10n.dart';
 
 /// Layout shared by the auth screens: centered, width-capped form that
 /// scrolls when the screen is short (landscape, big text, keyboard).
@@ -124,7 +125,9 @@ class _PasswordFieldState extends State<PasswordField> {
         prefixIcon: const Icon(Icons.lock_outline),
         suffixIcon: IconButton(
           key: widget.toggleKey,
-          tooltip: _obscure ? 'Mostrar contraseña' : 'Ocultar contraseña',
+          tooltip: _obscure
+              ? context.l10n.showPassword
+              : context.l10n.hidePassword,
           icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off),
           onPressed: () => setState(() => _obscure = !_obscure),
         ),
@@ -160,7 +163,8 @@ class LoadingButton extends StatelessWidget {
   }
 }
 
-const unexpectedErrorMessage = 'Ocurrió un error. Intenta de nuevo.';
+/// "Ocurrió un error. Intenta de nuevo." in the active language.
+String unexpectedError(BuildContext context) => context.l10n.unexpectedError;
 
 void showErrorSnackBar(BuildContext context, String message) {
   ScaffoldMessenger.of(context)
@@ -175,13 +179,14 @@ String formatWait(Duration d) {
   return '${(seconds / 60).ceil()} min';
 }
 
-/// "¿Eliminar …?" with Cancelar / [confirmLabel]. True when confirmed.
+/// "¿Eliminar …?" with Cancelar / [confirmLabel] (default "Eliminar").
+/// True when confirmed.
 Future<bool> confirmDestructive(
   BuildContext context, {
   required String title,
   required String body,
   required Key confirmKey,
-  String confirmLabel = 'Eliminar',
+  String? confirmLabel,
 }) async =>
     await showDialog<bool>(
       context: context,
@@ -191,12 +196,12 @@ Future<bool> confirmDestructive(
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
+            child: Text(context.l10n.cancel),
           ),
           FilledButton(
             key: confirmKey,
             onPressed: () => Navigator.pop(context, true),
-            child: Text(confirmLabel),
+            child: Text(confirmLabel ?? context.l10n.delete),
           ),
         ],
       ),

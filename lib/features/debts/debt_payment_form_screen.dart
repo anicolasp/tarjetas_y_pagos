@@ -99,7 +99,7 @@ class _PaymentFormState extends ConsumerState<_PaymentForm> {
     } on ArgumentError catch (e) {
       if (mounted) showErrorSnackBar(context, '${e.message}');
     } catch (_) {
-      if (mounted) showErrorSnackBar(context, unexpectedErrorMessage);
+      if (mounted) showErrorSnackBar(context, unexpectedError(context));
     } finally {
       if (mounted) setState(() => _saving = false);
     }

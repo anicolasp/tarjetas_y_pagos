@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../l10n/l10n.dart';
 import 'auth_controller.dart';
 import 'auth_widgets.dart';
 
@@ -40,31 +41,31 @@ class _UnlockScreenState extends ConsumerState<UnlockScreen> {
   Widget build(BuildContext context) {
     final auth = ref.watch(authControllerProvider);
     final name = auth is AuthNeedsUnlock ? auth.user.firstName : '';
+    final l = context.l10n;
 
     return AuthScaffold(
       key: const ValueKey('unlock.root'),
       icon: Icons.lock_outline,
-      title: 'Hola, $name',
+      title: l.unlockHello(name),
       subtitle: _blocked
-          ? 'No pudimos verificar tu huella. Entra con tu contraseña.'
+          ? l.unlockBlocked
           : _failed
-          ? 'No se pudo verificar tu huella. Intenta de nuevo o usa tu '
-                'contraseña.'
-          : 'Usa tu huella para entrar',
+          ? l.unlockFailed
+          : l.unlockPrompt,
       children: [
         if (!_blocked) ...[
           FilledButton.icon(
             key: const ValueKey('unlock.biometric'),
             onPressed: _unlock,
             icon: const Icon(Icons.fingerprint),
-            label: const Text('Desbloquear con huella'),
+            label: Text(l.unlockWithFingerprint),
           ),
           const SizedBox(height: 12),
           TextButton(
             key: const ValueKey('unlock.usePassword'),
             onPressed: () =>
                 ref.read(authControllerProvider.notifier).usePassword(),
-            child: const Text('Usar contraseña'),
+            child: Text(l.usePassword),
           ),
         ] else
           FilledButton.icon(
@@ -72,7 +73,7 @@ class _UnlockScreenState extends ConsumerState<UnlockScreen> {
             onPressed: () =>
                 ref.read(authControllerProvider.notifier).usePassword(),
             icon: const Icon(Icons.password),
-            label: const Text('Entrar con contraseña'),
+            label: Text(l.loginWithPassword),
           ),
       ],
     );

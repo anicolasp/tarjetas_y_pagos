@@ -260,7 +260,7 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
           break;
       }
     } catch (_) {
-      if (mounted) showErrorSnackBar(context, unexpectedErrorMessage);
+      if (mounted) showErrorSnackBar(context, unexpectedError(context));
     } finally {
       if (mounted) {
         setState(() {
@@ -410,7 +410,7 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
       if (mounted) context.pop();
     } catch (_) {
       // Repository errors (ArgumentError/StateError) and I/O failures.
-      if (mounted) showErrorSnackBar(context, unexpectedErrorMessage);
+      if (mounted) showErrorSnackBar(context, unexpectedError(context));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -442,7 +442,7 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
       refreshFinance(ref);
       if (mounted) context.pop();
     } catch (_) {
-      if (mounted) showErrorSnackBar(context, unexpectedErrorMessage);
+      if (mounted) showErrorSnackBar(context, unexpectedError(context));
     }
   }
 

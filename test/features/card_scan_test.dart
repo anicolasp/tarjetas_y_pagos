@@ -8,7 +8,6 @@ import 'package:tarjetas_y_pagos/core/card_detection.dart';
 import 'package:tarjetas_y_pagos/core/formatters.dart';
 import 'package:tarjetas_y_pagos/data/database.dart';
 import 'package:tarjetas_y_pagos/data/models/credit_card.dart';
-import 'package:tarjetas_y_pagos/features/auth/auth_widgets.dart';
 import 'package:tarjetas_y_pagos/services/card_scan_service.dart';
 
 import '../helpers/fakes.dart';
@@ -309,7 +308,7 @@ void main() {
     scanner.error = Exception('ML Kit');
     await open(tester);
     await scanFrom(tester, 'gallery');
-    expect(find.text(unexpectedErrorMessage), findsOneWidget);
+    expect(find.text('Ocurrió un error. Intenta de nuevo.'), findsOneWidget);
     expect(key('cardForm.scanning'), findsNothing);
     expect(
       tester.widget<OutlinedButton>(key('cardForm.scan')).onPressed,
