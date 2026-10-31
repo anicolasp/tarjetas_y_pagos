@@ -123,7 +123,9 @@ class _FilterSheetState extends State<_FilterSheet> {
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      for (final c in widget.categories)
+                      for (final c in context.l10n.sortedCategories(
+                        widget.categories,
+                      ))
                         FilterChip(
                           key: ValueKey('expenseFilter.category.${c.name}'),
                           showCheckmark: false,

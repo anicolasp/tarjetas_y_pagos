@@ -973,8 +973,8 @@ abstract class AppLocalizations {
   /// No description provided for @recommendationLine.
   ///
   /// In es, this message translates to:
-  /// **'{cut} · pagas el {due} · {days} días'**
-  String recommendationLine(String cut, String due, int days);
+  /// **'{cut} · pagas el {due} · {days}'**
+  String recommendationLine(String cut, String due, String days);
 
   /// No description provided for @receiptErrorOffline.
   ///
@@ -1453,7 +1453,7 @@ abstract class AppLocalizations {
   /// No description provided for @daysCountPlain.
   ///
   /// In es, this message translates to:
-  /// **'{count, plural, =1{1 día} other{{count} días}}'**
+  /// **'{count, plural, =0{0 días} =1{1 día} other{{count} días}}'**
   String daysCountPlain(int count);
 
   /// No description provided for @creditInFavor.

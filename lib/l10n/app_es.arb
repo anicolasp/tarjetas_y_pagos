@@ -263,7 +263,7 @@
       }
     }
   },
-  "recommendationLine": "{cut} · pagas el {due} · {days} días",
+  "recommendationLine": "{cut} · pagas el {due} · {days}",
   "@recommendationLine": {
     "placeholders": {
       "cut": {
@@ -273,7 +273,7 @@
         "type": "String"
       },
       "days": {
-        "type": "int"
+        "type": "String"
       }
     }
   },
@@ -394,7 +394,7 @@
   "nextCut": "Próximo corte",
   "nextCutDue": "Fecha límite de ese corte",
   "payInIfUsedToday": "Si la usas hoy, pagas en",
-  "daysCountPlain": "{count, plural, =1{1 día} other{{count} días}}",
+  "daysCountPlain": "{count, plural, =0{0 días} =1{1 día} other{{count} días}}",
   "@daysCountPlain": {
     "placeholders": {
       "count": {

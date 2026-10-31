@@ -47,7 +47,7 @@ class CategoriesScreen extends ConsumerWidget {
                       style: text.bodyMedium,
                     )
                   else
-                    for (final c in value)
+                    for (final c in context.l10n.sortedCategories(value))
                       if (!c.isBase)
                         _CategoryTile(
                           category: c,
@@ -63,7 +63,7 @@ class CategoriesScreen extends ConsumerWidget {
                     style: text.bodySmall,
                   ),
                   const SizedBox(height: 8),
-                  for (final c in value)
+                  for (final c in context.l10n.sortedCategories(value))
                     if (c.isBase) _CategoryTile(category: c),
                 ],
               ),

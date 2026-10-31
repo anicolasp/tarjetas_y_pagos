@@ -161,7 +161,7 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
   late DateTime _date = _e?.date ?? ref.read(clockProvider)();
   var _rateStatus = _RateStatus.idle;
   var _saving = false;
-  String? _categoryError;
+  var _categoryMissing = false;
 
   /// From the first tap on "Escanear factura" until the result.
   var _scanBusy = false;
@@ -290,7 +290,7 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
       if (d.date case final date?) _date = date;
       if (d.categoryId case final id?) {
         _categoryId = id;
-        _categoryError = null;
+        _categoryMissing = false;
       }
     });
     if (d.currency case final c?) _selectCurrency(c);
@@ -365,13 +365,9 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
   }
 
   Future<void> _save() async {
-    setState(
-      () => _categoryError = _categoryId == null
-          ? context.l10n.fieldCategoryRequired
-          : null,
-    );
+    setState(() => _categoryMissing = _categoryId == null);
     final valid = _form.currentState!.validate();
-    if (_saving || !valid || _categoryError != null) return;
+    if (_saving || !valid || _categoryMissing) return;
     final user = ref.read(currentUserProvider);
     final cardCents = _cardAmountCents;
     if (user == null || cardCents == null || cardCents <= 0) return;
@@ -519,7 +515,9 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
                         spacing: 8,
                         runSpacing: 8,
                         children: [
-                          for (final c in widget.categories)
+                          for (final c in context.l10n.sortedCategories(
+                            widget.categories,
+                          ))
                             ChoiceChip(
                               key: ValueKey('expenseForm.category.${c.name}'),
                               // The tinted background marks the selection; a
@@ -534,7 +532,7 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
                               selected: _categoryId == c.id,
                               onSelected: (_) => setState(() {
                                 _categoryId = c.id;
-                                _categoryError = null;
+                                _categoryMissing = false;
                               }),
                             ),
                         ],
@@ -542,11 +540,11 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
                       if (_categoryId case final id?
                           when _isFromAi('category', id))
                         const _AiChip(field: 'category'),
-                      if (_categoryError != null)
+                      if (_categoryMissing)
                         Padding(
                           padding: const EdgeInsets.only(left: 12, top: 6),
                           child: Text(
-                            _categoryError!,
+                            context.l10n.fieldCategoryRequired,
                             style: text.bodySmall?.copyWith(
                               color: scheme.error,
                             ),

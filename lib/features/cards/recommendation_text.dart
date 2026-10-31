@@ -12,6 +12,6 @@ String explainRecommendation(
   return l.recommendationLine(
     l.cutsIn(cutIn),
     formatDayMonth(r.dueDate),
-    r.financingDays,
+    l.daysCountPlain(r.financingDays),
   );
 }

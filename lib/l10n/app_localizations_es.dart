@@ -504,8 +504,8 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String recommendationLine(String cut, String due, int days) {
-    return '$cut · pagas el $due · $days días';
+  String recommendationLine(String cut, String due, String days) {
+    return '$cut · pagas el $due · $days';
   }
 
   @override
@@ -774,6 +774,7 @@ class AppLocalizationsEs extends AppLocalizations {
       locale: localeName,
       other: '$count días',
       one: '1 día',
+      zero: '0 días',
     );
     return '$_temp0';
   }

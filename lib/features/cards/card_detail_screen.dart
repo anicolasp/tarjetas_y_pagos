@@ -169,7 +169,12 @@ class _Body extends ConsumerWidget {
               const SizedBox(height: 24),
               Row(
                 children: [
-                  Expanded(child: Text(context.l10n.movements, style: text.titleMedium)),
+                  Expanded(
+                    child: Text(
+                      context.l10n.movements,
+                      style: text.titleMedium,
+                    ),
+                  ),
                   if (!filter.isEmpty)
                     TextButton.icon(
                       key: const ValueKey('cardDetail.clearFilter'),
@@ -302,10 +307,7 @@ class _StatementCard extends StatelessWidget {
               const SizedBox(height: 12),
             ],
             _Row(context.l10n.nextCut, formatDate(recommendation.nextCut)),
-            _Row(
-              context.l10n.nextCutDue,
-              formatDate(recommendation.dueDate),
-            ),
+            _Row(context.l10n.nextCutDue, formatDate(recommendation.dueDate)),
             _Row(
               context.l10n.payInIfUsedToday,
               context.l10n.daysCountPlain(recommendation.financingDays),
@@ -525,9 +527,7 @@ class _EmptyMovements extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          filtered
-              ? context.l10n.noExpensesMatch
-              : context.l10n.noMovementsYet,
+          filtered ? context.l10n.noExpensesMatch : context.l10n.noMovementsYet,
           textAlign: TextAlign.center,
           style: text.bodyLarge,
         ),

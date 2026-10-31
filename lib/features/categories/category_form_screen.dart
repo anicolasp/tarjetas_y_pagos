@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/category_icons.dart';
 import '../../core/responsive.dart';
+import '../../core/security_question.dart';
 import '../../core/validators.dart';
 import '../../data/models/category.dart';
 import '../../data/repositories/categories_repository.dart';
@@ -103,6 +104,20 @@ class _CategoryFormState extends ConsumerState<_CategoryForm> {
     }
   }
 
+  /// The repository compares with the stored (Spanish) base names; this
+  /// also refuses one that looks like a base category as shown ("Fuel").
+  String? _nameError(String? value) {
+    final l = context.l10n;
+    final name = (value ?? '').trim();
+    if (name.isEmpty) return l.fieldCategoryNameRequired;
+    final key = normalizeSecurityAnswer(name);
+    final base = ref.read(categoriesProvider).value ?? const <Category>[];
+    final clash = base.any(
+      (c) => c.isBase && normalizeSecurityAnswer(l.categoryLabel(c)) == key,
+    );
+    return clash ? l.fieldCategoryNameTaken : null;
+  }
+
   /// Without expenses: a plain confirmation. With expenses: pick where
   /// they go ("Otros" first), then delete in one go.
   Future<void> _delete() async {
@@ -128,7 +143,9 @@ class _CategoryFormState extends ConsumerState<_CategoryForm> {
       } else {
         // Already alphabetical with "Otros" last: bring "Otros" first.
         final rest = [
-          for (final o in ref.read(categoriesProvider).value ?? <Category>[])
+          for (final o in context.l10n.sortedCategories(
+            ref.read(categoriesProvider).value ?? <Category>[],
+          ))
             if (o.id != c.id) o,
         ];
         final others = [
@@ -155,6 +172,9 @@ class _CategoryFormState extends ConsumerState<_CategoryForm> {
 
   @override
   Widget build(BuildContext context) {
+    // Keeps the list loaded for [_nameError] (a new category opens
+    // without it).
+    ref.watch(categoriesProvider);
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
     const gap = SizedBox(height: 16);
@@ -181,9 +201,7 @@ class _CategoryFormState extends ConsumerState<_CategoryForm> {
                     controller: _name,
                     textCapitalization: TextCapitalization.sentences,
                     maxLength: categoryNameMaxLength,
-                    validator: (v) => (v ?? '').trim().isEmpty
-                        ? context.l10n.fieldCategoryNameRequired
-                        : null,
+                    validator: _nameError,
                     decoration: InputDecoration(
                       labelText: context.l10n.categoryNameLabel,
                       prefixIcon: Icon(

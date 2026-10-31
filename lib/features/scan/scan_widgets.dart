@@ -57,11 +57,7 @@ Future<void> explainPhotoPermission(
       icon: Icon(
         camera ? Icons.no_photography_outlined : Icons.hide_image_outlined,
       ),
-      title: Text(
-        camera
-            ? context.l10n.allowCamera
-            : context.l10n.allowPhotos,
-      ),
+      title: Text(camera ? context.l10n.allowCamera : context.l10n.allowPhotos),
       content: Text('$purpose $alternative'),
       actions: [
         TextButton(
@@ -82,10 +78,7 @@ Future<void> explainPhotoPermission(
   } catch (_) {
     // No settings channel on this platform.
     if (context.mounted) {
-      showErrorSnackBar(
-        context,
-        context.l10n.openSettingsHint,
-      );
+      showErrorSnackBar(context, context.l10n.openSettingsHint);
     }
   }
 }

@@ -6,6 +6,7 @@ import '../../core/clock.dart';
 import '../../core/formatters.dart';
 import '../../core/money.dart';
 import '../../core/responsive.dart';
+import '../../core/validators.dart';
 import '../../data/models/card_payment.dart';
 import '../../data/models/credit_card.dart';
 import '../../data/repositories/expenses_repository.dart';
@@ -103,6 +104,11 @@ class _PaymentFormState extends ConsumerState<_PaymentForm> {
       );
       refreshFinance(ref);
       if (mounted) context.pop();
+    } on FieldErrorException catch (e) {
+      // Business rule from the repository: show why.
+      if (mounted) {
+        showErrorSnackBar(context, context.l10n.fieldError(e.error)!);
+      }
     } catch (_) {
       if (mounted) showErrorSnackBar(context, unexpectedError(context));
     } finally {
@@ -176,7 +182,9 @@ class _PaymentFormState extends ConsumerState<_PaymentForm> {
                         onPressed: () =>
                             setState(() => _amount.text = centsToInput(due)),
                         child: Text(
-                          context.l10n.payStatementDue(formatMoney(due, _currency)),
+                          context.l10n.payStatementDue(
+                            formatMoney(due, _currency),
+                          ),
                         ),
                       ),
                     ),

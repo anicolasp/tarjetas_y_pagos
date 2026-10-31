@@ -173,10 +173,7 @@ class _CardFormState extends ConsumerState<_CardForm> {
           if (detection.bank case final bank?) _bank.text = bank;
         });
       case CardScanNothing():
-        showErrorSnackBar(
-          context,
-          context.l10n.cardScanNothing,
-        );
+        showErrorSnackBar(context, context.l10n.cardScanNothing);
       case CardScanPermissionDenied(:final source):
         await explainPhotoPermission(
           context,
@@ -226,7 +223,9 @@ class _CardFormState extends ConsumerState<_CardForm> {
       if (mounted) context.pop(true);
     } on FieldErrorException catch (e) {
       // Business rule from the repository: show why.
-      if (mounted) showErrorSnackBar(context, context.l10n.fieldError(e.error)!);
+      if (mounted) {
+        showErrorSnackBar(context, context.l10n.fieldError(e.error)!);
+      }
     } catch (_) {
       // StateError and I/O failures.
       if (mounted) showErrorSnackBar(context, unexpectedError(context));
@@ -522,7 +521,9 @@ class _CardFormState extends ConsumerState<_CardForm> {
                       const SizedBox(height: 28),
                       LoadingButton(
                         key: const ValueKey('cardForm.save'),
-                        label: _editing ? context.l10n.saveChanges : context.l10n.addCard,
+                        label: _editing
+                            ? context.l10n.saveChanges
+                            : context.l10n.addCard,
                         loading: _saving,
                         onPressed: _save,
                       ),
@@ -594,8 +595,9 @@ class _BankFieldState extends State<_BankField> {
             focusNode: focusNode,
             textCapitalization: TextCapitalization.words,
             textInputAction: TextInputAction.next,
-            validator: (v) =>
-                (v ?? '').trim().isEmpty ? context.l10n.fieldCardBankRequired : null,
+            validator: (v) => (v ?? '').trim().isEmpty
+                ? context.l10n.fieldCardBankRequired
+                : null,
             decoration: InputDecoration(
               labelText: context.l10n.bank,
               prefixIcon: Icon(Icons.account_balance),

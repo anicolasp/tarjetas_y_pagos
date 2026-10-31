@@ -4,7 +4,6 @@ import '../core/greeting.dart';
 import '../core/language.dart';
 import '../core/security_question.dart';
 import '../core/validators.dart';
-import '../data/database.dart' show baseCategories;
 import '../data/models/category.dart';
 import '../data/repositories/categories_repository.dart'
     show categoryNameMaxLength;
@@ -126,7 +125,17 @@ extension AppTexts on AppLocalizations {
       _ => category.name,
     };
   }
-}
 
-/// Every base category has a translation (checked by a test).
-Iterable<String> get baseCategoryNames => baseCategories.map((c) => c.name);
+  /// [categories] in alphabetical order of their shown names, "Otros"
+  /// last. The repository sorts by the stored (Spanish) names, which is
+  /// not alphabetical once translated.
+  List<Category> sortedCategories(Iterable<Category> categories) {
+    int rank(Category c) => c.isBase && c.name == 'Otros' ? 1 : 0;
+    // Without accents and case: "Électricité" sorts with the E's.
+    String sortKey(Category c) => normalizeSecurityAnswer(categoryLabel(c));
+    return [...categories]..sort((a, b) {
+      final byRank = rank(a).compareTo(rank(b));
+      return byRank != 0 ? byRank : sortKey(a).compareTo(sortKey(b));
+    });
+  }
+}

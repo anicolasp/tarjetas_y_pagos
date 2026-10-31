@@ -31,7 +31,8 @@ void main() {
           Category(name: name, icon: 'more_horiz', color: 0xFF000000);
       for (final c in baseCategories) {
         expect(es.categoryLabel(base(c.name)), c.name);
-        expect(en.categoryLabel(base(c.name)), isNotEmpty);
+        // A missing translation would fall back to the Spanish name.
+        expect(en.categoryLabel(base(c.name)), isNot(c.name));
         expect(fr.categoryLabel(base(c.name)), isNotEmpty);
       }
       expect(en.categoryLabel(base('Supermercado')), 'Supermarket');
@@ -44,6 +45,44 @@ void main() {
         color: 0xFF000000,
       );
       expect(en.categoryLabel(own), 'Salud');
+    });
+
+    test('categories sort by their shown name, "Otros" last', () {
+      Category base(String name) =>
+          Category(name: name, icon: 'more_horiz', color: 0xFF000000);
+      final list = [
+        base('Otros'),
+        base('Combustible'),
+        base('Luz'),
+        base('Agua'),
+        Category(userId: 1, name: 'Mascotas', icon: 'pets', color: 0),
+      ];
+      String names(AppLanguage language) {
+        final l = l10nFor(language);
+        return l.sortedCategories(list).map(l.categoryLabel).join(', ');
+      }
+
+      expect(names(AppLanguage.es), 'Agua, Combustible, Luz, Mascotas, Otros');
+      expect(
+        names(AppLanguage.en),
+        'Electricity, Fuel, Mascotas, Water, Other',
+      );
+      // Accents do not push "Électricité" after the Z's.
+      expect(
+        names(AppLanguage.fr),
+        'Carburant, Eau, Électricité, Mascotas, Autres',
+      );
+    });
+
+    test('day counts agree in number, 0 included', () {
+      expect(l10nFor(AppLanguage.fr).daysCountPlain(0), '0 jour');
+      expect(l10nFor(AppLanguage.en).daysCountPlain(0), '0 days');
+      expect(l10nFor(AppLanguage.es).daysCountPlain(1), '1 día');
+      expect(
+        l10nFor(AppLanguage.en)
+            .recommendationLine('Closes today', '1 Nov', '1 day'),
+        'Closes today · pay by 1 Nov · 1 day',
+      );
     });
 
     test('greetings in every language', () {
@@ -188,6 +227,23 @@ void main() {
       final es = l10nFor(AppLanguage.es).fieldError(FieldError.dateInFuture);
       final fr = l10nFor(AppLanguage.fr).fieldError(FieldError.dateInFuture);
       expect(fr, isNot(es));
+    });
+
+    testWidgets('a new category cannot look like a base one as shown', (
+      tester,
+    ) async {
+      await open(tester, 'en', '/home/profile/categories/new');
+      await tester.enterText(key('categoryForm.name'), 'fuel');
+      await tester.tap(key('categoryForm.save'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('You already have a category like that'),
+        findsOneWidget,
+      );
+      expect(
+        await db.db.query('categories', where: 'user_id IS NOT NULL'),
+        isEmpty,
+      );
     });
 
     testWidgets('categories in French: included ones translated', (
