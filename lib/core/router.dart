@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../features/auth/auth_controller.dart';
+import '../features/auth/forgot_password_screen.dart';
 import '../features/auth/login_screen.dart';
 import '../features/auth/register_screen.dart';
 import '../features/auth/unlock_screen.dart';
@@ -31,6 +32,7 @@ abstract final class Routes {
   static const onboarding = '/onboarding';
   static const login = '/login';
   static const register = '/register';
+  static const forgotPassword = '/forgot-password';
   static const unlock = '/unlock';
   static const home = '/home';
   static const setup = '/setup';
@@ -41,6 +43,7 @@ abstract final class Routes {
   static const profileName = '/home/profile/name';
   static const profileEmail = '/home/profile/email';
   static const profilePassword = '/home/profile/password';
+  static const profileSecurityQuestion = '/home/profile/security-question';
   static const categories = '/home/profile/categories';
   static const categoryNew = '/home/profile/categories/new';
   static String categoryEdit(int id) => '/home/profile/categories/$id';
@@ -67,6 +70,7 @@ const _publicRoutes = {
   Routes.onboarding,
   Routes.login,
   Routes.register,
+  Routes.forgotPassword,
   Routes.unlock,
 };
 
@@ -87,7 +91,9 @@ String? authRedirect({
     AuthLoading() => goTo(Routes.splash),
     AuthNeedsUnlock() => goTo(Routes.unlock),
     AuthLoggedOut() =>
-      location == Routes.login || location == Routes.register
+      location == Routes.login ||
+              location == Routes.register ||
+              location == Routes.forgotPassword
           ? null
           : Routes.login,
     // While the wizard is pending, Home leads to it; screens it opens on
@@ -146,6 +152,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const RegisterScreen(),
       ),
       GoRoute(
+        path: Routes.forgotPassword,
+        builder: (context, state) => const ForgotPasswordScreen(),
+      ),
+      GoRoute(
         path: Routes.unlock,
         builder: (context, state) => const UnlockScreen(),
       ),
@@ -172,6 +182,10 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: 'password',
                 builder: (context, state) => const ChangePasswordScreen(),
+              ),
+              GoRoute(
+                path: 'security-question',
+                builder: (context, state) => const SecurityQuestionScreen(),
               ),
               GoRoute(
                 path: 'categories',

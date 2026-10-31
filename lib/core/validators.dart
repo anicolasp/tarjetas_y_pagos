@@ -3,6 +3,8 @@
 /// (`AppLocalizations.fieldError`), so `core` stays free of UI strings.
 library;
 
+import 'security_question.dart';
+
 final _emailPattern = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
 final _letter = RegExp(r'[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]');
 final _digit = RegExp(r'\d');
@@ -24,6 +26,11 @@ enum FieldError {
   lastNameRequired,
   nameTooLong,
   samePassword,
+  questionRequired,
+  questionTooLong,
+  answerRequired,
+  answerTooShort,
+  answerTooLong,
 }
 
 /// A business rule broken in a repository call. Still an [ArgumentError],
@@ -71,6 +78,25 @@ FieldError? validateName(String? value, {required NameField field}) {
         : FieldError.lastNameRequired;
   }
   if (v.length > nameMaxLength) return FieldError.nameTooLong;
+  return null;
+}
+
+/// A question the user wrote (the list ones are always valid).
+FieldError? validateCustomQuestion(String? value) {
+  final v = value?.trim() ?? '';
+  if (v.isEmpty) return FieldError.questionRequired;
+  if (v.length > SecurityQuestion.customMaxLength) {
+    return FieldError.questionTooLong;
+  }
+  return null;
+}
+
+/// Checked on the normalized answer, which is what is compared later.
+FieldError? validateSecurityAnswer(String? value) {
+  final v = normalizeSecurityAnswer(value ?? '');
+  if (v.isEmpty) return FieldError.answerRequired;
+  if (v.length < securityAnswerMinLength) return FieldError.answerTooShort;
+  if (v.length > securityAnswerMaxLength) return FieldError.answerTooLong;
   return null;
 }
 

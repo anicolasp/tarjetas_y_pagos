@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import '../core/language.dart';
+import '../core/security_question.dart';
 import '../core/validators.dart';
 import 'app_localizations.dart';
 
@@ -33,5 +34,26 @@ extension FieldErrorText on AppLocalizations {
     FieldError.lastNameRequired => fieldLastNameRequired,
     FieldError.nameTooLong => fieldTooLong(nameMaxLength),
     FieldError.samePassword => fieldSamePassword,
+    FieldError.questionRequired => fieldQuestionRequired,
+    FieldError.questionTooLong => fieldTooLong(
+      SecurityQuestion.customMaxLength,
+    ),
+    FieldError.answerRequired => fieldAnswerRequired,
+    FieldError.answerTooShort => fieldAnswerTooShort(securityAnswerMinLength),
+    FieldError.answerTooLong => fieldTooLong(securityAnswerMaxLength),
+  };
+}
+
+extension SecurityQuestionText on AppLocalizations {
+  /// A list question in the active language, or the user's own text.
+  String securityQuestionText(SecurityQuestion question) => switch (question) {
+    CustomQuestion(:final text) => text,
+    PresetQuestion(:final preset) => switch (preset) {
+      SecurityQuestionPreset.firstPet => secQFirstPet,
+      SecurityQuestionPreset.birthCity => secQBirthCity,
+      SecurityQuestionPreset.primarySchool => secQPrimarySchool,
+      SecurityQuestionPreset.childhoodFriend => secQChildhoodFriend,
+      SecurityQuestionPreset.firstJob => secQFirstJob,
+    },
   };
 }

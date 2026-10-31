@@ -393,4 +393,86 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get notificationsDenied =>
       'Sin permiso no podremos avisarte. Puedes darlo luego en los ajustes del teléfono.';
+
+  @override
+  String get secQFirstPet => '¿Cómo se llamaba tu primera mascota?';
+
+  @override
+  String get secQBirthCity => '¿En qué ciudad naciste?';
+
+  @override
+  String get secQPrimarySchool => '¿Cómo se llamaba tu escuela primaria?';
+
+  @override
+  String get secQChildhoodFriend =>
+      '¿Cómo se llamaba tu mejor amigo de la infancia?';
+
+  @override
+  String get secQFirstJob => '¿Dónde fue tu primer trabajo?';
+
+  @override
+  String get secQCustom => 'Escribir mi propia pregunta';
+
+  @override
+  String get securityQuestionLabel => 'Pregunta de seguridad';
+
+  @override
+  String get customQuestionLabel => 'Tu pregunta';
+
+  @override
+  String get securityAnswerLabel => 'Respuesta';
+
+  @override
+  String get securityAnswerHint => 'No importan las mayúsculas ni las tildes.';
+
+  @override
+  String get registerSecurityHint => 'La usarás si olvidas tu contraseña.';
+
+  @override
+  String get fieldQuestionChoose => 'Elige una pregunta';
+
+  @override
+  String get fieldQuestionRequired => 'Escribe tu pregunta';
+
+  @override
+  String get fieldAnswerRequired => 'Escribe tu respuesta';
+
+  @override
+  String fieldAnswerTooShort(int min) {
+    return 'Mínimo $min caracteres';
+  }
+
+  @override
+  String get forgotPasswordLink => '¿Olvidaste tu contraseña?';
+
+  @override
+  String get forgotTitle => 'Recuperar contraseña';
+
+  @override
+  String get forgotEmailSubtitle => 'Escribe el correo de tu cuenta.';
+
+  @override
+  String get forgotAnswerSubtitle => 'Responde tu pregunta de seguridad.';
+
+  @override
+  String get forgotNewPasswordSubtitle => 'Crea una contraseña nueva.';
+
+  @override
+  String get continueLabel => 'Continuar';
+
+  @override
+  String get accountNotFound => 'No encontramos una cuenta con ese correo';
+
+  @override
+  String get noSecurityQuestion => 'Esta cuenta no tiene pregunta de seguridad';
+
+  @override
+  String get wrongAnswer => 'La respuesta no es correcta';
+
+  @override
+  String get securityQuestionMissing =>
+      'Configura una pregunta para poder recuperar tu contraseña.';
+
+  @override
+  String get securityQuestionSaved => 'Pregunta de seguridad guardada';
 }

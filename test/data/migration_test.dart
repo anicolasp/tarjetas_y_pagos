@@ -125,4 +125,24 @@ void main() {
     expect((await v3.db.query('users')).single['language'], 'fr');
     await v3.close();
   });
+
+  test('v3 → v4: existing users have no security question', () async {
+    final v3 = await openAt(3);
+    await v3.db.insert('users', {
+      'first_name': 'Ana',
+      'last_name': 'Prueba',
+      'email': 'ana@example.com',
+      'password_hash': 'h',
+      'salt': 's',
+      'created_at': '2026-01-01T00:00:00.000Z',
+    });
+    await v3.close();
+
+    final v4 = await openAt(null);
+    final user = (await v4.db.query('users')).single;
+    expect(user['security_question'], isNull);
+    expect(user['security_answer_hash'], isNull);
+    expect(user['security_salt'], isNull);
+    await v4.close();
+  });
 }

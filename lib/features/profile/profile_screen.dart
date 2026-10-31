@@ -153,6 +153,29 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       value: user.biometricEnabled,
                       onChanged: _busy ? null : _toggleBiometrics,
                     ),
+                    ListTile(
+                      key: const ValueKey('profile.securityQuestion'),
+                      leading: Icon(
+                        user.hasSecurityQuestion
+                            ? Icons.help_outline
+                            : Icons.warning_amber,
+                        color: user.hasSecurityQuestion ? null : scheme.error,
+                      ),
+                      title: Text(l.securityQuestionLabel),
+                      // Without one, the password cannot be recovered: say
+                      // so in words, not only with the icon's color.
+                      subtitle: Text(
+                        user.securityQuestion == null
+                            ? l.securityQuestionMissing
+                            : l.securityQuestionText(user.securityQuestion!),
+                        key: const ValueKey('profile.securityQuestion.status'),
+                        style: user.hasSecurityQuestion
+                            ? null
+                            : TextStyle(color: scheme.error),
+                      ),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => context.push(Routes.profileSecurityQuestion),
+                    ),
                   ],
                 ),
                 gap,

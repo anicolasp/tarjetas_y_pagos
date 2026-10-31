@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../core/language.dart';
 import '../../core/money.dart';
+import '../../core/security_question.dart';
 import '../../data/models/app_user.dart';
 import '../../data/providers.dart';
 import '../../data/repositories/auth_repository.dart';
@@ -152,12 +153,16 @@ class AuthController extends Notifier<AuthState> {
     required String lastName,
     required String email,
     required String password,
+    required SecurityQuestion securityQuestion,
+    required String securityAnswer,
   }) async {
     final user = await (await _repo).register(
       firstName: firstName,
       lastName: lastName,
       email: email,
       password: password,
+      securityQuestion: securityQuestion,
+      securityAnswer: securityAnswer,
       // The language the register screen was shown in.
       language: _languageFor(state, ref.read(appPrefsProvider)),
     );
@@ -165,6 +170,28 @@ class AuthController extends Notifier<AuthState> {
     await ref.read(setupPendingProvider.notifier).start(user.id!);
     await _startSession(user);
   }
+
+  // ------------------------------------------------------ recovery (#27)
+  // Before login: they never change the session; the user logs in after.
+
+  /// Throws the [AuthRepository.securityQuestionFor] exceptions.
+  Future<SecurityQuestion> securityQuestionFor(String email) async =>
+      (await _repo).securityQuestionFor(email);
+
+  /// Throws the [AuthRepository.checkSecurityAnswer] exceptions.
+  Future<void> checkSecurityAnswer(String email, String answer) async =>
+      (await _repo).checkSecurityAnswer(email, answer);
+
+  /// Throws the [AuthRepository.resetPasswordWithAnswer] exceptions.
+  Future<void> resetPasswordWithAnswer({
+    required String email,
+    required String answer,
+    required String newPassword,
+  }) async => (await _repo).resetPasswordWithAnswer(
+    email: email,
+    answer: answer,
+    newPassword: newPassword,
+  );
 
   /// Unlocks a saved session. Returns false if biometrics failed.
   Future<bool> unlock() async {
@@ -237,6 +264,20 @@ class AuthController extends Notifier<AuthState> {
       _updateUser(
         await (await _repo).updateName(_user.id!, firstName, lastName),
       );
+
+  /// Throws the [AuthRepository.setSecurityQuestion] exceptions.
+  Future<void> setSecurityQuestion({
+    required String currentPassword,
+    required SecurityQuestion question,
+    required String answer,
+  }) async => _updateUser(
+    await (await _repo).setSecurityQuestion(
+      _user.id!,
+      currentPassword: currentPassword,
+      question: question,
+      answer: answer,
+    ),
+  );
 
   /// Throws the [AuthRepository.changeEmail] exceptions.
   Future<void> changeEmail({

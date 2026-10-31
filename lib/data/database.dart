@@ -48,7 +48,7 @@ class AppDatabase {
 
 typedef _Migration = Future<void> Function(Database db);
 
-final List<_Migration> _migrations = [_v1, _v2, _v3];
+final List<_Migration> _migrations = [_v1, _v2, _v3, _v4];
 
 /// Base categories available to every user (`user_id IS NULL`).
 /// `icon` is a key resolved to a Material icon by the UI layer.
@@ -229,4 +229,15 @@ Future<void> _v3(Database db) async {
   await db.execute(
     "ALTER TABLE users ADD COLUMN language TEXT NOT NULL DEFAULT 'es'",
   );
+}
+
+/// v4 (#27): security question for password recovery. NULL for accounts
+/// created before it (they are asked to set one in Mi perfil). The answer
+/// is stored only as a PBKDF2 hash with its own salt.
+Future<void> _v4(Database db) async {
+  final batch = db.batch();
+  batch.execute('ALTER TABLE users ADD COLUMN security_question TEXT');
+  batch.execute('ALTER TABLE users ADD COLUMN security_answer_hash TEXT');
+  batch.execute('ALTER TABLE users ADD COLUMN security_salt TEXT');
+  await batch.commit(noResult: true);
 }

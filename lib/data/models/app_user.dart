@@ -2,6 +2,7 @@ import 'package:flutter/material.dart' show ThemeMode;
 
 import '../../core/language.dart';
 import '../../core/money.dart';
+import '../../core/security_question.dart';
 import 'db_codec.dart';
 
 class AppUser {
@@ -17,6 +18,7 @@ class AppUser {
     this.defaultCurrency = Currency.dop,
     this.notifyDaysBefore = 3,
     this.language = AppLanguage.es,
+    this.securityQuestion,
     required this.createdAt,
   });
 
@@ -31,6 +33,12 @@ class AppUser {
   final Currency defaultCurrency;
   final int notifyDaysBefore;
   final AppLanguage language;
+
+  /// Null for accounts created before #27. The answer never leaves the
+  /// repository.
+  final SecurityQuestion? securityQuestion;
+
+  bool get hasSecurityQuestion => securityQuestion != null;
   final DateTime createdAt;
 
   factory AppUser.fromMap(Map<String, Object?> m) => AppUser(
@@ -45,6 +53,9 @@ class AppUser {
     defaultCurrency: Currency.fromCode(m['default_currency'] as String),
     notifyDaysBefore: m['notify_days_before'] as int,
     language: AppLanguage.fromCode(m['language'] as String?),
+    securityQuestion: SecurityQuestion.decode(
+      m['security_question'] as String?,
+    ),
     createdAt: decodeTimestamp(m['created_at'] as String),
   );
 
@@ -60,6 +71,7 @@ class AppUser {
     'default_currency': defaultCurrency.code,
     'notify_days_before': notifyDaysBefore,
     'language': language.code,
+    'security_question': securityQuestion?.encode(),
     'created_at': encodeTimestamp(createdAt),
   };
 
@@ -75,6 +87,7 @@ class AppUser {
     Currency? defaultCurrency,
     int? notifyDaysBefore,
     AppLanguage? language,
+    SecurityQuestion? securityQuestion,
   }) => AppUser(
     id: id ?? this.id,
     firstName: firstName ?? this.firstName,
@@ -87,6 +100,7 @@ class AppUser {
     defaultCurrency: defaultCurrency ?? this.defaultCurrency,
     notifyDaysBefore: notifyDaysBefore ?? this.notifyDaysBefore,
     language: language ?? this.language,
+    securityQuestion: securityQuestion ?? this.securityQuestion,
     createdAt: createdAt,
   );
 }
