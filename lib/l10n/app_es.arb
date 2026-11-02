@@ -597,5 +597,266 @@
   },
   "reassignHint": "Para eliminarla, elige a qué categoría pasan.",
   "moveTo": "Pasar a",
-  "moveAndDelete": "Mover y eliminar"
+  "moveAndDelete": "Mover y eliminar",
+  "fieldCreditorRequired": "Escribe a quién le debes",
+  "fieldDebtCurrencyLocked": "No se puede cambiar la moneda: ya tiene abonos",
+  "fieldDebtAmountBelowPaid": "El monto no puede ser menor que lo ya abonado",
+  "fieldDateTooOld": "La fecha es demasiado antigua",
+  "fieldPaymentAboveRemaining": "El abono es mayor que lo que falta por pagar",
+  "deletePaymentOfDebtTitle": "¿Eliminar este abono?",
+  "deletePaymentOfDebtBody": "Lo que falta por pagar volverá a subir {amount}.",
+  "@deletePaymentOfDebtBody": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "debtNotFound": "Deuda no encontrada",
+  "debt": "Deuda",
+  "edit": "Editar",
+  "addDebtPayment": "Registrar abono",
+  "debtSettled": "Deuda saldada",
+  "debtPayments": "Abonos",
+  "noDebtPayments": "Todavía no hay abonos.",
+  "debtsActive": "Activas",
+  "debtsSettled": "Saldadas",
+  "newDebt": "Nueva deuda",
+  "editDebt": "Editar deuda",
+  "debtsLoadError": "No se pudieron cargar las deudas",
+  "cards": "Tarjetas",
+  "cardsNoBalance": "Tus tarjetas no tienen balance pendiente.",
+  "otherDebts": "Otras deudas",
+  "noOtherDebts": "No tienes otras deudas activas.",
+  "noSettledDebts": "Aún no has saldado ninguna deuda.",
+  "cardOverdueSince": "Vencido desde el {date}",
+  "@cardOverdueSince": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "cardDueOn": "Fecha límite {date}",
+  "@cardDueOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "debtSettledShort": "Saldada",
+  "debtRemaining": "Falta {amount}",
+  "@debtRemaining": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "debtPaidOf": "Pagado {paid} de {total}",
+  "@debtPaidOf": {
+    "placeholders": {
+      "paid": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "percentPaid": "{percent} % pagado",
+  "@percentPaid": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "debtOverdueOn": "Vencida el {date}",
+  "@debtOverdueOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "debtDueOn": "Vence el {date}",
+  "@debtDueOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteDebtTitle": "¿Eliminar esta deuda?",
+  "deleteDebtBody": "También se eliminan sus abonos.",
+  "creditorLabel": "Acreedor (ej. Préstamo Juan)",
+  "descriptionOptional": "Descripción (opcional)",
+  "debtCurrencyLockedHint": "Tiene abonos: la moneda ya no se puede cambiar.",
+  "alreadyPaidAmount": "Ya abonaste {amount}",
+  "@alreadyPaidAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "debtTotalAmount": "Monto total",
+  "dueOptional": "Vence (opcional)",
+  "noDate": "Sin fecha",
+  "saveDebt": "Guardar deuda",
+  "deleteDebt": "Eliminar deuda",
+  "debtAlreadySettled": "La deuda ya está saldada",
+  "maxAmountValue": "Máximo {amount}",
+  "@maxAmountValue": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "debtPaymentAmount": "Monto del abono",
+  "debtPaymentDate": "Fecha del abono",
+  "periodThisMonth": "Este mes",
+  "periodLastMonth": "Mes pasado",
+  "periodLast3Months": "Últimos 3 meses",
+  "periodCustom": "Rango",
+  "reportsSummary": "Resumen",
+  "movementsTab": "Movimientos",
+  "amountFrom": "Desde {amount}",
+  "@amountFrom": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "amountUpTo": "Hasta {amount}",
+  "@amountUpTo": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "allCards": "Todas las tarjetas",
+  "cardsCount": "Tarjetas ({count})",
+  "@cardsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "moreFilters": "Más filtros",
+  "archivedCardSubtitle": "{bank} · archivada",
+  "@archivedCardSubtitle": {
+    "placeholders": {
+      "bank": {
+        "type": "String"
+      }
+    }
+  },
+  "allCardsShort": "Todas",
+  "reportLoadError": "No se pudo cargar el reporte",
+  "chartsOneCurrency": "Los gráficos muestran un solo tipo de moneda; no se suman.",
+  "byCategory": "Por categoría ({symbol})",
+  "@byCategory": {
+    "placeholders": {
+      "symbol": {
+        "type": "String"
+      }
+    }
+  },
+  "byMonth": "Por mes ({symbol})",
+  "@byMonth": {
+    "placeholders": {
+      "symbol": {
+        "type": "String"
+      }
+    }
+  },
+  "byCard": "Por tarjeta ({symbol})",
+  "@byCard": {
+    "placeholders": {
+      "symbol": {
+        "type": "String"
+      }
+    }
+  },
+  "expensesLoadError": "No se pudieron cargar los gastos",
+  "noExpensesForFilters": "No hay gastos con estos filtros",
+  "spendingIn": "Gastos en {symbol}",
+  "@spendingIn": {
+    "placeholders": {
+      "symbol": {
+        "type": "String"
+      }
+    }
+  },
+  "statTotal": "Total",
+  "statAverage": "Promedio por gasto",
+  "statCount": "Cantidad",
+  "restCategories": "Resto ({count})",
+  "@restCategories": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "percentValue": "{percent} %",
+  "@percentValue": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "percentBelowOne": "<1 %",
+  "tapBarHint": "Toca una barra para ver su mes.",
+  "cardArchivedName": "{name} (archivada)",
+  "@cardArchivedName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "reminderCut": "{days, plural, =0{Tu tarjeta {alias} corta hoy} =1{Tu tarjeta {alias} corta mañana} other{Tu tarjeta {alias} corta en {days} días}}",
+  "@reminderCut": {
+    "placeholders": {
+      "alias": {
+        "type": "String"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "reminderPayment": "Fecha límite de pago de {alias}: {date}",
+  "@reminderPayment": {
+    "placeholders": {
+      "alias": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "reminderDebt": "La deuda con {creditor} vence el {date}",
+  "@reminderDebt": {
+    "placeholders": {
+      "creditor": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "reminderChannelName": "Recordatorios",
+  "reminderChannelDescription": "Corte, fecha límite de pago y deudas por vencer"
 }

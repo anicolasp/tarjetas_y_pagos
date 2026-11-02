@@ -9,6 +9,7 @@ import '../../core/money.dart';
 import '../../core/report.dart';
 import '../../data/models/category.dart';
 import '../../data/models/credit_card.dart';
+import '../../l10n/l10n.dart';
 import 'chart_colors.dart';
 
 /// Whole percentages of [values] that add up to 100 (largest remainder):
@@ -87,22 +88,22 @@ class CurrencyTotalsTile extends StatelessWidget {
     );
 
     return ReportSection(
-      title: 'Gastos en ${totals.currency.symbol}',
+      title: context.l10n.spendingIn(totals.currency.symbol),
       child: Wrap(
         spacing: 24,
         runSpacing: 12,
         children: [
           stat(
             'total',
-            'Total',
+            context.l10n.statTotal,
             formatMoney(totals.totalCents, totals.currency),
           ),
           stat(
             'average',
-            'Promedio por gasto',
+            context.l10n.statAverage,
             formatMoney(totals.averageCents, totals.currency),
           ),
-          stat('count', 'Cantidad', '${totals.count}'),
+          stat('count', context.l10n.statCount, '${totals.count}'),
         ],
       ),
     );
@@ -136,7 +137,10 @@ class CategoryDonut extends StatelessWidget {
       for (final t in top)
         (
           key: 'reports.category.${t.categoryId}',
-          label: categories[t.categoryId]?.name ?? 'Sin categoría',
+          label: switch (categories[t.categoryId]) {
+            final c? => context.l10n.categoryLabel(c),
+            null => context.l10n.noCategory,
+          },
           icon: categoryIcon(categories[t.categoryId]?.icon ?? 'category'),
           color: readableOn(
             Color(categories[t.categoryId]?.color ?? 0xFF757575),
@@ -147,7 +151,7 @@ class CategoryDonut extends StatelessWidget {
       if (rest != null)
         (
           key: 'reports.category.rest',
-          label: 'Resto (${rest.categories})',
+          label: context.l10n.restCategories(rest.categories),
           icon: Icons.more_horiz,
           color: restColor,
           cents: rest.totalCents,
@@ -202,8 +206,8 @@ class CategoryDonut extends StatelessWidget {
             label: s.label,
             value: formatMoney(s.cents, currency),
             percent: percents[i] == 0 && s.cents > 0
-                ? '<1 %'
-                : '${percents[i]} %',
+                ? context.l10n.percentBelowOne
+                : context.l10n.percentValue(percents[i]),
           ),
       ],
     );
@@ -345,11 +349,12 @@ class _MonthBarsState extends State<MonthBars> {
       0,
       (m, e) => e.totalCents > m ? e.totalCents : m,
     );
-    final compact = NumberFormat.compact(locale: appLocale);
+    // Amounts keep the money format in every language (1.5K, as 1,500.00).
+    final compact = NumberFormat.compact(locale: 'en_US');
     String monthLabel(DateTime m, {bool long = false}) {
       final name = DateFormat(
         long ? 'MMMM y' : 'MMM',
-        appLocale,
+        dateLocale,
       ).format(m).replaceAll('.', '');
       return !long && multiYear ? '$name ${m.year % 100}' : name;
     }
@@ -468,7 +473,7 @@ class _MonthBarsState extends State<MonthBars> {
           style: text.bodyMedium,
         ),
         Text(
-          'Toca una barra para ver su mes.',
+          context.l10n.tapBarHint,
           style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
         ),
       ],
@@ -509,7 +514,10 @@ class CardTotals extends StatelessWidget {
                   alignment: WrapAlignment.spaceBetween,
                   spacing: 12,
                   children: [
-                    Text(_cardName(cards[t.cardId]), style: text.bodyMedium),
+                    Text(
+                      _cardName(context.l10n, cards[t.cardId]),
+                      style: text.bodyMedium,
+                    ),
                     Text(
                       formatMoney(t.totalCents, currency),
                       style: text.bodyMedium?.copyWith(
@@ -538,6 +546,9 @@ class CardTotals extends StatelessWidget {
     );
   }
 
-  static String _cardName(CreditCard? c) =>
-      c == null ? 'Tarjeta' : '${c.label}${c.archived ? ' (archivada)' : ''}';
+  static String _cardName(AppLocalizations l, CreditCard? c) => switch (c) {
+    null => l.card,
+    CreditCard(archived: true) => l.cardArchivedName(c.label),
+    _ => c.label,
+  };
 }

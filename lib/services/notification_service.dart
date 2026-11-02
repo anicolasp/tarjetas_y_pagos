@@ -16,25 +16,25 @@ abstract interface class NotificationService {
   /// Asks for permission (Android 13+). True when notifications may show.
   Future<bool> requestPermission();
 
-  /// Cancels every reminder and schedules [plan] instead.
-  Future<void> replaceAll(List<PlannedNotification> plan);
+  /// Cancels every reminder and schedules [plan] instead, on the channel
+  /// named [channel] (Android shows it in the app's notification settings).
+  Future<void> replaceAll(
+    List<PlannedNotification> plan, {
+    required ReminderChannel channel,
+  });
 
   Future<void> cancelAll();
 }
+
+/// The name and description of the reminders channel, in the user's
+/// language.
+typedef ReminderChannel = ({String name, String description});
 
 class LocalNotificationService implements NotificationService {
   LocalNotificationService([FlutterLocalNotificationsPlugin? plugin])
     : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
 
   final FlutterLocalNotificationsPlugin _plugin;
-
-  static const _details = NotificationDetails(
-    android: AndroidNotificationDetails(
-      'reminders',
-      'Recordatorios',
-      channelDescription: 'Corte, fecha límite de pago y deudas por vencer',
-    ),
-  );
 
   @override
   Future<String?> init({required void Function(String route) onTap}) async {
@@ -79,7 +79,31 @@ class LocalNotificationService implements NotificationService {
       false;
 
   @override
-  Future<void> replaceAll(List<PlannedNotification> plan) async {
+  Future<void> replaceAll(
+    List<PlannedNotification> plan, {
+    required ReminderChannel channel,
+  }) async {
+    // Same channel id: a new language only renames it. Done now, since
+    // the plugin only touches the channel when a reminder is shown.
+    await _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >()
+        ?.createNotificationChannel(
+          AndroidNotificationChannel(
+            'reminders',
+            channel.name,
+            description: channel.description,
+          ),
+        );
+    final details = NotificationDetails(
+      android: AndroidNotificationDetails(
+        'reminders',
+        channel.name,
+        channelDescription: channel.description,
+        channelAction: AndroidNotificationChannelAction.update,
+      ),
+    );
     await _plugin.cancelAll();
     for (final n in plan) {
       await _plugin.zonedSchedule(
@@ -92,7 +116,7 @@ class LocalNotificationService implements NotificationService {
           n.at.hour,
           n.at.minute,
         ),
-        notificationDetails: _details,
+        notificationDetails: details,
         // Inexact: no exact-alarm permission needed; a 9:00 reminder may
         // arrive a few minutes late.
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,

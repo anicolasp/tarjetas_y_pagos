@@ -74,10 +74,10 @@ class DebtsRepository {
       final current = await _owned(txn, d.userId, d.id!);
       final paid = await _paid(txn, d.id!);
       if (paid > 0 && d.currency != current.currency) {
-        throw ArgumentError('No se puede cambiar la moneda: ya tiene abonos');
+        throw FieldErrorException(FieldError.debtCurrencyLocked);
       }
       if (d.amountCents < paid) {
-        throw ArgumentError('El monto no puede ser menor que lo ya abonado');
+        throw FieldErrorException(FieldError.debtAmountBelowPaid);
       }
       await txn.update(
         'debts',
@@ -100,28 +100,30 @@ class DebtsRepository {
       where: 'id = ? AND user_id = ?',
       whereArgs: [debtId, userId],
     );
-    if (count == 0) throw StateError('Deuda no encontrada');
+    if (count == 0) throw StateError('Debt not found');
   }
 
   /// A payment greater than what is left is rejected; reaching 0 settles
   /// the debt. Both happen in one transaction.
   Future<DebtPayment> addPayment(int userId, DebtPayment payment) async {
-    if (payment.amountCents <= 0) throw ArgumentError('Monto no válido');
+    if (payment.amountCents <= 0) {
+      throw FieldErrorException(FieldError.amountInvalid);
+    }
     final day = dateOnly(payment.date);
     if (day.isAfter(dateOnly(_clock()))) {
-      throw ArgumentError('La fecha no puede ser futura');
+      throw FieldErrorException(FieldError.dateInFuture);
     }
     final id = await _db.db.transaction((txn) async {
       final debt = await _owned(txn, userId, payment.debtId);
       // A loan entered today may have been paid on for months: any date
       // in the last five years counts (as for expenses).
       if (day.isBefore(earliestPaymentDate(_clock()))) {
-        throw ArgumentError('La fecha es demasiado antigua');
+        throw FieldErrorException(FieldError.dateTooOld);
       }
       final paid = await _paid(txn, debt.id!);
       final remaining = debt.amountCents - paid;
       if (payment.amountCents > remaining) {
-        throw ArgumentError('El abono es mayor que lo que falta por pagar');
+        throw FieldErrorException(FieldError.paymentAboveRemaining);
       }
       final id = await txn.insert(
         'debt_payments',
@@ -151,7 +153,7 @@ class DebtsRepository {
         'ON d.id = p.debt_id WHERE p.id = ? AND d.user_id = ?',
         [paymentId, userId],
       );
-      if (rows.isEmpty) throw StateError('Abono no encontrado');
+      if (rows.isEmpty) throw StateError('Debt payment not found');
       final debtId = rows.single['debt_id']! as int;
       await txn.delete(
         'debt_payments',
@@ -171,11 +173,15 @@ class DebtsRepository {
 
   Debt _validated(Debt d) {
     final creditor = d.creditor.trim();
-    if (creditor.isEmpty) throw ArgumentError('Escribe el acreedor');
-    if (creditor.length > creditorMaxLength) {
-      throw ArgumentError('Máximo $creditorMaxLength caracteres');
+    if (creditor.isEmpty) {
+      throw FieldErrorException(FieldError.creditorRequired);
     }
-    if (d.amountCents <= 0) throw ArgumentError('Monto no válido');
+    if (creditor.length > creditorMaxLength) {
+      throw FieldErrorException(FieldError.creditorTooLong);
+    }
+    if (d.amountCents <= 0) {
+      throw FieldErrorException(FieldError.amountInvalid);
+    }
     final description = trimmedOrNull(d.description, debtDescriptionMaxLength);
     return d.copyWith(
       creditor: creditor,
@@ -194,7 +200,7 @@ class DebtsRepository {
       whereArgs: [debtId, userId],
       limit: 1,
     );
-    if (rows.isEmpty) throw StateError('Deuda no encontrada');
+    if (rows.isEmpty) throw StateError('Debt not found');
     return Debt.fromMap(rows.single);
   }
 

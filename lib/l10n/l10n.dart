@@ -2,11 +2,13 @@ import 'package:flutter/widgets.dart';
 
 import '../core/greeting.dart';
 import '../core/language.dart';
+import '../core/report.dart' show ReportPeriod;
 import '../core/security_question.dart';
 import '../core/validators.dart';
 import '../data/models/category.dart';
 import '../data/repositories/categories_repository.dart'
     show categoryNameMaxLength;
+import '../data/repositories/debts_repository.dart' show creditorMaxLength;
 import '../data/repositories/expenses_repository.dart' show merchantMaxLength;
 import '../services/receipt_ai_service.dart' show ReceiptScanError;
 import 'app_localizations.dart';
@@ -69,6 +71,12 @@ extension FieldErrorText on AppLocalizations {
     FieldError.categoryColorInvalid => fieldCategoryColorInvalid,
     FieldError.categoryNameTaken => fieldCategoryNameTaken,
     FieldError.categoryReassignOther => fieldCategoryReassignOther,
+    FieldError.creditorRequired => fieldCreditorRequired,
+    FieldError.creditorTooLong => fieldTooLong(creditorMaxLength),
+    FieldError.debtCurrencyLocked => fieldDebtCurrencyLocked,
+    FieldError.debtAmountBelowPaid => fieldDebtAmountBelowPaid,
+    FieldError.dateTooOld => fieldDateTooOld,
+    FieldError.paymentAboveRemaining => fieldPaymentAboveRemaining,
   };
 }
 
@@ -125,6 +133,13 @@ extension AppTexts on AppLocalizations {
       _ => category.name,
     };
   }
+
+  String reportPeriod(ReportPeriod period) => switch (period) {
+    ReportPeriod.thisMonth => periodThisMonth,
+    ReportPeriod.lastMonth => periodLastMonth,
+    ReportPeriod.last3Months => periodLast3Months,
+    ReportPeriod.custom => periodCustom,
+  };
 
   /// [categories] in alphabetical order of their shown names, "Otros"
   /// last. The repository sorts by the stored (Spanish) names, which is

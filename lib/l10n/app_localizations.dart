@@ -2097,6 +2097,492 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Mover y eliminar'**
   String get moveAndDelete;
+
+  /// No description provided for @fieldCreditorRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Escribe a quién le debes'**
+  String get fieldCreditorRequired;
+
+  /// No description provided for @fieldDebtCurrencyLocked.
+  ///
+  /// In es, this message translates to:
+  /// **'No se puede cambiar la moneda: ya tiene abonos'**
+  String get fieldDebtCurrencyLocked;
+
+  /// No description provided for @fieldDebtAmountBelowPaid.
+  ///
+  /// In es, this message translates to:
+  /// **'El monto no puede ser menor que lo ya abonado'**
+  String get fieldDebtAmountBelowPaid;
+
+  /// No description provided for @fieldDateTooOld.
+  ///
+  /// In es, this message translates to:
+  /// **'La fecha es demasiado antigua'**
+  String get fieldDateTooOld;
+
+  /// No description provided for @fieldPaymentAboveRemaining.
+  ///
+  /// In es, this message translates to:
+  /// **'El abono es mayor que lo que falta por pagar'**
+  String get fieldPaymentAboveRemaining;
+
+  /// No description provided for @deletePaymentOfDebtTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Eliminar este abono?'**
+  String get deletePaymentOfDebtTitle;
+
+  /// No description provided for @deletePaymentOfDebtBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Lo que falta por pagar volverá a subir {amount}.'**
+  String deletePaymentOfDebtBody(String amount);
+
+  /// No description provided for @debtNotFound.
+  ///
+  /// In es, this message translates to:
+  /// **'Deuda no encontrada'**
+  String get debtNotFound;
+
+  /// No description provided for @debt.
+  ///
+  /// In es, this message translates to:
+  /// **'Deuda'**
+  String get debt;
+
+  /// No description provided for @edit.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar'**
+  String get edit;
+
+  /// No description provided for @addDebtPayment.
+  ///
+  /// In es, this message translates to:
+  /// **'Registrar abono'**
+  String get addDebtPayment;
+
+  /// No description provided for @debtSettled.
+  ///
+  /// In es, this message translates to:
+  /// **'Deuda saldada'**
+  String get debtSettled;
+
+  /// No description provided for @debtPayments.
+  ///
+  /// In es, this message translates to:
+  /// **'Abonos'**
+  String get debtPayments;
+
+  /// No description provided for @noDebtPayments.
+  ///
+  /// In es, this message translates to:
+  /// **'Todavía no hay abonos.'**
+  String get noDebtPayments;
+
+  /// No description provided for @debtsActive.
+  ///
+  /// In es, this message translates to:
+  /// **'Activas'**
+  String get debtsActive;
+
+  /// No description provided for @debtsSettled.
+  ///
+  /// In es, this message translates to:
+  /// **'Saldadas'**
+  String get debtsSettled;
+
+  /// No description provided for @newDebt.
+  ///
+  /// In es, this message translates to:
+  /// **'Nueva deuda'**
+  String get newDebt;
+
+  /// No description provided for @editDebt.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar deuda'**
+  String get editDebt;
+
+  /// No description provided for @debtsLoadError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudieron cargar las deudas'**
+  String get debtsLoadError;
+
+  /// No description provided for @cards.
+  ///
+  /// In es, this message translates to:
+  /// **'Tarjetas'**
+  String get cards;
+
+  /// No description provided for @cardsNoBalance.
+  ///
+  /// In es, this message translates to:
+  /// **'Tus tarjetas no tienen balance pendiente.'**
+  String get cardsNoBalance;
+
+  /// No description provided for @otherDebts.
+  ///
+  /// In es, this message translates to:
+  /// **'Otras deudas'**
+  String get otherDebts;
+
+  /// No description provided for @noOtherDebts.
+  ///
+  /// In es, this message translates to:
+  /// **'No tienes otras deudas activas.'**
+  String get noOtherDebts;
+
+  /// No description provided for @noSettledDebts.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no has saldado ninguna deuda.'**
+  String get noSettledDebts;
+
+  /// No description provided for @cardOverdueSince.
+  ///
+  /// In es, this message translates to:
+  /// **'Vencido desde el {date}'**
+  String cardOverdueSince(String date);
+
+  /// No description provided for @cardDueOn.
+  ///
+  /// In es, this message translates to:
+  /// **'Fecha límite {date}'**
+  String cardDueOn(String date);
+
+  /// No description provided for @debtSettledShort.
+  ///
+  /// In es, this message translates to:
+  /// **'Saldada'**
+  String get debtSettledShort;
+
+  /// No description provided for @debtRemaining.
+  ///
+  /// In es, this message translates to:
+  /// **'Falta {amount}'**
+  String debtRemaining(String amount);
+
+  /// No description provided for @debtPaidOf.
+  ///
+  /// In es, this message translates to:
+  /// **'Pagado {paid} de {total}'**
+  String debtPaidOf(String paid, String total);
+
+  /// No description provided for @percentPaid.
+  ///
+  /// In es, this message translates to:
+  /// **'{percent} % pagado'**
+  String percentPaid(int percent);
+
+  /// No description provided for @debtOverdueOn.
+  ///
+  /// In es, this message translates to:
+  /// **'Vencida el {date}'**
+  String debtOverdueOn(String date);
+
+  /// No description provided for @debtDueOn.
+  ///
+  /// In es, this message translates to:
+  /// **'Vence el {date}'**
+  String debtDueOn(String date);
+
+  /// No description provided for @deleteDebtTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Eliminar esta deuda?'**
+  String get deleteDebtTitle;
+
+  /// No description provided for @deleteDebtBody.
+  ///
+  /// In es, this message translates to:
+  /// **'También se eliminan sus abonos.'**
+  String get deleteDebtBody;
+
+  /// No description provided for @creditorLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Acreedor (ej. Préstamo Juan)'**
+  String get creditorLabel;
+
+  /// No description provided for @descriptionOptional.
+  ///
+  /// In es, this message translates to:
+  /// **'Descripción (opcional)'**
+  String get descriptionOptional;
+
+  /// No description provided for @debtCurrencyLockedHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Tiene abonos: la moneda ya no se puede cambiar.'**
+  String get debtCurrencyLockedHint;
+
+  /// No description provided for @alreadyPaidAmount.
+  ///
+  /// In es, this message translates to:
+  /// **'Ya abonaste {amount}'**
+  String alreadyPaidAmount(String amount);
+
+  /// No description provided for @debtTotalAmount.
+  ///
+  /// In es, this message translates to:
+  /// **'Monto total'**
+  String get debtTotalAmount;
+
+  /// No description provided for @dueOptional.
+  ///
+  /// In es, this message translates to:
+  /// **'Vence (opcional)'**
+  String get dueOptional;
+
+  /// No description provided for @noDate.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin fecha'**
+  String get noDate;
+
+  /// No description provided for @saveDebt.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar deuda'**
+  String get saveDebt;
+
+  /// No description provided for @deleteDebt.
+  ///
+  /// In es, this message translates to:
+  /// **'Eliminar deuda'**
+  String get deleteDebt;
+
+  /// No description provided for @debtAlreadySettled.
+  ///
+  /// In es, this message translates to:
+  /// **'La deuda ya está saldada'**
+  String get debtAlreadySettled;
+
+  /// No description provided for @maxAmountValue.
+  ///
+  /// In es, this message translates to:
+  /// **'Máximo {amount}'**
+  String maxAmountValue(String amount);
+
+  /// No description provided for @debtPaymentAmount.
+  ///
+  /// In es, this message translates to:
+  /// **'Monto del abono'**
+  String get debtPaymentAmount;
+
+  /// No description provided for @debtPaymentDate.
+  ///
+  /// In es, this message translates to:
+  /// **'Fecha del abono'**
+  String get debtPaymentDate;
+
+  /// No description provided for @periodThisMonth.
+  ///
+  /// In es, this message translates to:
+  /// **'Este mes'**
+  String get periodThisMonth;
+
+  /// No description provided for @periodLastMonth.
+  ///
+  /// In es, this message translates to:
+  /// **'Mes pasado'**
+  String get periodLastMonth;
+
+  /// No description provided for @periodLast3Months.
+  ///
+  /// In es, this message translates to:
+  /// **'Últimos 3 meses'**
+  String get periodLast3Months;
+
+  /// No description provided for @periodCustom.
+  ///
+  /// In es, this message translates to:
+  /// **'Rango'**
+  String get periodCustom;
+
+  /// No description provided for @reportsSummary.
+  ///
+  /// In es, this message translates to:
+  /// **'Resumen'**
+  String get reportsSummary;
+
+  /// No description provided for @movementsTab.
+  ///
+  /// In es, this message translates to:
+  /// **'Movimientos'**
+  String get movementsTab;
+
+  /// No description provided for @amountFrom.
+  ///
+  /// In es, this message translates to:
+  /// **'Desde {amount}'**
+  String amountFrom(String amount);
+
+  /// No description provided for @amountUpTo.
+  ///
+  /// In es, this message translates to:
+  /// **'Hasta {amount}'**
+  String amountUpTo(String amount);
+
+  /// No description provided for @allCards.
+  ///
+  /// In es, this message translates to:
+  /// **'Todas las tarjetas'**
+  String get allCards;
+
+  /// No description provided for @cardsCount.
+  ///
+  /// In es, this message translates to:
+  /// **'Tarjetas ({count})'**
+  String cardsCount(int count);
+
+  /// No description provided for @moreFilters.
+  ///
+  /// In es, this message translates to:
+  /// **'Más filtros'**
+  String get moreFilters;
+
+  /// No description provided for @archivedCardSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'{bank} · archivada'**
+  String archivedCardSubtitle(String bank);
+
+  /// No description provided for @allCardsShort.
+  ///
+  /// In es, this message translates to:
+  /// **'Todas'**
+  String get allCardsShort;
+
+  /// No description provided for @reportLoadError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo cargar el reporte'**
+  String get reportLoadError;
+
+  /// No description provided for @chartsOneCurrency.
+  ///
+  /// In es, this message translates to:
+  /// **'Los gráficos muestran un solo tipo de moneda; no se suman.'**
+  String get chartsOneCurrency;
+
+  /// No description provided for @byCategory.
+  ///
+  /// In es, this message translates to:
+  /// **'Por categoría ({symbol})'**
+  String byCategory(String symbol);
+
+  /// No description provided for @byMonth.
+  ///
+  /// In es, this message translates to:
+  /// **'Por mes ({symbol})'**
+  String byMonth(String symbol);
+
+  /// No description provided for @byCard.
+  ///
+  /// In es, this message translates to:
+  /// **'Por tarjeta ({symbol})'**
+  String byCard(String symbol);
+
+  /// No description provided for @expensesLoadError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudieron cargar los gastos'**
+  String get expensesLoadError;
+
+  /// No description provided for @noExpensesForFilters.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay gastos con estos filtros'**
+  String get noExpensesForFilters;
+
+  /// No description provided for @spendingIn.
+  ///
+  /// In es, this message translates to:
+  /// **'Gastos en {symbol}'**
+  String spendingIn(String symbol);
+
+  /// No description provided for @statTotal.
+  ///
+  /// In es, this message translates to:
+  /// **'Total'**
+  String get statTotal;
+
+  /// No description provided for @statAverage.
+  ///
+  /// In es, this message translates to:
+  /// **'Promedio por gasto'**
+  String get statAverage;
+
+  /// No description provided for @statCount.
+  ///
+  /// In es, this message translates to:
+  /// **'Cantidad'**
+  String get statCount;
+
+  /// No description provided for @restCategories.
+  ///
+  /// In es, this message translates to:
+  /// **'Resto ({count})'**
+  String restCategories(int count);
+
+  /// No description provided for @percentValue.
+  ///
+  /// In es, this message translates to:
+  /// **'{percent} %'**
+  String percentValue(int percent);
+
+  /// No description provided for @percentBelowOne.
+  ///
+  /// In es, this message translates to:
+  /// **'<1 %'**
+  String get percentBelowOne;
+
+  /// No description provided for @tapBarHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Toca una barra para ver su mes.'**
+  String get tapBarHint;
+
+  /// No description provided for @cardArchivedName.
+  ///
+  /// In es, this message translates to:
+  /// **'{name} (archivada)'**
+  String cardArchivedName(String name);
+
+  /// No description provided for @reminderCut.
+  ///
+  /// In es, this message translates to:
+  /// **'{days, plural, =0{Tu tarjeta {alias} corta hoy} =1{Tu tarjeta {alias} corta mañana} other{Tu tarjeta {alias} corta en {days} días}}'**
+  String reminderCut(String alias, int days);
+
+  /// No description provided for @reminderPayment.
+  ///
+  /// In es, this message translates to:
+  /// **'Fecha límite de pago de {alias}: {date}'**
+  String reminderPayment(String alias, String date);
+
+  /// No description provided for @reminderDebt.
+  ///
+  /// In es, this message translates to:
+  /// **'La deuda con {creditor} vence el {date}'**
+  String reminderDebt(String creditor, String date);
+
+  /// No description provided for @reminderChannelName.
+  ///
+  /// In es, this message translates to:
+  /// **'Recordatorios'**
+  String get reminderChannelName;
+
+  /// No description provided for @reminderChannelDescription.
+  ///
+  /// In es, this message translates to:
+  /// **'Corte, fecha límite de pago y deudas por vencer'**
+  String get reminderChannelDescription;
 }
 
 class _AppLocalizationsDelegate

@@ -86,7 +86,7 @@ class CardsRepository {
       where: 'id = ? AND user_id = ?',
       whereArgs: [card.id, card.userId],
     );
-    if (count == 0) throw StateError('Tarjeta no encontrada');
+    if (count == 0) throw StateError('Card not found');
   }
 
   /// Hides the card from lists and the ranking; its data is kept.
@@ -97,7 +97,7 @@ class CardsRepository {
       where: 'id = ? AND user_id = ?',
       whereArgs: [id, userId],
     );
-    if (count == 0) throw StateError('Tarjeta no encontrada');
+    if (count == 0) throw StateError('Card not found');
   }
 
   CreditCard _validated(CreditCard card) {

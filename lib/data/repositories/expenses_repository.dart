@@ -294,7 +294,7 @@ class ExpensesRepository {
       where: 'id = ? AND user_id = ?',
       whereArgs: [expense.id, expense.userId],
     );
-    if (count == 0) throw StateError('Gasto no encontrado');
+    if (count == 0) throw StateError('Expense not found');
   }
 
   Future<void> delete(int userId, int id) async {
@@ -303,7 +303,7 @@ class ExpensesRepository {
       where: 'id = ? AND user_id = ?',
       whereArgs: [id, userId],
     );
-    if (count == 0) throw StateError('Gasto no encontrado');
+    if (count == 0) throw StateError('Expense not found');
   }
 
   /// Throws [ArgumentError] for invalid data.
@@ -335,7 +335,7 @@ class ExpensesRepository {
       where: 'id = ? AND card_id IN (SELECT id FROM cards WHERE user_id = ?)',
       whereArgs: [paymentId, userId],
     );
-    if (count == 0) throw StateError('Pago no encontrado');
+    if (count == 0) throw StateError('Payment not found');
   }
 
   // ---------------------------------------------------------- validation

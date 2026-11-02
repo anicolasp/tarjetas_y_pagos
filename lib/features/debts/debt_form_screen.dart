@@ -7,8 +7,10 @@ import '../../core/formatters.dart';
 import '../../core/money.dart';
 import '../../core/responsive.dart';
 import '../../core/router.dart';
+import '../../core/validators.dart';
 import '../../data/models/debt.dart';
 import '../../data/repositories/debts_repository.dart';
+import '../../l10n/l10n.dart';
 import '../auth/auth_widgets.dart';
 import '../cards/cards_providers.dart';
 
@@ -29,7 +31,7 @@ class DebtFormScreen extends ConsumerWidget {
     if (summary == null) {
       return Scaffold(
         appBar: AppBar(),
-        body: const Center(child: Text('Deuda no encontrada')),
+        body: Center(child: Text(context.l10n.debtNotFound)),
       );
     }
     return _DebtForm(debt: summary.debt, paidCents: summary.paidCents);
@@ -116,9 +118,11 @@ class _DebtFormState extends ConsumerState<_DebtForm> {
       }
       refreshFinance(ref);
       if (mounted) context.pop();
-    } on ArgumentError catch (e) {
+    } on FieldErrorException catch (e) {
       // Business rule from the repository: show why.
-      if (mounted) showErrorSnackBar(context, '${e.message}');
+      if (mounted) {
+        showErrorSnackBar(context, context.l10n.fieldError(e.error)!);
+      }
     } catch (_) {
       if (mounted) showErrorSnackBar(context, unexpectedError(context));
     } finally {
@@ -129,8 +133,8 @@ class _DebtFormState extends ConsumerState<_DebtForm> {
   Future<void> _delete() async {
     final confirmed = await confirmDestructive(
       context,
-      title: '¿Eliminar esta deuda?',
-      body: 'También se eliminan sus abonos.',
+      title: context.l10n.deleteDebtTitle,
+      body: context.l10n.deleteDebtBody,
       confirmKey: const ValueKey('debtForm.deleteConfirm'),
     );
     if (!confirmed || !mounted) return;
@@ -152,7 +156,9 @@ class _DebtFormState extends ConsumerState<_DebtForm> {
 
     return Scaffold(
       key: const ValueKey('debtForm.root'),
-      appBar: AppBar(title: Text(_editing ? 'Editar deuda' : 'Nueva deuda')),
+      appBar: AppBar(
+        title: Text(_editing ? context.l10n.editDebt : context.l10n.newDebt),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(vertical: 16),
@@ -170,11 +176,11 @@ class _DebtFormState extends ConsumerState<_DebtForm> {
                     textInputAction: TextInputAction.next,
                     maxLength: creditorMaxLength,
                     validator: (v) => (v ?? '').trim().isEmpty
-                        ? 'Escribe a quién le debes'
+                        ? context.l10n.fieldCreditorRequired
                         : null,
-                    decoration: const InputDecoration(
-                      labelText: 'Acreedor (ej. Préstamo Juan)',
-                      prefixIcon: Icon(Icons.person_outline),
+                    decoration: InputDecoration(
+                      labelText: context.l10n.creditorLabel,
+                      prefixIcon: const Icon(Icons.person_outline),
                       counterText: '',
                     ),
                   ),
@@ -186,13 +192,13 @@ class _DebtFormState extends ConsumerState<_DebtForm> {
                     maxLength: debtDescriptionMaxLength,
                     maxLines: 2,
                     minLines: 1,
-                    decoration: const InputDecoration(
-                      labelText: 'Descripción (opcional)',
-                      prefixIcon: Icon(Icons.notes),
+                    decoration: InputDecoration(
+                      labelText: context.l10n.descriptionOptional,
+                      prefixIcon: const Icon(Icons.notes),
                     ),
                   ),
                   gap,
-                  Text('Moneda', style: text.labelLarge),
+                  Text(context.l10n.currency, style: text.labelLarge),
                   const SizedBox(height: 6),
                   Wrap(
                     spacing: 8,
@@ -213,7 +219,7 @@ class _DebtFormState extends ConsumerState<_DebtForm> {
                     Padding(
                       padding: const EdgeInsets.only(left: 12, top: 6),
                       child: Text(
-                        'Tiene abonos: la moneda ya no se puede cambiar.',
+                        context.l10n.debtCurrencyLockedHint,
                         style: text.bodySmall,
                       ),
                     ),
@@ -227,16 +233,17 @@ class _DebtFormState extends ConsumerState<_DebtForm> {
                     validator: (v) {
                       final cents = parseMoneyToCents(v ?? '');
                       if (cents == null || cents <= 0) {
-                        return 'Escribe un monto mayor que 0';
+                        return context.l10n.fieldAmountPositive;
                       }
                       if (cents < widget.paidCents) {
-                        return 'Ya abonaste '
-                            '${formatMoney(widget.paidCents, _currency)}';
+                        return context.l10n.alreadyPaidAmount(
+                          formatMoney(widget.paidCents, _currency),
+                        );
                       }
                       return null;
                     },
                     decoration: InputDecoration(
-                      labelText: 'Monto total',
+                      labelText: context.l10n.debtTotalAmount,
                       prefixText: '${_currency.symbol} ',
                       prefixIcon: const Icon(Icons.payments_outlined),
                     ),
@@ -248,26 +255,28 @@ class _DebtFormState extends ConsumerState<_DebtForm> {
                     onTap: _pickDue,
                     child: InputDecorator(
                       decoration: InputDecoration(
-                        labelText: 'Vence (opcional)',
+                        labelText: context.l10n.dueOptional,
                         prefixIcon: const Icon(Icons.event_outlined),
                         suffixIcon: _due == null
                             ? null
                             : IconButton(
                                 key: const ValueKey('debtForm.clearDue'),
-                                tooltip: 'Sin fecha',
+                                tooltip: context.l10n.noDate,
                                 icon: const Icon(Icons.clear),
                                 onPressed: () => setState(() => _due = null),
                               ),
                       ),
                       child: Text(
-                        _due == null ? 'Sin fecha' : formatDate(_due!),
+                        _due == null ? context.l10n.noDate : formatDate(_due!),
                       ),
                     ),
                   ),
                   const SizedBox(height: 20),
                   LoadingButton(
                     key: const ValueKey('debtForm.save'),
-                    label: _editing ? 'Guardar cambios' : 'Guardar deuda',
+                    label: _editing
+                        ? context.l10n.saveChanges
+                        : context.l10n.saveDebt,
                     loading: _saving,
                     onPressed: _save,
                   ),
@@ -281,7 +290,7 @@ class _DebtFormState extends ConsumerState<_DebtForm> {
                       ),
                       onPressed: _saving ? null : _delete,
                       icon: const Icon(Icons.delete_outline),
-                      label: const Text('Eliminar deuda'),
+                      label: Text(context.l10n.deleteDebt),
                     ),
                   ],
                 ],

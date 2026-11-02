@@ -8,7 +8,7 @@ import 'money.dart';
 const appLocale = 'es';
 
 /// Dates follow the active language; money never does (always `RD$ 1,250.00`).
-String get _dateLocale => Intl.defaultLocale ?? appLocale;
+String get dateLocale => Intl.defaultLocale ?? appLocale;
 
 final _amount = NumberFormat('#,##0.00', 'en_US');
 
@@ -39,15 +39,17 @@ String centsToInput(int cents) =>
     '${cents ~/ 100}.${(cents % 100).toString().padLeft(2, '0')}';
 
 /// `15 oct 2026`
-String formatDate(DateTime d) => DateFormat('d MMM y', _dateLocale).format(d);
+/// [locale] overrides the active language (reminders built for another).
+String formatDate(DateTime d, {String? locale}) =>
+    DateFormat('d MMM y', locale ?? dateLocale).format(d);
 
 /// `15/10/2026`
 String formatShortDate(DateTime d) =>
-    DateFormat('dd/MM/y', _dateLocale).format(d);
+    DateFormat('dd/MM/y', dateLocale).format(d);
 
 /// `15/dic`
 String formatDayMonth(DateTime d) =>
-    '${d.day}/${DateFormat('MMM', _dateLocale).format(d).replaceAll('.', '')}';
+    '${d.day}/${DateFormat('MMM', dateLocale).format(d).replaceAll('.', '')}';
 
 /// `octubre`
-String formatMonthName(DateTime d) => DateFormat('MMMM', _dateLocale).format(d);
+String formatMonthName(DateTime d) => DateFormat('MMMM', dateLocale).format(d);

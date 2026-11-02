@@ -13,6 +13,7 @@ import '../../data/models/category.dart';
 import '../../data/models/credit_card.dart';
 import '../../data/models/expense.dart';
 import '../../data/repositories/expenses_repository.dart';
+import '../../l10n/l10n.dart';
 import '../cards/cards_providers.dart';
 import '../expenses/expense_filter_sheet.dart';
 import '../expenses/widgets/movement_tile.dart';
@@ -80,7 +81,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
               for (final p in ReportPeriod.values)
                 ListTile(
                   key: ValueKey('reports.period.${p.name}'),
-                  title: Text(p.label),
+                  title: Text(context.l10n.reportPeriod(p)),
                   trailing: p == _period ? const Icon(Icons.check) : null,
                   onTap: () => Navigator.pop(context, p),
                 ),
@@ -202,11 +203,17 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
       child: Scaffold(
         key: const ValueKey('reports.root'),
         appBar: AppBar(
-          title: const Text('Reportes'),
-          bottom: const TabBar(
+          title: Text(context.l10n.reports),
+          bottom: TabBar(
             tabs: [
-              Tab(key: ValueKey('reports.tabSummary'), text: 'Resumen'),
-              Tab(key: ValueKey('reports.tabList'), text: 'Movimientos'),
+              Tab(
+                key: const ValueKey('reports.tabSummary'),
+                text: context.l10n.reportsSummary,
+              ),
+              Tab(
+                key: const ValueKey('reports.tabList'),
+                text: context.l10n.movementsTab,
+              ),
             ],
           ),
         ),
@@ -282,8 +289,8 @@ class _FilterBar extends StatelessWidget {
         '${formatShortDate(range.from)} – ${formatShortDate(range.to)}';
     final amountLabel = switch ((more.minCents, more.maxCents)) {
       (null, null) => null,
-      (final min?, null) => 'Desde ${centsToInput(min)}',
-      (null, final max?) => 'Hasta ${centsToInput(max)}',
+      (final min?, null) => context.l10n.amountFrom(centsToInput(min)),
+      (null, final max?) => context.l10n.amountUpTo(centsToInput(max)),
       (final min?, final max?) => '${centsToInput(min)} – ${centsToInput(max)}',
     };
 
@@ -298,7 +305,7 @@ class _FilterBar extends StatelessWidget {
             ActionChip(
               key: const ValueKey('reports.period'),
               avatar: const Icon(Icons.date_range, size: 18),
-              label: Text(period.label),
+              label: Text(context.l10n.reportPeriod(period)),
               onPressed: onPeriod,
             ),
             ActionChip(
@@ -306,15 +313,15 @@ class _FilterBar extends StatelessWidget {
               avatar: const Icon(Icons.credit_card, size: 18),
               label: Text(
                 cardIds.isEmpty
-                    ? 'Todas las tarjetas'
-                    : 'Tarjetas (${cardIds.length})',
+                    ? context.l10n.allCards
+                    : context.l10n.cardsCount(cardIds.length),
               ),
               onPressed: onCards,
             ),
             ActionChip(
               key: const ValueKey('reports.moreFilters'),
               avatar: const Icon(Icons.tune, size: 18),
-              label: const Text('Más filtros'),
+              label: Text(context.l10n.moreFilters),
               onPressed: onMore,
             ),
           ],
@@ -337,7 +344,7 @@ class _FilterBar extends StatelessWidget {
               for (final id in cardIds)
                 InputChip(
                   key: ValueKey('reports.chip.card.$id'),
-                  label: Text(byCardId[id]?.label ?? 'Tarjeta'),
+                  label: Text(byCardId[id]?.label ?? context.l10n.card),
                   onDeleted: () => onRemoveCard(id),
                 ),
               for (final id in more.categoryIds)
@@ -347,7 +354,10 @@ class _FilterBar extends StatelessWidget {
                     categoryIcon(byCategoryId[id]?.icon ?? 'category'),
                     size: 18,
                   ),
-                  label: Text(byCategoryId[id]?.name ?? 'Categoría'),
+                  label: Text(switch (byCategoryId[id]) {
+                    final c? => context.l10n.categoryLabel(c),
+                    null => context.l10n.category,
+                  }),
                   onDeleted: () => onRemoveCategory(id),
                 ),
               if ((more.merchant ?? '').isNotEmpty)
@@ -400,7 +410,7 @@ class _CardPickerState extends State<_CardPicker> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
-                  'Tarjetas',
+                  context.l10n.cards,
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
               ),
@@ -410,7 +420,11 @@ class _CardPickerState extends State<_CardPicker> {
                   key: ValueKey('reports.cardOption.${c.id}'),
                   value: _selected.contains(c.id),
                   title: Text(c.label),
-                  subtitle: Text(c.archived ? '${c.bank} · archivada' : c.bank),
+                  subtitle: Text(
+                    c.archived
+                        ? context.l10n.archivedCardSubtitle(c.bank)
+                        : c.bank,
+                  ),
                   onChanged: (on) => setState(
                     () => on! ? _selected.add(c.id!) : _selected.remove(c.id),
                   ),
@@ -425,7 +439,7 @@ class _CardPickerState extends State<_CardPicker> {
                     TextButton(
                       key: const ValueKey('reports.cardsAll'),
                       onPressed: () => Navigator.pop(context, <int>{}),
-                      child: const Text('Todas'),
+                      child: Text(context.l10n.allCardsShort),
                     ),
                     FilledButton(
                       key: const ValueKey('reports.cardsApply'),
@@ -433,7 +447,7 @@ class _CardPickerState extends State<_CardPicker> {
                         minimumSize: const Size(64, 44),
                       ),
                       onPressed: () => Navigator.pop(context, _selected),
-                      child: const Text('Aplicar'),
+                      child: Text(context.l10n.apply),
                     ),
                   ],
                 ),
@@ -497,10 +511,10 @@ class _Summary extends ConsumerWidget {
         AsyncData(:final value) when value.isEmpty => [const _Empty()],
         AsyncData(:final value) => _content(context, value, gap),
         AsyncError() => [
-          const _Message(
-            key: ValueKey('reports.loadError'),
+          _Message(
+            key: const ValueKey('reports.loadError'),
             icon: Icons.error_outline,
-            text: 'No se pudo cargar el reporte',
+            text: context.l10n.reportLoadError,
           ),
         ],
         _ => [
@@ -546,14 +560,14 @@ class _Summary extends ConsumerWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          'Los gráficos muestran un solo tipo de moneda; no se suman.',
+          context.l10n.chartsOneCurrency,
           style: Theme.of(context).textTheme.bodySmall,
         ),
         gap,
       ],
       ReportSection(
         key: const ValueKey('reports.byCategory'),
-        title: 'Por categoría (${shown.symbol})',
+        title: context.l10n.byCategory(shown.symbol),
         child: CategoryDonut(
           report: r,
           currency: shown,
@@ -565,14 +579,14 @@ class _Summary extends ConsumerWidget {
         gap,
         ReportSection(
           key: const ValueKey('reports.byMonth'),
-          title: 'Por mes (${shown.symbol})',
+          title: context.l10n.byMonth(shown.symbol),
           child: MonthBars(months: months, currency: shown),
         ),
       ],
       gap,
       ReportSection(
         key: const ValueKey('reports.byCard'),
-        title: 'Por tarjeta (${shown.symbol})',
+        title: context.l10n.byCard(shown.symbol),
         child: CardTotals(
           totals: r.cardsIn(shown),
           currency: shown,
@@ -614,10 +628,10 @@ class _Movements extends ConsumerWidget {
             ),
         ],
         AsyncError() => [
-          const _Message(
-            key: ValueKey('reports.loadError'),
+          _Message(
+            key: const ValueKey('reports.loadError'),
             icon: Icons.error_outline,
-            text: 'No se pudieron cargar los gastos',
+            text: context.l10n.expensesLoadError,
           ),
         ],
         _ => [
@@ -652,7 +666,10 @@ class _ExpenseRow extends StatelessWidget {
       title: e.merchant,
       subtitle: [
         formatShortDate(e.date),
-        category?.name ?? 'Sin categoría',
+        switch (category) {
+          final c? => context.l10n.categoryLabel(c),
+          null => context.l10n.noCategory,
+        },
         if (card != null) card!.label,
       ].join(' · '),
       amount: formatMoney(e.amountCents, e.currency),
@@ -665,10 +682,10 @@ class _Empty extends StatelessWidget {
   const _Empty();
 
   @override
-  Widget build(BuildContext context) => const _Message(
-    key: ValueKey('reports.empty'),
+  Widget build(BuildContext context) => _Message(
+    key: const ValueKey('reports.empty'),
     icon: Icons.search_off,
-    text: 'No hay gastos con estos filtros',
+    text: context.l10n.noExpensesForFilters,
   );
 }
 

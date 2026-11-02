@@ -43,7 +43,7 @@ class CategoriesRepository {
 
   Future<Category> update(int userId, Category category) async {
     if (await _own(userId, category.id!) == null) {
-      throw StateError('Categoría no encontrada');
+      throw StateError('Category not found');
     }
     final c = await _validated(userId, category, exceptId: category.id);
     await _db.db.update(
@@ -75,7 +75,7 @@ class CategoriesRepository {
         whereArgs: [categoryId, userId],
         limit: 1,
       );
-      if (own.isEmpty) throw StateError('Categoría no encontrada');
+      if (own.isEmpty) throw StateError('Category not found');
       final count =
           (await txn.rawQuery(
                 'SELECT COUNT(*) AS n FROM expenses '
@@ -94,7 +94,7 @@ class CategoriesRepository {
           whereArgs: [reassignTo, userId],
           limit: 1,
         );
-        if (target.isEmpty) throw StateError('Categoría no encontrada');
+        if (target.isEmpty) throw StateError('Category not found');
         await txn.update(
           'expenses',
           {'category_id': reassignTo},

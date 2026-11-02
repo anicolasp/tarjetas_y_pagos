@@ -327,7 +327,7 @@ class AuthRepository {
   /// the same per-email throttle as the login.
   Future<AppUser> _verifiedUser(int userId, String password) async {
     final user = await getById(userId);
-    if (user == null) throw StateError('Usuario no encontrado');
+    if (user == null) throw StateError('User not found');
     await _throttled(
       user.email,
       const WrongPasswordException(),
@@ -364,10 +364,10 @@ class AuthRepository {
         where: 'id = ?',
         whereArgs: [userId],
       );
-      if (count == 0) throw StateError('Usuario no encontrado');
+      if (count == 0) throw StateError('User not found');
     }
     final user = await getById(userId);
-    if (user == null) throw StateError('Usuario no encontrado');
+    if (user == null) throw StateError('User not found');
     return user;
   }
 
