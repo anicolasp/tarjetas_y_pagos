@@ -1145,4 +1145,308 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get moveAndDelete => 'Move and delete';
+
+  @override
+  String get fieldCreditorRequired => 'Enter who you owe';
+
+  @override
+  String get fieldDebtCurrencyLocked =>
+      'The currency can\'t change: it already has payments';
+
+  @override
+  String get fieldDebtAmountBelowPaid =>
+      'The amount can\'t be less than what was already paid';
+
+  @override
+  String get fieldDateTooOld => 'The date is too old';
+
+  @override
+  String get fieldPaymentAboveRemaining =>
+      'The payment is more than what is left to pay';
+
+  @override
+  String get deletePaymentOfDebtTitle => 'Delete this payment?';
+
+  @override
+  String deletePaymentOfDebtBody(String amount) {
+    return 'What is left to pay will go back up by $amount.';
+  }
+
+  @override
+  String get debtNotFound => 'Debt not found';
+
+  @override
+  String get debt => 'Debt';
+
+  @override
+  String get edit => 'Edit';
+
+  @override
+  String get addDebtPayment => 'Record payment';
+
+  @override
+  String get debtSettled => 'Debt paid off';
+
+  @override
+  String get debtPayments => 'Payments';
+
+  @override
+  String get noDebtPayments => 'No payments yet.';
+
+  @override
+  String get debtsActive => 'Active';
+
+  @override
+  String get debtsSettled => 'Paid off';
+
+  @override
+  String get newDebt => 'New debt';
+
+  @override
+  String get editDebt => 'Edit debt';
+
+  @override
+  String get debtsLoadError => 'Couldn\'t load the debts';
+
+  @override
+  String get cards => 'Cards';
+
+  @override
+  String get cardsNoBalance => 'Your cards have no outstanding balance.';
+
+  @override
+  String get otherDebts => 'Other debts';
+
+  @override
+  String get noOtherDebts => 'You don\'t have other active debts.';
+
+  @override
+  String get noSettledDebts => 'You haven\'t paid off any debt yet.';
+
+  @override
+  String cardOverdueSince(String date) {
+    return 'Overdue since $date';
+  }
+
+  @override
+  String cardDueOn(String date) {
+    return 'Due $date';
+  }
+
+  @override
+  String get debtSettledShort => 'Paid off';
+
+  @override
+  String debtRemaining(String amount) {
+    return '$amount left';
+  }
+
+  @override
+  String debtPaidOf(String paid, String total) {
+    return 'Paid $paid of $total';
+  }
+
+  @override
+  String percentPaid(int percent) {
+    return '$percent% paid';
+  }
+
+  @override
+  String debtOverdueOn(String date) {
+    return 'Overdue since $date';
+  }
+
+  @override
+  String debtDueOn(String date) {
+    return 'Due $date';
+  }
+
+  @override
+  String get deleteDebtTitle => 'Delete this debt?';
+
+  @override
+  String get deleteDebtBody => 'Its payments are deleted too.';
+
+  @override
+  String get creditorLabel => 'Creditor (e.g. Loan from Juan)';
+
+  @override
+  String get descriptionOptional => 'Description (optional)';
+
+  @override
+  String get debtCurrencyLockedHint =>
+      'It has payments: the currency can\'t change anymore.';
+
+  @override
+  String alreadyPaidAmount(String amount) {
+    return 'You already paid $amount';
+  }
+
+  @override
+  String get debtTotalAmount => 'Total amount';
+
+  @override
+  String get dueOptional => 'Due (optional)';
+
+  @override
+  String get noDate => 'No date';
+
+  @override
+  String get saveDebt => 'Save debt';
+
+  @override
+  String get deleteDebt => 'Delete debt';
+
+  @override
+  String get debtAlreadySettled => 'The debt is already paid off';
+
+  @override
+  String maxAmountValue(String amount) {
+    return 'At most $amount';
+  }
+
+  @override
+  String get debtPaymentAmount => 'Payment amount';
+
+  @override
+  String get debtPaymentDate => 'Payment date';
+
+  @override
+  String get periodThisMonth => 'This month';
+
+  @override
+  String get periodLastMonth => 'Last month';
+
+  @override
+  String get periodLast3Months => 'Last 3 months';
+
+  @override
+  String get periodCustom => 'Date range';
+
+  @override
+  String get reportsSummary => 'Summary';
+
+  @override
+  String get movementsTab => 'Movements';
+
+  @override
+  String amountFrom(String amount) {
+    return 'From $amount';
+  }
+
+  @override
+  String amountUpTo(String amount) {
+    return 'Up to $amount';
+  }
+
+  @override
+  String get allCards => 'All cards';
+
+  @override
+  String cardsCount(int count) {
+    return 'Cards ($count)';
+  }
+
+  @override
+  String get moreFilters => 'More filters';
+
+  @override
+  String archivedCardSubtitle(String bank) {
+    return '$bank · archived';
+  }
+
+  @override
+  String get all => 'All';
+
+  @override
+  String get reportLoadError => 'Couldn\'t load the report';
+
+  @override
+  String get chartsOneCurrency =>
+      'Charts show one currency at a time; they aren\'t added up.';
+
+  @override
+  String byCategory(String symbol) {
+    return 'By category ($symbol)';
+  }
+
+  @override
+  String byMonth(String symbol) {
+    return 'By month ($symbol)';
+  }
+
+  @override
+  String byCard(String symbol) {
+    return 'By card ($symbol)';
+  }
+
+  @override
+  String get expensesLoadError => 'Couldn\'t load the expenses';
+
+  @override
+  String get noExpensesForFilters => 'No expenses match these filters';
+
+  @override
+  String spendingIn(String symbol) {
+    return 'Spending in $symbol';
+  }
+
+  @override
+  String get statTotal => 'Total';
+
+  @override
+  String get statAverage => 'Average per expense';
+
+  @override
+  String get statCount => 'Count';
+
+  @override
+  String restCategories(int count) {
+    return 'Others ($count)';
+  }
+
+  @override
+  String percentValue(int percent) {
+    return '$percent%';
+  }
+
+  @override
+  String get percentBelowOne => '<1%';
+
+  @override
+  String get tapBarHint => 'Tap a bar to see its month.';
+
+  @override
+  String cardArchivedName(String name) {
+    return '$name (archived)';
+  }
+
+  @override
+  String reminderCut(String alias, int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'Your card $alias closes in $days days',
+      one: 'Your card $alias closes tomorrow',
+      zero: 'Your card $alias closes today',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String reminderPayment(String alias, String date) {
+    return 'Payment due for $alias: $date';
+  }
+
+  @override
+  String reminderDebt(String creditor, String date) {
+    return 'Your debt with $creditor is due on $date';
+  }
+
+  @override
+  String get reminderChannelName => 'Reminders';
+
+  @override
+  String get reminderChannelDescription =>
+      'Statement closings, payment due dates and upcoming debts';
 }

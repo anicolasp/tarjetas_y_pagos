@@ -131,16 +131,12 @@ class ExpenseReport {
       );
 }
 
-/// The quick periods of the reports filter.
+/// The quick periods of the reports filter (worded by the UI).
 enum ReportPeriod {
-  thisMonth('Este mes'),
-  lastMonth('Mes pasado'),
-  last3Months('Últimos 3 meses'),
-  custom('Rango');
-
-  const ReportPeriod(this.label);
-
-  final String label;
+  thisMonth,
+  lastMonth,
+  last3Months,
+  custom;
 
   /// Inclusive range for [today]; null for [custom] (the user picks it).
   ({DateTime from, DateTime to})? rangeFor(DateTime today) => switch (this) {

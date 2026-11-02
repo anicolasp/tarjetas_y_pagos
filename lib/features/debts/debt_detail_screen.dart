@@ -7,6 +7,7 @@ import '../../core/formatters.dart';
 import '../../core/responsive.dart';
 import '../../core/router.dart';
 import '../../data/models/debt_payment.dart';
+import '../../l10n/l10n.dart';
 import '../auth/auth_widgets.dart';
 import '../cards/cards_providers.dart';
 import '../expenses/widgets/movement_tile.dart';
@@ -27,8 +28,8 @@ class DebtDetailScreen extends ConsumerWidget {
   ) async {
     final confirmed = await confirmDestructive(
       context,
-      title: '¿Eliminar este abono?',
-      body: 'Lo que falta por pagar volverá a subir $amount.',
+      title: context.l10n.deletePaymentOfDebtTitle,
+      body: context.l10n.deletePaymentOfDebtBody(amount),
       confirmKey: const ValueKey('debtDetail.deletePaymentConfirm'),
     );
     if (!confirmed) return;
@@ -55,7 +56,7 @@ class DebtDetailScreen extends ConsumerWidget {
     if (summary == null) {
       return Scaffold(
         appBar: AppBar(),
-        body: const Center(child: Text('Deuda no encontrada')),
+        body: Center(child: Text(context.l10n.debtNotFound)),
       );
     }
     final d = summary.debt;
@@ -66,11 +67,11 @@ class DebtDetailScreen extends ConsumerWidget {
     return Scaffold(
       key: const ValueKey('debtDetail.root'),
       appBar: AppBar(
-        title: const Text('Deuda'),
+        title: Text(context.l10n.debt),
         actions: [
           IconButton(
             key: const ValueKey('debtDetail.edit'),
-            tooltip: 'Editar',
+            tooltip: context.l10n.edit,
             icon: const Icon(Icons.edit_outlined),
             onPressed: () => context.push(Routes.debtEdit(debtId)),
           ),
@@ -101,7 +102,7 @@ class DebtDetailScreen extends ConsumerWidget {
                     key: const ValueKey('debtDetail.addPayment'),
                     onPressed: () => context.push(Routes.debtPay(debtId)),
                     icon: const Icon(Icons.add),
-                    label: const Text('Registrar abono'),
+                    label: Text(context.l10n.addDebtPayment),
                   )
                 else
                   Row(
@@ -110,16 +111,19 @@ class DebtDetailScreen extends ConsumerWidget {
                       const Icon(Icons.check_circle, color: paid),
                       const SizedBox(width: 8),
                       Expanded(
-                        child: Text('Deuda saldada', style: text.titleMedium),
+                        child: Text(
+                          context.l10n.debtSettled,
+                          style: text.titleMedium,
+                        ),
                       ),
                     ],
                   ),
                 const SizedBox(height: 24),
-                Text('Abonos', style: text.titleMedium),
+                Text(context.l10n.debtPayments, style: text.titleMedium),
                 const SizedBox(height: 8),
                 if (payments.isEmpty)
                   Text(
-                    'Todavía no hay abonos.',
+                    context.l10n.noDebtPayments,
                     key: const ValueKey('debtDetail.noPayments'),
                     style: text.bodyMedium,
                   )

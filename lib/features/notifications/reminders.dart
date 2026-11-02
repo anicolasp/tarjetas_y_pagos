@@ -2,8 +2,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/clock.dart';
+import '../../core/formatters.dart';
 import '../../core/notification_plan.dart';
 import '../../core/router.dart';
+import '../../data/finance_snapshot.dart';
+import '../../l10n/l10n.dart';
 import '../../services/providers.dart';
 import '../auth/auth_controller.dart';
 import '../cards/cards_providers.dart';
@@ -43,27 +46,41 @@ final remindersProvider = Provider<void>((ref) {
   // expense, a theme change…) leaves the plan as it was.
   String? scheduled;
 
+  void replan(FinanceSnapshot snapshot) => enqueue(() async {
+    // No user while loading or locked (unlock pending): keep what is
+    // scheduled. Only a logout cancels (below).
+    final user = ref.read(currentUserProvider);
+    if (user == null) return;
+    final l = l10nFor(user.language);
+    final plan = planNotifications(
+      snapshot,
+      now: ref.read(clockProvider)(),
+      daysBefore: user.notifyDaysBefore,
+      texts: L10nReminderTexts(l, user.language.code),
+    );
+    final channel = (
+      name: l.reminderChannelName,
+      description: l.reminderChannelDescription,
+    );
+    final key = [
+      channel.name,
+      for (final n in plan) '${n.id}|${n.at}|${n.title}|${n.body}|${n.route}',
+    ].join('\n');
+    if (key == scheduled) return;
+    await service.replaceAll(plan, channel: channel);
+    scheduled = key;
+  });
+
   ref.listen(financeProvider, (_, next) {
-    if (next case AsyncData(:final value)) {
-      enqueue(() async {
-        // No user while loading or locked (unlock pending): keep what is
-        // scheduled. Only a logout cancels (below).
-        final user = ref.read(currentUserProvider);
-        if (user == null) return;
-        final plan = planNotifications(
-          value,
-          now: ref.read(clockProvider)(),
-          daysBefore: user.notifyDaysBefore,
-        );
-        final key = plan
-            .map((n) => '${n.id}|${n.at}|${n.body}|${n.route}')
-            .join('\n');
-        if (key == scheduled) return;
-        await service.replaceAll(plan);
-        scheduled = key;
-      });
-    }
+    if (next case AsyncData(:final value)) replan(value);
   }, fireImmediately: true);
+
+  // A new language rewrites the pending reminders: same ids and times.
+  ref.listen(languageProvider, (_, _) {
+    if (ref.read(financeProvider) case AsyncData(:final value)) {
+      replan(value);
+    }
+  });
 
   ref.listen(authControllerProvider, (_, next) {
     if (next is AuthLoggedOut) {
@@ -88,6 +105,29 @@ final remindersProvider = Provider<void>((ref) {
   ref.listen(authControllerProvider, (_, _) => openPending());
   ref.listen(setupPendingProvider, (_, _) => openPending());
 });
+
+/// The reminders' wording from the ARB texts of [locale]'s language. Dates
+/// use that language too, whatever the app shows at the moment.
+class L10nReminderTexts implements ReminderTexts {
+  const L10nReminderTexts(this._l, this._locale);
+
+  final AppLocalizations _l;
+  final String _locale;
+
+  @override
+  String get title => _l.appTitle;
+
+  @override
+  String cut(String alias, int daysBefore) => _l.reminderCut(alias, daysBefore);
+
+  @override
+  String payment(String alias, DateTime date) =>
+      _l.reminderPayment(alias, formatDate(date, locale: _locale));
+
+  @override
+  String debt(String creditor, DateTime date) =>
+      _l.reminderDebt(creditor, formatDate(date, locale: _locale));
+}
 
 void _log(Object error) {
   // A reminder that could not be scheduled must not break the app.

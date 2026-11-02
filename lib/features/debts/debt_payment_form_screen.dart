@@ -6,8 +6,10 @@ import '../../core/clock.dart';
 import '../../core/debts.dart';
 import '../../core/formatters.dart';
 import '../../core/responsive.dart';
+import '../../core/validators.dart';
 import '../../data/models/debt_payment.dart';
 import '../../data/repositories/debts_repository.dart';
+import '../../l10n/l10n.dart';
 import '../auth/auth_widgets.dart';
 import '../cards/cards_providers.dart';
 
@@ -31,8 +33,8 @@ class DebtPaymentFormScreen extends ConsumerWidget {
         body: Center(
           child: Text(
             summary == null
-                ? 'Deuda no encontrada'
-                : 'La deuda ya está saldada',
+                ? context.l10n.debtNotFound
+                : context.l10n.debtAlreadySettled,
           ),
         ),
       );
@@ -96,8 +98,11 @@ class _PaymentFormState extends ConsumerState<_PaymentForm> {
       );
       refreshFinance(ref);
       if (mounted) context.pop();
-    } on ArgumentError catch (e) {
-      if (mounted) showErrorSnackBar(context, '${e.message}');
+    } on FieldErrorException catch (e) {
+      // Business rule from the repository: show why.
+      if (mounted) {
+        showErrorSnackBar(context, context.l10n.fieldError(e.error)!);
+      }
     } catch (_) {
       if (mounted) showErrorSnackBar(context, unexpectedError(context));
     } finally {
@@ -114,7 +119,7 @@ class _PaymentFormState extends ConsumerState<_PaymentForm> {
 
     return Scaffold(
       key: const ValueKey('debtPayment.root'),
-      appBar: AppBar(title: const Text('Registrar abono')),
+      appBar: AppBar(title: Text(context.l10n.addDebtPayment)),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(vertical: 16),
@@ -127,7 +132,9 @@ class _PaymentFormState extends ConsumerState<_PaymentForm> {
                 children: [
                   Text(s.debt.creditor, style: text.titleMedium),
                   Text(
-                    'Falta ${formatMoney(s.remainingCents, currency)}',
+                    context.l10n.debtRemaining(
+                      formatMoney(s.remainingCents, currency),
+                    ),
                     key: const ValueKey('debtPayment.remaining'),
                     style: text.bodyMedium,
                   ),
@@ -141,15 +148,17 @@ class _PaymentFormState extends ConsumerState<_PaymentForm> {
                     validator: (v) {
                       final cents = parseMoneyToCents(v ?? '');
                       if (cents == null || cents <= 0) {
-                        return 'Escribe un monto mayor que 0';
+                        return context.l10n.fieldAmountPositive;
                       }
                       if (cents > s.remainingCents) {
-                        return 'Máximo ${formatMoney(s.remainingCents, currency)}';
+                        return context.l10n.maxAmountValue(
+                          formatMoney(s.remainingCents, currency),
+                        );
                       }
                       return null;
                     },
                     decoration: InputDecoration(
-                      labelText: 'Monto del abono',
+                      labelText: context.l10n.debtPaymentAmount,
                       prefixText: '${currency.symbol} ',
                       prefixIcon: const Icon(Icons.payments_outlined),
                     ),
@@ -160,9 +169,9 @@ class _PaymentFormState extends ConsumerState<_PaymentForm> {
                     borderRadius: BorderRadius.circular(12),
                     onTap: _pickDate,
                     child: InputDecorator(
-                      decoration: const InputDecoration(
-                        labelText: 'Fecha del abono',
-                        prefixIcon: Icon(Icons.event_outlined),
+                      decoration: InputDecoration(
+                        labelText: context.l10n.debtPaymentDate,
+                        prefixIcon: const Icon(Icons.event_outlined),
                       ),
                       child: Text(formatDate(_date)),
                     ),
@@ -172,15 +181,15 @@ class _PaymentFormState extends ConsumerState<_PaymentForm> {
                     key: const ValueKey('debtPayment.note'),
                     controller: _note,
                     maxLength: debtNoteMaxLength,
-                    decoration: const InputDecoration(
-                      labelText: 'Nota (opcional)',
-                      prefixIcon: Icon(Icons.notes),
+                    decoration: InputDecoration(
+                      labelText: context.l10n.noteOptional,
+                      prefixIcon: const Icon(Icons.notes),
                     ),
                   ),
                   const SizedBox(height: 20),
                   LoadingButton(
                     key: const ValueKey('debtPayment.save'),
-                    label: 'Registrar abono',
+                    label: context.l10n.addDebtPayment,
                     loading: _saving,
                     onPressed: _save,
                   ),

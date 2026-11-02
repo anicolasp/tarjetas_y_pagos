@@ -171,6 +171,7 @@ class FakeNotificationService implements NotificationService {
   var cancels = 0;
   var replaces = 0;
   List<PlannedNotification> scheduled = [];
+  ReminderChannel? channel;
   void Function(String route)? _onTap;
 
   /// Simulates tapping a notification.
@@ -189,9 +190,13 @@ class FakeNotificationService implements NotificationService {
   }
 
   @override
-  Future<void> replaceAll(List<PlannedNotification> plan) async {
+  Future<void> replaceAll(
+    List<PlannedNotification> plan, {
+    required ReminderChannel channel,
+  }) async {
     replaces++;
     scheduled = [...plan];
+    this.channel = channel;
   }
 
   @override

@@ -56,6 +56,13 @@ enum FieldError {
   categoryColorInvalid,
   categoryNameTaken,
   categoryReassignOther,
+  // Debts (#29)
+  creditorRequired,
+  creditorTooLong,
+  debtCurrencyLocked,
+  debtAmountBelowPaid,
+  dateTooOld,
+  paymentAboveRemaining,
 }
 
 /// A business rule broken in a repository call. Still an [ArgumentError],

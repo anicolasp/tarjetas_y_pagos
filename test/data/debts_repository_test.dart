@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:tarjetas_y_pagos/core/validators.dart';
 import 'package:tarjetas_y_pagos/core/debts.dart';
 import 'package:tarjetas_y_pagos/core/money.dart';
 import 'package:tarjetas_y_pagos/data/database.dart';
@@ -103,10 +104,10 @@ void main() {
     await expectLater(
       repo.addPayment(ana, pay(d, 600001)),
       throwsA(
-        isA<ArgumentError>().having(
-          (e) => e.message,
-          'message',
-          contains('mayor que lo que falta'),
+        isA<FieldErrorException>().having(
+          (e) => e.error,
+          'error',
+          FieldError.paymentAboveRemaining,
         ),
       ),
     );

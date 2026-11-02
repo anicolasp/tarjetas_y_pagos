@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:tarjetas_y_pagos/core/formatters.dart';
+import 'package:tarjetas_y_pagos/core/language.dart';
 import 'package:tarjetas_y_pagos/core/money.dart';
 import 'package:tarjetas_y_pagos/core/notification_plan.dart';
 import 'package:tarjetas_y_pagos/data/finance_snapshot.dart';
@@ -8,6 +9,8 @@ import 'package:tarjetas_y_pagos/data/models/credit_card.dart';
 import 'package:tarjetas_y_pagos/data/models/debt.dart';
 import 'package:tarjetas_y_pagos/data/models/debt_payment.dart';
 import 'package:tarjetas_y_pagos/data/models/expense.dart';
+import 'package:tarjetas_y_pagos/features/notifications/reminders.dart';
+import 'package:tarjetas_y_pagos/l10n/l10n.dart';
 
 /// Card 1 cuts on the 5th with 20 days to pay. On 22 Oct 2026 the 5 Oct
 /// statement is due 25 Oct and the next cut is 5 Nov.
@@ -56,7 +59,12 @@ void main() {
     FinanceSnapshot s, {
     DateTime? at,
     int days = 3,
-  }) => planNotifications(s, now: at ?? now, daysBefore: days);
+  }) => planNotifications(
+    s,
+    now: at ?? now,
+    daysBefore: days,
+    texts: L10nReminderTexts(l10nFor(AppLanguage.es), 'es'),
+  );
 
   test('cut − N at 9:00, with the alias and a stable id', () {
     final p = plan(

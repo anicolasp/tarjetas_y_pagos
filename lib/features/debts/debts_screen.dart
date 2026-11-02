@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/statement.dart';
 import '../../core/clock.dart';
 import '../../core/debts.dart';
 import '../../core/formatters.dart';
 import '../../core/responsive.dart';
 import '../../core/router.dart';
+import '../../core/statement.dart';
 import '../../data/finance_snapshot.dart';
+import '../../l10n/l10n.dart';
 import '../cards/cards_providers.dart';
 
 /// "Deudas": what the cards owe (read only) and the other debts, in
@@ -26,11 +27,17 @@ class DebtsScreen extends ConsumerWidget {
       child: Scaffold(
         key: const ValueKey('debts.root'),
         appBar: AppBar(
-          title: const Text('Deudas'),
-          bottom: const TabBar(
+          title: Text(context.l10n.debts),
+          bottom: TabBar(
             tabs: [
-              Tab(key: ValueKey('debts.tabActive'), text: 'Activas'),
-              Tab(key: ValueKey('debts.tabSettled'), text: 'Saldadas'),
+              Tab(
+                key: const ValueKey('debts.tabActive'),
+                text: context.l10n.debtsActive,
+              ),
+              Tab(
+                key: const ValueKey('debts.tabSettled'),
+                text: context.l10n.debtsSettled,
+              ),
             ],
           ),
         ),
@@ -38,7 +45,7 @@ class DebtsScreen extends ConsumerWidget {
           key: const ValueKey('debts.add'),
           onPressed: () => context.push(Routes.debtNew),
           icon: const Icon(Icons.add),
-          label: const Text('Nueva deuda'),
+          label: Text(context.l10n.newDebt),
         ),
         body: SafeArea(
           child: switch (finance) {
@@ -48,9 +55,9 @@ class DebtsScreen extends ConsumerWidget {
                 _SettledTab(snapshot: value, today: today),
               ],
             ),
-            AsyncError() => const Center(
-              key: ValueKey('debts.loadError'),
-              child: Text('No se pudieron cargar las deudas'),
+            AsyncError() => Center(
+              key: const ValueKey('debts.loadError'),
+              child: Text(context.l10n.debtsLoadError),
             ),
             _ => const Center(child: CircularProgressIndicator()),
           },
@@ -106,23 +113,23 @@ class _ActiveTab extends StatelessWidget {
 
     return _TabPage(
       children: [
-        Text('Tarjetas', style: text.titleMedium),
+        Text(context.l10n.cards, style: text.titleMedium),
         const SizedBox(height: 8),
         if (cards.isEmpty)
-          const _Empty(
-            key: ValueKey('debts.cardsEmpty'),
-            text: 'Tus tarjetas no tienen balance pendiente.',
+          _Empty(
+            key: const ValueKey('debts.cardsEmpty'),
+            text: context.l10n.cardsNoBalance,
           )
         else
           for (final c in cards)
             _CardDebtTile(snapshot: snapshot, cardId: c.id!, today: today),
         const SizedBox(height: 24),
-        Text('Otras deudas', style: text.titleMedium),
+        Text(context.l10n.otherDebts, style: text.titleMedium),
         const SizedBox(height: 8),
         if (active.isEmpty)
-          const _Empty(
-            key: ValueKey('debts.empty'),
-            text: 'No tienes otras deudas activas.',
+          _Empty(
+            key: const ValueKey('debts.empty'),
+            text: context.l10n.noOtherDebts,
           )
         else
           for (final s in active) _DebtTile(summary: s, today: today),
@@ -146,9 +153,9 @@ class _SettledTab extends StatelessWidget {
     return _TabPage(
       children: [
         if (settled.isEmpty)
-          const _Empty(
-            key: ValueKey('debts.settledEmpty'),
-            text: 'Aún no has saldado ninguna deuda.',
+          _Empty(
+            key: const ValueKey('debts.settledEmpty'),
+            text: context.l10n.noSettledDebts,
           )
         else
           for (final s in settled) _DebtTile(summary: s, today: today),
@@ -208,8 +215,10 @@ class _CardDebtTile extends StatelessWidget {
                       Flexible(
                         child: Text(
                           late
-                              ? 'Vencido desde el ${formatDayMonth(due)}'
-                              : 'Fecha límite ${formatDayMonth(due)}',
+                              ? context.l10n.cardOverdueSince(
+                                  formatDayMonth(due),
+                                )
+                              : context.l10n.cardDueOn(formatDayMonth(due)),
                           style: late
                               ? text.bodySmall?.copyWith(
                                   color: scheme.error,
@@ -303,21 +312,25 @@ class DebtSummaryView extends StatelessWidget {
           children: [
             Text(
               summary.settled
-                  ? 'Saldada'
-                  : 'Falta ${formatMoney(summary.remainingCents, d.currency)}',
+                  ? context.l10n.debtSettledShort
+                  : context.l10n.debtRemaining(
+                      formatMoney(summary.remainingCents, d.currency),
+                    ),
               key: ValueKey('debt.${d.id}.remaining'),
               style: text.titleMedium?.copyWith(fontWeight: FontWeight.w600),
             ),
             Text(
-              'Pagado ${formatMoney(summary.paidCents, d.currency)} de '
-              '${formatMoney(d.amountCents, d.currency)}',
+              context.l10n.debtPaidOf(
+                formatMoney(summary.paidCents, d.currency),
+                formatMoney(d.amountCents, d.currency),
+              ),
               style: muted,
             ),
           ],
         ),
         const SizedBox(height: 8),
         Semantics(
-          label: '$percent % pagado',
+          label: context.l10n.percentPaid(percent),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
@@ -333,7 +346,7 @@ class DebtSummaryView extends StatelessWidget {
           alignment: WrapAlignment.spaceBetween,
           spacing: 12,
           children: [
-            Text('$percent % pagado', style: muted),
+            Text(context.l10n.percentPaid(percent), style: muted),
             if (d.dueDate != null && !summary.settled)
               Row(
                 key: ValueKey('debt.${d.id}.due'),
@@ -346,8 +359,10 @@ class DebtSummaryView extends StatelessWidget {
                   Flexible(
                     child: Text(
                       late
-                          ? 'Vencida el ${formatShortDate(d.dueDate!)}'
-                          : 'Vence el ${formatShortDate(d.dueDate!)}',
+                          ? context.l10n.debtOverdueOn(
+                              formatShortDate(d.dueDate!),
+                            )
+                          : context.l10n.debtDueOn(formatShortDate(d.dueDate!)),
                       style: late
                           ? text.bodySmall?.copyWith(
                               color: scheme.error,

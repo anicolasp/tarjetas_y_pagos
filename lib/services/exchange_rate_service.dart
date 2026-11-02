@@ -30,12 +30,12 @@ class OpenErApiSource implements ExchangeRateSource {
     final body = jsonDecode(response.body) as Map<String, Object?>;
     final rate = (body['rates'] as Map<String, Object?>?)?['DOP'];
     if (body['result'] != 'success' || rate is! num) {
-      throw const FormatException('Respuesta de tasa no válida');
+      throw const FormatException('Invalid rate response');
     }
     final micros = (rate * rateScale).round();
     // Sanity range for RD$ per US$; anything else is a bad response.
     if (micros < 1 * rateScale || micros > 1000 * rateScale) {
-      throw FormatException('Tasa fuera de rango: $rate');
+      throw FormatException('Rate out of range: $rate');
     }
     return micros;
   }

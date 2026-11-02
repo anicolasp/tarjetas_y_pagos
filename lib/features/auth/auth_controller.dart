@@ -253,7 +253,7 @@ class AuthController extends Notifier<AuthState> {
 
   AppUser get _user {
     final current = state;
-    if (current is! AuthLoggedIn) throw StateError('Sin sesión');
+    if (current is! AuthLoggedIn) throw StateError('No session');
     return current.user;
   }
 

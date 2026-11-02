@@ -1,6 +1,5 @@
 import '../data/finance_snapshot.dart';
 import 'billing_cycle.dart';
-import 'formatters.dart';
 import 'router.dart';
 import 'statement.dart';
 
@@ -8,6 +7,19 @@ import 'statement.dart';
 const notificationHour = 9;
 
 enum ReminderKind { cut, payment, debt }
+
+/// The wording of the reminders, in the user's language (the UI layer
+/// builds it from the ARB texts).
+abstract interface class ReminderTexts {
+  String get title;
+
+  /// The card cuts in [daysBefore] days (0 = today).
+  String cut(String alias, int daysBefore);
+
+  String payment(String alias, DateTime date);
+
+  String debt(String creditor, DateTime date);
+}
 
 /// A local notification to schedule.
 class PlannedNotification {
@@ -52,6 +64,7 @@ List<PlannedNotification> planNotifications(
   FinanceSnapshot snapshot, {
   required DateTime now,
   required int daysBefore,
+  required ReminderTexts texts,
 }) {
   final today = dateOnly(now);
   final plan = <PlannedNotification>[];
@@ -76,18 +89,12 @@ List<PlannedNotification> planNotifications(
       PlannedNotification(
         id: notificationId(entityId, kind),
         at: at,
-        title: 'Tarjetas y Pagos',
+        title: texts.title,
         body: body,
         route: route,
       ),
     );
   }
-
-  final inDays = switch (daysBefore) {
-    0 => 'hoy',
-    1 => 'mañana',
-    _ => 'en $daysBefore días',
-  };
 
   for (final card in snapshot.cards) {
     final id = card.id!;
@@ -101,7 +108,7 @@ List<PlannedNotification> planNotifications(
       id,
       ReminderKind.cut,
       cut,
-      'Tu tarjeta ${card.alias} corta $inDays',
+      texts.cut(card.alias, daysBefore),
       Routes.cardDetail(id),
     );
     final statement = snapshot.statementOf(card, today);
@@ -112,7 +119,7 @@ List<PlannedNotification> planNotifications(
         id,
         ReminderKind.payment,
         pay.date,
-        'Fecha límite de pago de ${card.alias}: ${formatDate(pay.date)}',
+        texts.payment(card.alias, pay.date),
         Routes.cardDetail(id),
       );
     }
@@ -125,7 +132,7 @@ List<PlannedNotification> planNotifications(
       s.debt.id!,
       ReminderKind.debt,
       due,
-      'La deuda con ${s.debt.creditor} vence el ${formatDate(due)}',
+      texts.debt(s.debt.creditor, due),
       Routes.debtDetail(s.debt.id!),
     );
   }

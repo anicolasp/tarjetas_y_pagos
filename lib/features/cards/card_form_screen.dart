@@ -497,7 +497,7 @@ class _CardFormState extends ConsumerState<_CardForm> {
                           },
                           decoration: InputDecoration(
                             labelText: context.l10n.limitUsdOptional,
-                            prefixText: 'US\$ ',
+                            prefixText: '${Currency.usd.symbol} ',
                             prefixIcon: Icon(Icons.account_balance_wallet),
                           ),
                         ),
