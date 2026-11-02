@@ -10,7 +10,6 @@ import 'package:tarjetas_y_pagos/data/models/debt.dart';
 import 'package:tarjetas_y_pagos/data/models/debt_payment.dart';
 import 'package:tarjetas_y_pagos/data/models/expense.dart';
 import 'package:tarjetas_y_pagos/features/notifications/reminders.dart';
-import 'package:tarjetas_y_pagos/l10n/l10n.dart';
 
 /// Card 1 cuts on the 5th with 20 days to pay. On 22 Oct 2026 the 5 Oct
 /// statement is due 25 Oct and the next cut is 5 Nov.
@@ -63,7 +62,7 @@ void main() {
     s,
     now: at ?? now,
     daysBefore: days,
-    texts: L10nReminderTexts(l10nFor(AppLanguage.es), 'es'),
+    texts: L10nReminderTexts(AppLanguage.es),
   );
 
   test('cut − N at 9:00, with the alias and a stable id', () {

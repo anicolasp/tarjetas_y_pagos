@@ -392,7 +392,7 @@
   "cardsCount": "Cartes ({count})",
   "moreFilters": "Plus de filtres",
   "archivedCardSubtitle": "{bank} · archivée",
-  "all": "Toutes",
+  "allCardsShort": "Toutes",
   "reportLoadError": "Impossible de charger le rapport",
   "chartsOneCurrency": "Les graphiques montrent une seule devise à la fois ; elles ne sont pas additionnées.",
   "byCategory": "Par catégorie ({symbol})",

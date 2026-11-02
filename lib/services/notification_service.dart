@@ -83,12 +83,14 @@ class LocalNotificationService implements NotificationService {
     List<PlannedNotification> plan, {
     required ReminderChannel channel,
   }) async {
-    // Same channel id: a new language only renames it.
+    // Same channel id: a new language only renames it (Android keeps an
+    // existing channel's name unless asked to update it).
     final details = NotificationDetails(
       android: AndroidNotificationDetails(
         'reminders',
         channel.name,
         channelDescription: channel.description,
+        channelAction: AndroidNotificationChannelAction.update,
       ),
     );
     await _plugin.cancelAll();

@@ -439,7 +439,7 @@ class _CardPickerState extends State<_CardPicker> {
                     TextButton(
                       key: const ValueKey('reports.cardsAll'),
                       onPressed: () => Navigator.pop(context, <int>{}),
-                      child: Text(context.l10n.all),
+                      child: Text(context.l10n.allCardsShort),
                     ),
                     FilledButton(
                       key: const ValueKey('reports.cardsApply'),

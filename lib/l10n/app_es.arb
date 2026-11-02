@@ -758,7 +758,7 @@
       }
     }
   },
-  "all": "Todas",
+  "allCardsShort": "Todas",
   "reportLoadError": "No se pudo cargar el reporte",
   "chartsOneCurrency": "Los gráficos muestran un solo tipo de moneda; no se suman.",
   "byCategory": "Por categoría ({symbol})",

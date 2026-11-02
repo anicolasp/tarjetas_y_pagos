@@ -134,18 +134,20 @@ void main() {
     );
   });
 
+  // Forward slashes on every OS, as in the allow-lists.
+  String posix(File f) => f.path.replaceAll(r'\', '/');
   final files = Directory('lib')
       .listSync(recursive: true)
       .whereType<File>()
       .where((f) => f.path.endsWith('.dart'))
-      .where((f) => !f.path.startsWith('lib/l10n/app_localizations'))
+      .where((f) => !posix(f).startsWith('lib/l10n/app_localizations'))
       .toList();
 
   test('the scan sees the app', () => expect(files.length, greaterThan(50)));
 
   test('no visible text is written in the code', () {
     final found = [
-      for (final f in files) ...scan(f.path, f.readAsStringSync()),
+      for (final f in files) ...scan(posix(f), f.readAsStringSync()),
     ];
     expect(found, isEmpty, reason: 'Move these texts to the ARB files.');
   });

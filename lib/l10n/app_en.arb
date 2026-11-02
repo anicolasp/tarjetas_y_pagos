@@ -392,7 +392,7 @@
   "cardsCount": "Cards ({count})",
   "moreFilters": "More filters",
   "archivedCardSubtitle": "{bank} · archived",
-  "all": "All",
+  "allCardsShort": "All",
   "reportLoadError": "Couldn't load the report",
   "chartsOneCurrency": "Charts show one currency at a time; they aren't added up.",
   "byCategory": "By category ({symbol})",

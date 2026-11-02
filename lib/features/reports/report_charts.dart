@@ -349,7 +349,8 @@ class _MonthBarsState extends State<MonthBars> {
       0,
       (m, e) => e.totalCents > m ? e.totalCents : m,
     );
-    final compact = NumberFormat.compact(locale: dateLocale);
+    // Amounts keep the money format in every language (1.5K, as 1,500.00).
+    final compact = NumberFormat.compact(locale: 'en_US');
     String monthLabel(DateTime m, {bool long = false}) {
       final name = DateFormat(
         long ? 'MMMM y' : 'MMM',

@@ -1354,7 +1354,7 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get all => 'Todas';
+  String get allCardsShort => 'Todas';
 
   @override
   String get reportLoadError => 'No se pudo cargar el reporte';

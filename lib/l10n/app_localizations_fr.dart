@@ -1369,7 +1369,7 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get all => 'Toutes';
+  String get allCardsShort => 'Toutes';
 
   @override
   String get reportLoadError => 'Impossible de charger le rapport';

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/clock.dart';
 import '../../core/formatters.dart';
+import '../../core/language.dart';
 import '../../core/notification_plan.dart';
 import '../../core/router.dart';
 import '../../data/finance_snapshot.dart';
@@ -56,7 +57,7 @@ final remindersProvider = Provider<void>((ref) {
       snapshot,
       now: ref.read(clockProvider)(),
       daysBefore: user.notifyDaysBefore,
-      texts: L10nReminderTexts(l, user.language.code),
+      texts: L10nReminderTexts(user.language),
     );
     final channel = (
       name: l.reminderChannelName,
@@ -71,16 +72,11 @@ final remindersProvider = Provider<void>((ref) {
     scheduled = key;
   });
 
+  // Any change of the user (a new language too) reloads the snapshot, so
+  // the reminders are rewritten in that language: same ids and times.
   ref.listen(financeProvider, (_, next) {
     if (next case AsyncData(:final value)) replan(value);
   }, fireImmediately: true);
-
-  // A new language rewrites the pending reminders: same ids and times.
-  ref.listen(languageProvider, (_, _) {
-    if (ref.read(financeProvider) case AsyncData(:final value)) {
-      replan(value);
-    }
-  });
 
   ref.listen(authControllerProvider, (_, next) {
     if (next is AuthLoggedOut) {
@@ -106,10 +102,12 @@ final remindersProvider = Provider<void>((ref) {
   ref.listen(setupPendingProvider, (_, _) => openPending());
 });
 
-/// The reminders' wording from the ARB texts of [locale]'s language. Dates
-/// use that language too, whatever the app shows at the moment.
+/// The reminders' wording from the ARB texts of [language]. Dates use that
+/// language too, whatever the app shows at the moment.
 class L10nReminderTexts implements ReminderTexts {
-  const L10nReminderTexts(this._l, this._locale);
+  L10nReminderTexts(AppLanguage language)
+    : _l = l10nFor(language),
+      _locale = language.code;
 
   final AppLocalizations _l;
   final String _locale;

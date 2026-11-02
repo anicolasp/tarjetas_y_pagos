@@ -14,7 +14,6 @@ import 'package:tarjetas_y_pagos/data/models/debt.dart';
 import 'package:tarjetas_y_pagos/data/models/debt_payment.dart';
 import 'package:tarjetas_y_pagos/data/repositories/debts_repository.dart';
 import 'package:tarjetas_y_pagos/features/notifications/reminders.dart';
-import 'package:tarjetas_y_pagos/l10n/l10n.dart';
 
 import '../helpers/fakes.dart';
 import '../helpers/screen_sizes.dart';
@@ -62,7 +61,7 @@ void main() {
           ),
           now: now,
           daysBefore: days,
-          texts: L10nReminderTexts(l10nFor(language), language.code),
+          texts: L10nReminderTexts(language),
         ).map((n) => n.body).toList();
 
     test('in English and French, with their own dates', () {

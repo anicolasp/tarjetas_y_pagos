@@ -2452,11 +2452,11 @@ abstract class AppLocalizations {
   /// **'{bank} · archivada'**
   String archivedCardSubtitle(String bank);
 
-  /// No description provided for @all.
+  /// No description provided for @allCardsShort.
   ///
   /// In es, this message translates to:
   /// **'Todas'**
-  String get all;
+  String get allCardsShort;
 
   /// No description provided for @reportLoadError.
   ///
