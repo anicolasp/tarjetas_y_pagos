@@ -83,8 +83,19 @@ class LocalNotificationService implements NotificationService {
     List<PlannedNotification> plan, {
     required ReminderChannel channel,
   }) async {
-    // Same channel id: a new language only renames it (Android keeps an
-    // existing channel's name unless asked to update it).
+    // Same channel id: a new language only renames it. Done now, since
+    // the plugin only touches the channel when a reminder is shown.
+    await _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >()
+        ?.createNotificationChannel(
+          AndroidNotificationChannel(
+            'reminders',
+            channel.name,
+            description: channel.description,
+          ),
+        );
     final details = NotificationDetails(
       android: AndroidNotificationDetails(
         'reminders',
