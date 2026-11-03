@@ -11,6 +11,7 @@ import '../core/formatters.dart';
 import '../core/money.dart';
 import '../data/models/category.dart';
 import '../data/repositories/expenses_repository.dart' show merchantMaxLength;
+import 'app_settings.dart';
 import 'picked_photo.dart';
 
 export 'package:image_picker/image_picker.dart' show ImageSource;

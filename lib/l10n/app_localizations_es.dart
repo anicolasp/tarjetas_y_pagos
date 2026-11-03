@@ -1447,4 +1447,17 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get reminderChannelDescription =>
       'Corte, fecha límite de pago y deudas por vencer';
+
+  @override
+  String get remindersOn => 'Recordatorios activados';
+
+  @override
+  String get remindersOff => 'Recordatorios desactivados';
+
+  @override
+  String get remindersOffHint => 'Activa los permisos para recibirlos.';
+
+  @override
+  String get remindersInSettings =>
+      'Puedes activarlos en los ajustes del teléfono.';
 }

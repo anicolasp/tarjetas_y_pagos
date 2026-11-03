@@ -413,5 +413,9 @@
   "reminderPayment": "Payment due for {alias}: {date}",
   "reminderDebt": "Your debt with {creditor} is due on {date}",
   "reminderChannelName": "Reminders",
-  "reminderChannelDescription": "Statement closings, payment due dates and upcoming debts"
+  "reminderChannelDescription": "Statement closings, payment due dates and upcoming debts",
+  "remindersOn": "Reminders on",
+  "remindersOff": "Reminders off",
+  "remindersOffHint": "Allow notifications to get them.",
+  "remindersInSettings": "You can turn them on in your phone settings."
 }

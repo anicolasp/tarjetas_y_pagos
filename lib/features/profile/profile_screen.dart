@@ -9,6 +9,8 @@ import '../../core/responsive.dart';
 import '../../core/router.dart';
 import '../../core/validators.dart';
 import '../../l10n/l10n.dart';
+import '../../services/notification_service.dart';
+import '../../services/providers.dart';
 import '../auth/auth_controller.dart';
 import '../auth/auth_widgets.dart';
 import '../cards/cards_providers.dart';
@@ -275,6 +277,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                   _auth.updatePreferences(notifyDaysBefore: d),
                             ),
                     ),
+                    const _Reminders(),
                   ],
                 ),
                 gap,
@@ -372,6 +375,149 @@ class _NavTile extends StatelessWidget {
       trailing: const Icon(Icons.chevron_right),
       onTap: onTap,
     );
+  }
+}
+
+/// Whether Android shows the reminders, and a way to allow them: the
+/// permission dialog first, the phone settings once Android stops showing
+/// it. Checked again when the user comes back to the app (from the
+/// settings, for instance).
+class _Reminders extends ConsumerStatefulWidget {
+  const _Reminders();
+
+  @override
+  ConsumerState<_Reminders> createState() => _RemindersState();
+}
+
+class _RemindersState extends ConsumerState<_Reminders> {
+  late final AppLifecycleListener _lifecycle;
+  bool? _granted;
+  var _asking = false;
+
+  /// Bumped by every check and request: an older answer that arrives late
+  /// (the dialog itself pauses and resumes the app) is ignored.
+  var _version = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _lifecycle = AppLifecycleListener(onResume: _check);
+    _check();
+  }
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    super.dispose();
+  }
+
+  Future<void> _check() async {
+    final version = ++_version;
+    final bool granted;
+    try {
+      granted = await ref.read(notificationServiceProvider).permissionGranted();
+    } catch (_) {
+      return; // Keep what is shown; the next return to the app retries.
+    }
+    if (mounted && version == _version) setState(() => _granted = granted);
+  }
+
+  Future<void> _enable() async {
+    final service = ref.read(notificationServiceProvider);
+    final version = ++_version;
+    setState(() => _asking = true);
+    var granted = false;
+    try {
+      granted = await service.requestPermission();
+    } catch (_) {
+      // No dialog could be shown: the settings are the way left.
+    } finally {
+      if (mounted) setState(() => _asking = false);
+    }
+    if (!mounted) return;
+    if (version == _version) setState(() => _granted = granted);
+    if (granted) return;
+    // Denied, or Android no longer shows the dialog: only the settings
+    // can allow them now.
+    final l = context.l10n;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(l.remindersInSettings),
+          action: SnackBarAction(
+            key: const ValueKey('profile.reminders.openSettings'),
+            label: l.openSettings,
+            onPressed: () => _openSettings(service),
+          ),
+        ),
+      );
+  }
+
+  Future<void> _openSettings(NotificationService service) async {
+    try {
+      await service.openSettings();
+    } catch (_) {
+      // No settings channel on this platform.
+      if (mounted) showErrorSnackBar(context, context.l10n.openSettingsHint);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final text = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
+    return switch (_granted) {
+      // About the height of the "on" row, so the page barely moves when
+      // the status arrives.
+      null => const SizedBox(height: 56),
+      true => ListTile(
+        key: const ValueKey('profile.reminders.on'),
+        leading: Icon(Icons.check_circle, color: scheme.primary),
+        title: Text(l.remindersOn),
+      ),
+      false => Padding(
+        key: const ValueKey('profile.reminders.off'),
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.notifications_off_outlined, color: scheme.error),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(l.remindersOff, style: text.bodyLarge),
+                      Text(
+                        l.remindersOffHint,
+                        style: text.bodyMedium?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: FilledButton.tonalIcon(
+                key: const ValueKey('profile.reminders.enable'),
+                onPressed: _asking ? null : _enable,
+                icon: const Icon(Icons.notifications_active_outlined),
+                label: Text(l.enableReminders),
+              ),
+            ),
+          ],
+        ),
+      ),
+    };
   }
 }
 

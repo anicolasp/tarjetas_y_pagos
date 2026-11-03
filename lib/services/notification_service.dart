@@ -5,6 +5,7 @@ import 'package:timezone/data/latest_10y.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../core/notification_plan.dart';
+import 'app_settings.dart';
 
 /// Local reminders (cut, payment deadline, debt due). Nothing leaves the
 /// phone.
@@ -15,6 +16,14 @@ abstract interface class NotificationService {
 
   /// Asks for permission (Android 13+). True when notifications may show.
   Future<bool> requestPermission();
+
+  /// Whether Android shows the reminders now: the permission on Android
+  /// 13+, and not blocked in the system settings on any version.
+  Future<bool> permissionGranted();
+
+  /// Opens this app's system settings, where the user can allow them once
+  /// Android no longer shows the permission dialog.
+  Future<void> openSettings();
 
   /// Cancels every reminder and schedules [plan] instead, on the channel
   /// named [channel] (Android shows it in the app's notification settings).
@@ -126,6 +135,20 @@ class LocalNotificationService implements NotificationService {
       );
     }
   }
+
+  @override
+  Future<bool> permissionGranted() async =>
+      await _plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >()
+          ?.areNotificationsEnabled() ??
+      // Only Android is set up for reminders; elsewhere there is nothing
+      // to turn on from the app.
+      true;
+
+  @override
+  Future<void> openSettings() => openAppSettings();
 
   @override
   Future<void> cancelAll() => _plugin.cancelAll();

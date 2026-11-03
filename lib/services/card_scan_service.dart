@@ -3,6 +3,7 @@ import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart
 import 'package:image_picker/image_picker.dart';
 
 import '../core/card_detection.dart';
+import 'app_settings.dart';
 import 'picked_photo.dart';
 
 export 'package:image_picker/image_picker.dart' show ImageSource;
