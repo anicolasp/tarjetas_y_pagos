@@ -858,5 +858,9 @@
     }
   },
   "reminderChannelName": "Recordatorios",
-  "reminderChannelDescription": "Corte, fecha límite de pago y deudas por vencer"
+  "reminderChannelDescription": "Corte, fecha límite de pago y deudas por vencer",
+  "remindersOn": "Recordatorios activados",
+  "remindersOff": "Recordatorios desactivados",
+  "remindersOffHint": "Activa los permisos para recibirlos.",
+  "remindersInSettings": "Puedes activarlos en los ajustes del teléfono."
 }

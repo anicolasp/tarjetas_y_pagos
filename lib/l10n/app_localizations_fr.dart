@@ -1463,4 +1463,18 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get reminderChannelDescription =>
       'Clôtures, échéances de paiement et dettes à venir';
+
+  @override
+  String get remindersOn => 'Rappels activés';
+
+  @override
+  String get remindersOff => 'Rappels désactivés';
+
+  @override
+  String get remindersOffHint =>
+      'Autorisez les notifications pour les recevoir.';
+
+  @override
+  String get remindersInSettings =>
+      'Vous pouvez les activer dans les réglages du téléphone.';
 }

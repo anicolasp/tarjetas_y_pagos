@@ -163,9 +163,18 @@ class BrokenSecureStore extends InMemorySecureStore {
 /// Overrides every platform-backed provider with an in-memory fake.
 /// Records what would be scheduled; never touches the plugin.
 class FakeNotificationService implements NotificationService {
-  FakeNotificationService({this.permission = true, this.launchRoute});
+  FakeNotificationService({
+    this.permission = true,
+    this.granted = true,
+    this.launchRoute,
+  });
 
+  /// What a permission request answers (and then the current state).
   bool permission;
+
+  /// Whether Android shows the reminders now.
+  bool granted;
+  var settingsOpened = 0;
   String? launchRoute;
   var permissionRequests = 0;
   var cancels = 0;
@@ -186,8 +195,14 @@ class FakeNotificationService implements NotificationService {
   @override
   Future<bool> requestPermission() async {
     permissionRequests++;
-    return permission;
+    return granted = permission;
   }
+
+  @override
+  Future<bool> permissionGranted() async => granted;
+
+  @override
+  Future<void> openSettings() async => settingsOpened++;
 
   @override
   Future<void> replaceAll(

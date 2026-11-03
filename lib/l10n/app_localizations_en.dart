@@ -1449,4 +1449,17 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get reminderChannelDescription =>
       'Statement closings, payment due dates and upcoming debts';
+
+  @override
+  String get remindersOn => 'Reminders on';
+
+  @override
+  String get remindersOff => 'Reminders off';
+
+  @override
+  String get remindersOffHint => 'Allow notifications to get them.';
+
+  @override
+  String get remindersInSettings =>
+      'You can turn them on in your phone settings.';
 }

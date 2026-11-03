@@ -2583,6 +2583,30 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Corte, fecha límite de pago y deudas por vencer'**
   String get reminderChannelDescription;
+
+  /// No description provided for @remindersOn.
+  ///
+  /// In es, this message translates to:
+  /// **'Recordatorios activados'**
+  String get remindersOn;
+
+  /// No description provided for @remindersOff.
+  ///
+  /// In es, this message translates to:
+  /// **'Recordatorios desactivados'**
+  String get remindersOff;
+
+  /// No description provided for @remindersOffHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Activa los permisos para recibirlos.'**
+  String get remindersOffHint;
+
+  /// No description provided for @remindersInSettings.
+  ///
+  /// In es, this message translates to:
+  /// **'Puedes activarlos en los ajustes del teléfono.'**
+  String get remindersInSettings;
 }
 
 class _AppLocalizationsDelegate

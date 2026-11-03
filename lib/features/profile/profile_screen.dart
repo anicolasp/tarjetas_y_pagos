@@ -9,6 +9,7 @@ import '../../core/responsive.dart';
 import '../../core/router.dart';
 import '../../core/validators.dart';
 import '../../l10n/l10n.dart';
+import '../../services/providers.dart';
 import '../auth/auth_controller.dart';
 import '../auth/auth_widgets.dart';
 import '../cards/cards_providers.dart';
@@ -275,6 +276,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                   _auth.updatePreferences(notifyDaysBefore: d),
                             ),
                     ),
+                    const _Reminders(),
                   ],
                 ),
                 gap,
@@ -376,6 +378,125 @@ class _NavTile extends StatelessWidget {
 }
 
 /// "Días de aviso" with − / + (0–30), for the reminders of #10.
+/// Whether Android shows the reminders, and a way to allow them: the
+/// permission dialog first, the phone settings once Android stops showing
+/// it. Checked again when the user comes back to the app (from the
+/// settings, for instance).
+class _Reminders extends ConsumerStatefulWidget {
+  const _Reminders();
+
+  @override
+  ConsumerState<_Reminders> createState() => _RemindersState();
+}
+
+class _RemindersState extends ConsumerState<_Reminders> {
+  late final AppLifecycleListener _lifecycle;
+  bool? _granted;
+  var _asking = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _lifecycle = AppLifecycleListener(onResume: _check);
+    _check();
+  }
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    super.dispose();
+  }
+
+  Future<void> _check() async {
+    final granted = await ref
+        .read(notificationServiceProvider)
+        .permissionGranted();
+    if (mounted) setState(() => _granted = granted);
+  }
+
+  Future<void> _enable() async {
+    final service = ref.read(notificationServiceProvider);
+    setState(() => _asking = true);
+    final granted = await service.requestPermission();
+    if (!mounted) return;
+    setState(() {
+      _asking = false;
+      _granted = granted;
+    });
+    if (granted) return;
+    // Denied, or Android no longer shows the dialog: only the settings
+    // can allow them now.
+    final l = context.l10n;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(l.remindersInSettings),
+          action: SnackBarAction(
+            key: const ValueKey('profile.reminders.openSettings'),
+            label: l.openSettings,
+            onPressed: service.openSettings,
+          ),
+        ),
+      );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final text = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
+    return switch (_granted) {
+      null => const SizedBox.shrink(),
+      true => ListTile(
+        key: const ValueKey('profile.reminders.on'),
+        leading: Icon(Icons.check_circle, color: scheme.primary),
+        title: Text(l.remindersOn),
+      ),
+      false => Padding(
+        key: const ValueKey('profile.reminders.off'),
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.notifications_off_outlined, color: scheme.error),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(l.remindersOff, style: text.bodyLarge),
+                      Text(
+                        l.remindersOffHint,
+                        style: text.bodyMedium?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: FilledButton.tonalIcon(
+                key: const ValueKey('profile.reminders.enable'),
+                onPressed: _asking ? null : _enable,
+                icon: const Icon(Icons.notifications_active_outlined),
+                label: Text(l.enableReminders),
+              ),
+            ),
+          ],
+        ),
+      ),
+    };
+  }
+}
+
 class _NotifyDays extends StatelessWidget {
   const _NotifyDays({required this.days, required this.onChanged});
 

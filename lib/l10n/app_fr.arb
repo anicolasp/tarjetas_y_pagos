@@ -413,5 +413,9 @@
   "reminderPayment": "Échéance de paiement de {alias} : {date}",
   "reminderDebt": "Votre dette envers {creditor} arrive à échéance le {date}",
   "reminderChannelName": "Rappels",
-  "reminderChannelDescription": "Clôtures, échéances de paiement et dettes à venir"
+  "reminderChannelDescription": "Clôtures, échéances de paiement et dettes à venir",
+  "remindersOn": "Rappels activés",
+  "remindersOff": "Rappels désactivés",
+  "remindersOffHint": "Autorisez les notifications pour les recevoir.",
+  "remindersInSettings": "Vous pouvez les activer dans les réglages du téléphone."
 }
