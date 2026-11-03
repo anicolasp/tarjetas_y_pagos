@@ -9,6 +9,7 @@ import '../../core/responsive.dart';
 import '../../core/router.dart';
 import '../../core/validators.dart';
 import '../../l10n/l10n.dart';
+import '../../services/notification_service.dart';
 import '../../services/providers.dart';
 import '../auth/auth_controller.dart';
 import '../auth/auth_widgets.dart';
@@ -377,7 +378,6 @@ class _NavTile extends StatelessWidget {
   }
 }
 
-/// "Días de aviso" with − / + (0–30), for the reminders of #10.
 /// Whether Android shows the reminders, and a way to allow them: the
 /// permission dialog first, the phone settings once Android stops showing
 /// it. Checked again when the user comes back to the app (from the
@@ -394,6 +394,10 @@ class _RemindersState extends ConsumerState<_Reminders> {
   bool? _granted;
   var _asking = false;
 
+  /// Bumped by every check and request: an older answer that arrives late
+  /// (the dialog itself pauses and resumes the app) is ignored.
+  var _version = 0;
+
   @override
   void initState() {
     super.initState();
@@ -408,21 +412,30 @@ class _RemindersState extends ConsumerState<_Reminders> {
   }
 
   Future<void> _check() async {
-    final granted = await ref
-        .read(notificationServiceProvider)
-        .permissionGranted();
-    if (mounted) setState(() => _granted = granted);
+    final version = ++_version;
+    final bool granted;
+    try {
+      granted = await ref.read(notificationServiceProvider).permissionGranted();
+    } catch (_) {
+      return; // Keep what is shown; the next return to the app retries.
+    }
+    if (mounted && version == _version) setState(() => _granted = granted);
   }
 
   Future<void> _enable() async {
     final service = ref.read(notificationServiceProvider);
+    final version = ++_version;
     setState(() => _asking = true);
-    final granted = await service.requestPermission();
+    var granted = false;
+    try {
+      granted = await service.requestPermission();
+    } catch (_) {
+      // No dialog could be shown: the settings are the way left.
+    } finally {
+      if (mounted) setState(() => _asking = false);
+    }
     if (!mounted) return;
-    setState(() {
-      _asking = false;
-      _granted = granted;
-    });
+    if (version == _version) setState(() => _granted = granted);
     if (granted) return;
     // Denied, or Android no longer shows the dialog: only the settings
     // can allow them now.
@@ -435,10 +448,19 @@ class _RemindersState extends ConsumerState<_Reminders> {
           action: SnackBarAction(
             key: const ValueKey('profile.reminders.openSettings'),
             label: l.openSettings,
-            onPressed: service.openSettings,
+            onPressed: () => _openSettings(service),
           ),
         ),
       );
+  }
+
+  Future<void> _openSettings(NotificationService service) async {
+    try {
+      await service.openSettings();
+    } catch (_) {
+      // No settings channel on this platform.
+      if (mounted) showErrorSnackBar(context, context.l10n.openSettingsHint);
+    }
   }
 
   @override
@@ -447,7 +469,9 @@ class _RemindersState extends ConsumerState<_Reminders> {
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
     return switch (_granted) {
-      null => const SizedBox.shrink(),
+      // About the height of the "on" row, so the page barely moves when
+      // the status arrives.
+      null => const SizedBox(height: 56),
       true => ListTile(
         key: const ValueKey('profile.reminders.on'),
         leading: Icon(Icons.check_circle, color: scheme.primary),
@@ -497,6 +521,7 @@ class _RemindersState extends ConsumerState<_Reminders> {
   }
 }
 
+/// "Días de aviso" with − / + (0–30), for the reminders of #10.
 class _NotifyDays extends StatelessWidget {
   const _NotifyDays({required this.days, required this.onChanged});
 

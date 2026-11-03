@@ -22,7 +22,7 @@ void main() {
   setUp(() async {
     db = await openTestDatabase();
     await seedUser(db);
-    notifications = FakeNotificationService(granted: false);
+    notifications = FakeNotificationService();
   });
 
   tearDown(() async {
@@ -112,6 +112,34 @@ void main() {
     notifications.granted = true;
     await leaveAndReturn(tester);
     expect(key('profile.reminders.on'), findsOneWidget);
+  });
+
+  testWidgets('a request that fails still offers the settings', (tester) async {
+    notifications.requestError = Exception('no activity');
+    await start(tester);
+    await tap(tester, 'profile.reminders.enable');
+    expect(key('profile.reminders.openSettings'), findsOneWidget);
+    // The button is usable again.
+    final button = tester.widget<ButtonStyleButton>(
+      key('profile.reminders.enable'),
+    );
+    expect(button.onPressed, isNotNull);
+  });
+
+  testWidgets('without a settings screen it explains where to go', (
+    tester,
+  ) async {
+    notifications
+      ..permission = false
+      ..settingsError = Exception('no settings channel');
+    await start(tester);
+    await tap(tester, 'profile.reminders.enable');
+    await tester.tap(key('profile.reminders.openSettings'));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Abre los ajustes del teléfono para permitirlo'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('allowing it does not touch the scheduled reminders', (

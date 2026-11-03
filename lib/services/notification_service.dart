@@ -143,7 +143,9 @@ class LocalNotificationService implements NotificationService {
             AndroidFlutterLocalNotificationsPlugin
           >()
           ?.areNotificationsEnabled() ??
-      false;
+      // Only Android is set up for reminders; elsewhere there is nothing
+      // to turn on from the app.
+      true;
 
   @override
   Future<void> openSettings() => openAppSettings();
