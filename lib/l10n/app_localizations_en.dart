@@ -1522,4 +1522,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get passwordCreated => 'Password created';
+
+  @override
+  String get googleOnlyAccount =>
+      'This account was created with Google: use \"Continue with Google\".';
+
+  @override
+  String get googleAlreadyLinked =>
+      'This account is already linked to another Google account.';
 }

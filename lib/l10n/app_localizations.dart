@@ -2709,6 +2709,18 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Contraseña creada'**
   String get passwordCreated;
+
+  /// No description provided for @googleOnlyAccount.
+  ///
+  /// In es, this message translates to:
+  /// **'Esta cuenta se creó con Google: entra con \"Continuar con Google\".'**
+  String get googleOnlyAccount;
+
+  /// No description provided for @googleAlreadyLinked.
+  ///
+  /// In es, this message translates to:
+  /// **'Esta cuenta ya está vinculada a otra cuenta de Google.'**
+  String get googleAlreadyLinked;
 }
 
 class _AppLocalizationsDelegate

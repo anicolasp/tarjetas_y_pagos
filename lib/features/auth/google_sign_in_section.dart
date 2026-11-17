@@ -18,6 +18,7 @@ class GoogleSignInSection extends ConsumerStatefulWidget {
     super.key,
     required this.keyPrefix,
     this.enabled = true,
+    this.onBusyChanged,
   });
 
   /// `login` or `register`: the button is `<keyPrefix>.google`.
@@ -25,6 +26,10 @@ class GoogleSignInSection extends ConsumerStatefulWidget {
 
   /// False while the screen's own form is busy.
   final bool enabled;
+
+  /// True while Google is in progress: the screen disables its own form,
+  /// so two sign-ins never race.
+  final ValueChanged<bool>? onBusyChanged;
 
   @override
   ConsumerState<GoogleSignInSection> createState() =>
@@ -34,8 +39,13 @@ class GoogleSignInSection extends ConsumerStatefulWidget {
 class _GoogleSignInSectionState extends ConsumerState<GoogleSignInSection> {
   var _loading = false;
 
+  void _setLoading(bool loading) {
+    setState(() => _loading = loading);
+    widget.onBusyChanged?.call(loading);
+  }
+
   Future<void> _signIn() async {
-    setState(() => _loading = true);
+    _setLoading(true);
     GoogleIdentity? toLink;
     try {
       await ref.read(authControllerProvider.notifier).loginWithGoogle();
@@ -53,16 +63,38 @@ class _GoogleSignInSectionState extends ConsumerState<GoogleSignInSection> {
     } on Exception {
       if (mounted) showErrorSnackBar(context, unexpectedError(context));
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) _setLoading(false);
     }
     // Not spinning behind the dialog: the dialog has its own progress.
     if (toLink != null && mounted) await _link(toLink);
   }
 
-  Future<void> _link(GoogleIdentity identity) => showDialog<void>(
-    context: context,
-    builder: (_) => _LinkDialog(identity: identity),
-  );
+  /// The email has an account without Google: its password links them and
+  /// signs in. A wrong password keeps the dialog open.
+  Future<void> _link(GoogleIdentity identity) {
+    final l = context.l10n;
+    return confirmWithPassword(
+      context,
+      keyPrefix: 'googleLink',
+      title: l.googleLinkTitle,
+      body: l.googleLinkBody(identity.email),
+      confirmLabel: l.googleLink,
+      onConfirm: (password) => ref
+          .read(authControllerProvider.notifier)
+          .linkGoogleAndLogin(identity, password),
+      errorFor: (e) => switch (e) {
+        InvalidCredentialsException() => l.wrongPasswordShort,
+        LockedOutException(:final remaining) => l.tooManyAttemptsWait(
+          formatWait(remaining),
+        ),
+        GoogleAccountTakenException() => l.googleAccountTaken,
+        // That email belongs to another Google account.
+        GoogleAlreadyLinkedException() ||
+        GoogleOnlyAccountException() => l.googleAlreadyLinked,
+        _ => null,
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -99,105 +131,6 @@ class _GoogleSignInSectionState extends ConsumerState<GoogleSignInSection> {
                 )
               : const GoogleLogo(size: 20),
           label: Text(l.continueWithGoogle),
-        ),
-      ],
-    );
-  }
-}
-
-/// The Google account's email has an account without Google: its password
-/// links them and signs in. A wrong password keeps the dialog open.
-class _LinkDialog extends ConsumerStatefulWidget {
-  const _LinkDialog({required this.identity});
-
-  final GoogleIdentity identity;
-
-  @override
-  ConsumerState<_LinkDialog> createState() => _LinkDialogState();
-}
-
-class _LinkDialogState extends ConsumerState<_LinkDialog> {
-  final _password = TextEditingController();
-  String? _error;
-  var _saving = false;
-
-  @override
-  void dispose() {
-    _password.dispose();
-    super.dispose();
-  }
-
-  Future<void> _confirm() async {
-    if (_saving || _password.text.isEmpty) return;
-    setState(() {
-      _saving = true;
-      _error = null;
-    });
-    final l = context.l10n;
-    try {
-      await ref
-          .read(authControllerProvider.notifier)
-          .linkGoogleAndLogin(widget.identity, _password.text);
-      if (mounted) Navigator.pop(context);
-    } on InvalidCredentialsException {
-      if (mounted) setState(() => _error = l.wrongPasswordShort);
-    } on LockedOutException catch (e) {
-      if (mounted) {
-        setState(
-          () => _error = l.tooManyAttemptsRetryIn(formatWait(e.remaining)),
-        );
-      }
-    } on GoogleAccountTakenException {
-      if (mounted) setState(() => _error = l.googleAccountTaken);
-    } on Exception {
-      if (mounted) setState(() => _error = unexpectedError(context));
-    } finally {
-      if (mounted) setState(() => _saving = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l = context.l10n;
-    return AlertDialog(
-      key: const ValueKey('googleLink.dialog'),
-      scrollable: true,
-      title: Text(l.googleLinkTitle),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(l.googleLinkBody(widget.identity.email)),
-          const SizedBox(height: 16),
-          PasswordField(
-            key: const ValueKey('googleLink.password'),
-            toggleKey: const ValueKey('googleLink.togglePassword'),
-            controller: _password,
-            label: l.passwordLabel,
-            textInputAction: TextInputAction.done,
-            autofillHints: const [AutofillHints.password],
-            onSubmitted: (_) => _confirm(),
-          ),
-          if (_error != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Text(
-                _error!,
-                key: const ValueKey('googleLink.error'),
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
-              ),
-            ),
-        ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: _saving ? null : () => Navigator.pop(context),
-          child: Text(l.cancel),
-        ),
-        FilledButton(
-          key: const ValueKey('googleLink.confirm'),
-          onPressed: _saving ? null : _confirm,
-          child: Text(l.googleLink),
         ),
       ],
     );

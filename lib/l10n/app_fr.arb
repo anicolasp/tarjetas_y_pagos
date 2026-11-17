@@ -434,5 +434,7 @@
   "googleUnlinked": "Google dissocié",
   "setPassword": "Créer un mot de passe",
   "setPasswordHint": "Pour vous connecter aussi sans Google ou sans internet.",
-  "passwordCreated": "Mot de passe créé"
+  "passwordCreated": "Mot de passe créé",
+  "googleOnlyAccount": "Ce compte a été créé avec Google : utilisez « Continuer avec Google ».",
+  "googleAlreadyLinked": "Ce compte est déjà associé à un autre compte Google."
 }

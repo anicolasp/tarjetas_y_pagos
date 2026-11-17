@@ -107,6 +107,38 @@ void main() {
     expect(await db.db.query('users'), hasLength(1));
   });
 
+  testWidgets('a Google-only account typing a password is pointed to '
+      'Google', (tester) async {
+    await start(tester);
+    await tap(tester, 'login.google');
+    await tap(tester, 'setup.skip');
+    await openProfile(tester);
+    await tap(tester, 'profile.logout');
+    await tap(tester, 'profile.logoutConfirm');
+    await tester.enterText(key('login.email'), 'ana@example.com');
+    await tester.enterText(key('login.password'), 'abc12345');
+    await tap(tester, 'login.submit');
+    expect(
+      find.text(
+        'Esta cuenta se creó con Google: entra con "Continuar con Google".',
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('logging out of an account without Google never opens it', (
+    tester,
+  ) async {
+    await seedUser(db, email: 'ana@example.com');
+    store.values['session_user_id'] = '1';
+    await start(tester);
+    await openProfile(tester);
+    await tap(tester, 'profile.logout');
+    await tap(tester, 'profile.logoutConfirm');
+    expect(key('login.root'), findsOneWidget);
+    expect(google.signOuts, 0);
+  });
+
   testWidgets('closing Google\'s sheet does nothing', (tester) async {
     google.next = null;
     await start(tester);

@@ -56,6 +56,18 @@ class GoogleAccountTakenException implements Exception {
   const GoogleAccountTakenException();
 }
 
+/// The account is already linked to a different Google account: linking
+/// another would silently cut that one off.
+class GoogleAlreadyLinkedException implements Exception {
+  const GoogleAlreadyLinkedException();
+}
+
+/// The account was created with Google and has no password yet: it signs
+/// in with Google (no password to check or to recover).
+class GoogleOnlyAccountException implements Exception {
+  const GoogleOnlyAccountException();
+}
+
 /// Days of notice before cuts, due dates and debts (#10).
 const notifyDaysRange = (min: 0, max: 30);
 
@@ -132,6 +144,11 @@ class AuthRepository {
     AppUser? user;
     await _throttled(normalized, const InvalidCredentialsException(), () async {
       user = await _findByEmail(normalized);
+      if (user != null && !user!.hasPassword) {
+        // Same work as a wrong password; not counted: no guess was made.
+        await _hasher.hash(password, _dummySalt);
+        throw const GoogleOnlyAccountException();
+      }
       return _checkPassword(user, password);
     });
     if (_hasher.needsRehash(user!.passwordHash)) {
@@ -279,7 +296,8 @@ class AuthRepository {
 
   /// Links [sub] to the account of [email] once its password is right (same
   /// throttle as the login). Throws [InvalidCredentialsException],
-  /// [LockedOutException] or [GoogleAccountTakenException].
+  /// [LockedOutException], [GoogleAccountTakenException] or
+  /// [GoogleAlreadyLinkedException].
   Future<AppUser> linkGoogle({
     required String email,
     required String password,
@@ -287,6 +305,7 @@ class AuthRepository {
   }) async {
     final user = await login(email, password);
     if (user.googleSub == sub) return user;
+    if (user.googleSub != null) throw const GoogleAlreadyLinkedException();
     if (await _findByGoogle(sub) != null) {
       throw const GoogleAccountTakenException();
     }
@@ -337,11 +356,19 @@ class AuthRepository {
   }
 
   /// "María José Pérez" → ("María", "José Pérez"); without a name, the
-  /// part of the email before "@". Longer than allowed is cut.
+  /// part of the email before "@". Google may give one word: the last name
+  /// stays empty (the name form asks for it). Cut to what [validateName]
+  /// accepts, never in the middle of a character.
   (String, String) _splitName(String? name, String email) {
-    String cut(String s) => s.characters.length > nameMaxLength
-        ? s.characters.take(nameMaxLength).toString()
-        : s;
+    String cut(String s) {
+      final out = StringBuffer();
+      for (final c in s.characters) {
+        if (out.length + c.length > nameMaxLength) break;
+        out.write(c);
+      }
+      return out.toString();
+    }
+
     final parts = (name ?? '').trim().split(RegExp(r'\s+'))
       ..removeWhere((p) => p.isEmpty);
     if (parts.isEmpty) return (cut(email.split('@').first), '');
@@ -355,6 +382,7 @@ class AuthRepository {
   Future<SecurityQuestion> securityQuestionFor(String email) async {
     final user = await _findByEmail(normalizeEmail(email));
     if (user == null) throw const AccountNotFoundException();
+    if (!user.hasPassword) throw const GoogleOnlyAccountException();
     return user.securityQuestion ?? (throw const NoSecurityQuestionException());
   }
 

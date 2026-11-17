@@ -1537,4 +1537,12 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get passwordCreated => 'Mot de passe créé';
+
+  @override
+  String get googleOnlyAccount =>
+      'Ce compte a été créé avec Google : utilisez « Continuer avec Google ».';
+
+  @override
+  String get googleAlreadyLinked =>
+      'Ce compte est déjà associé à un autre compte Google.';
 }

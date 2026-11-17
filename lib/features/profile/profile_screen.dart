@@ -64,11 +64,24 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   });
 
   Future<void> _unlinkGoogle() async {
-    final unlinked = await showDialog<bool>(
-      context: context,
-      builder: (_) => const _UnlinkGoogleDialog(),
+    final l = context.l10n;
+    final unlinked = await confirmWithPassword(
+      context,
+      keyPrefix: 'googleUnlink',
+      title: l.googleUnlinkTitle,
+      body: l.googleUnlinkBody,
+      confirmLabel: l.googleUnlink,
+      onConfirm: (password) =>
+          ref.read(authControllerProvider.notifier).unlinkGoogle(password),
+      errorFor: (e) => switch (e) {
+        WrongPasswordException() => l.wrongPasswordShort,
+        LockedOutException(:final remaining) => l.tooManyAttemptsWait(
+          formatWait(remaining),
+        ),
+        _ => null,
+      },
     );
-    if (unlinked == true && mounted) {
+    if (unlinked && mounted) {
       showErrorSnackBar(context, context.l10n.googleUnlinked);
     }
   }
@@ -419,99 +432,6 @@ class _NavTile extends StatelessWidget {
       title: Text(title),
       trailing: const Icon(Icons.chevron_right),
       onTap: onTap,
-    );
-  }
-}
-
-/// "¿Desvincular Google?" with the password; true once unlinked. A wrong
-/// password keeps it open.
-class _UnlinkGoogleDialog extends ConsumerStatefulWidget {
-  const _UnlinkGoogleDialog();
-
-  @override
-  ConsumerState<_UnlinkGoogleDialog> createState() =>
-      _UnlinkGoogleDialogState();
-}
-
-class _UnlinkGoogleDialogState extends ConsumerState<_UnlinkGoogleDialog> {
-  final _password = TextEditingController();
-  String? _error;
-  var _saving = false;
-
-  @override
-  void dispose() {
-    _password.dispose();
-    super.dispose();
-  }
-
-  Future<void> _confirm() async {
-    if (_saving || _password.text.isEmpty) return;
-    final l = context.l10n;
-    setState(() {
-      _saving = true;
-      _error = null;
-    });
-    try {
-      await ref
-          .read(authControllerProvider.notifier)
-          .unlinkGoogle(_password.text);
-      if (mounted) Navigator.pop(context, true);
-    } on WrongPasswordException {
-      if (mounted) setState(() => _error = l.wrongPasswordShort);
-    } on LockedOutException catch (e) {
-      if (mounted) {
-        setState(() => _error = l.tooManyAttemptsWait(formatWait(e.remaining)));
-      }
-    } on Exception {
-      if (mounted) setState(() => _error = unexpectedError(context));
-    } finally {
-      if (mounted) setState(() => _saving = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l = context.l10n;
-    return AlertDialog(
-      key: const ValueKey('googleUnlink.dialog'),
-      scrollable: true,
-      title: Text(l.googleUnlinkTitle),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(l.googleUnlinkBody),
-          const SizedBox(height: 16),
-          PasswordField(
-            key: const ValueKey('googleUnlink.password'),
-            toggleKey: const ValueKey('googleUnlink.togglePassword'),
-            controller: _password,
-            label: l.passwordLabel,
-            textInputAction: TextInputAction.done,
-            onSubmitted: (_) => _confirm(),
-          ),
-          if (_error != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Text(
-                _error!,
-                key: const ValueKey('googleUnlink.error'),
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
-              ),
-            ),
-        ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: _saving ? null : () => Navigator.pop(context, false),
-          child: Text(l.cancel),
-        ),
-        FilledButton(
-          key: const ValueKey('googleUnlink.confirm'),
-          onPressed: _saving ? null : _confirm,
-          child: Text(l.googleUnlink),
-        ),
-      ],
     );
   }
 }

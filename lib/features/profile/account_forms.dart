@@ -283,17 +283,37 @@ class SetPasswordScreen extends ConsumerStatefulWidget {
   ConsumerState<SetPasswordScreen> createState() => _SetPasswordScreenState();
 }
 
-class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen>
-    with _CurrentPassword {
+class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen> {
   final _form = GlobalKey<FormState>();
   final _new = TextEditingController();
   final _confirm = TextEditingController();
+  var saving = false;
 
   @override
   void dispose() {
     _new.dispose();
     _confirm.dispose();
     super.dispose();
+  }
+
+  /// No current password to check (there is none): only the rules.
+  Future<void> _save() async {
+    if (saving || !_form.currentState!.validate()) return;
+    setState(() => saving = true);
+    try {
+      await ref.read(authControllerProvider.notifier).setPassword(_new.text);
+      if (!mounted) return;
+      showErrorSnackBar(context, context.l10n.passwordCreated);
+      context.pop();
+    } on FieldErrorException catch (e) {
+      if (mounted) {
+        showErrorSnackBar(context, context.l10n.fieldError(e.error)!);
+      }
+    } catch (_) {
+      if (mounted) showErrorSnackBar(context, unexpectedError(context));
+    } finally {
+      if (mounted) setState(() => saving = false);
+    }
   }
 
   @override
@@ -307,11 +327,7 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen>
       formKey: _form,
       saveKey: const ValueKey('setPassword.save'),
       saving: saving,
-      onSave: () => submit(
-        _form,
-        () => ref.read(authControllerProvider.notifier).setPassword(_new.text),
-        l.passwordCreated,
-      ),
+      onSave: _save,
       children: [
         Text(l.setPasswordHint, style: muted),
         const SizedBox(height: 14),

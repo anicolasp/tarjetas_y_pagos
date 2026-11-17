@@ -75,8 +75,9 @@ class PluginGoogleAuthService implements GoogleAuthService {
           GoogleSignInFailure.misconfigured,
         _ => GoogleSignInFailure.failed,
       });
-    } on Exception {
-      // Platform errors outside the plugin's codes.
+    } on Object {
+      // Anything else from the platform or the plugin: the user still gets
+      // a message.
       throw const GoogleSignInFailedException(GoogleSignInFailure.failed);
     }
   }

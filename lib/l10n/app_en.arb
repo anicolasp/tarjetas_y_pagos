@@ -434,5 +434,7 @@
   "googleUnlinked": "Google unlinked",
   "setPassword": "Create password",
   "setPasswordHint": "To sign in without Google or without internet too.",
-  "passwordCreated": "Password created"
+  "passwordCreated": "Password created",
+  "googleOnlyAccount": "This account was created with Google: use \"Continue with Google\".",
+  "googleAlreadyLinked": "This account is already linked to another Google account."
 }

@@ -277,9 +277,13 @@ class AuthController extends Notifier<AuthState> {
   Future<void> usePassword() => logout();
 
   Future<void> logout() async {
+    final current = state;
     await ref.read(sessionServiceProvider).end();
-    // The next "Continuar con Google" lets the user pick an account.
-    await ref.read(googleAuthServiceProvider).signOut();
+    // The next "Continuar con Google" lets the user pick an account. Only
+    // for linked accounts: the others never opened Google.
+    if (current is AuthLoggedIn && current.user.hasGoogle) {
+      await ref.read(googleAuthServiceProvider).signOut();
+    }
     state = await _loggedOut(await _repo);
   }
 

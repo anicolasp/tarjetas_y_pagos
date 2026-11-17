@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tarjetas_y_pagos/core/language.dart';
+import 'package:tarjetas_y_pagos/core/validators.dart' show nameMaxLength;
 import 'package:tarjetas_y_pagos/data/database.dart';
 import 'package:tarjetas_y_pagos/data/models/app_user.dart';
 import 'package:tarjetas_y_pagos/data/repositories/auth_repository.dart';
@@ -64,6 +65,13 @@ void main() {
     expect(await db.db.query('users'), hasLength(1));
   });
 
+  test('a long name is cut to what the name rules accept, whole '
+      'characters only', () async {
+    final (:user, created: _) = await google(name: '😀' * 40);
+    expect(user.firstName.length, lessThanOrEqualTo(nameMaxLength));
+    expect(user.firstName, '😀' * 25);
+  });
+
   test('without a name, the part of the email before "@"', () async {
     final (:user, created: _) = await google(name: null);
     expect(user.firstName, 'ana');
@@ -115,6 +123,25 @@ void main() {
       expect(user.id, linked.id);
     });
 
+    test('an account linked to another Google account is not '
+        're-linked (that one would be cut off)', () async {
+      await registerAna();
+      await repo.linkGoogle(
+        email: 'ana@example.com',
+        password: 'abc12345',
+        sub: 'g-old',
+      );
+      await expectLater(
+        repo.linkGoogle(
+          email: 'ana@example.com',
+          password: 'abc12345',
+          sub: 'g-new',
+        ),
+        throwsA(isA<GoogleAlreadyLinkedException>()),
+      );
+      expect((await db.db.query('users')).single['google_sub'], 'g-old');
+    });
+
     test('a Google account linked to someone else is refused', () async {
       await google(sub: 'g-1', email: 'luis@example.com');
       await registerAna();
@@ -130,16 +157,15 @@ void main() {
   });
 
   group('an account created with Google', () {
-    test('cannot sign in with a password until it sets one', () async {
+    test('a password login says it signs in with Google, without '
+        'counting toward the lockout', () async {
       await google();
-      await expectLater(
-        repo.login('ana@example.com', ''),
-        throwsA(isA<InvalidCredentialsException>()),
-      );
-      await expectLater(
-        repo.login('ana@example.com', 'abc12345'),
-        throwsA(isA<InvalidCredentialsException>()),
-      );
+      for (var i = 0; i < 8; i++) {
+        await expectLater(
+          repo.login('ana@example.com', 'abc12345'),
+          throwsA(isA<GoogleOnlyAccountException>()),
+        );
+      }
     });
 
     test('sets a first password, then signs in with it too', () async {
@@ -155,11 +181,11 @@ void main() {
       );
     });
 
-    test('has no security question to recover', () async {
+    test('recovery says it signs in with Google', () async {
       await google();
       await expectLater(
         repo.securityQuestionFor('ana@example.com'),
-        throwsA(isA<NoSecurityQuestionException>()),
+        throwsA(isA<GoogleOnlyAccountException>()),
       );
     });
   });

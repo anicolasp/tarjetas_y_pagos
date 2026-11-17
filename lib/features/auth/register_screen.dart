@@ -26,6 +26,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _security = SecurityQuestionInput();
   var _loading = false;
 
+  /// "Continuar con Google" in progress: no second account at once.
+  var _googleBusy = false;
+
   /// Server-side style error shown under the email field.
   String? _emailError;
 
@@ -40,7 +43,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   Future<void> _submit() async {
     setState(() => _emailError = null);
-    if (_loading || !_form.currentState!.validate()) return;
+    if (_loading || _googleBusy || !_form.currentState!.validate()) return;
     setState(() => _loading = true);
     try {
       await ref
@@ -183,7 +186,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           loading: _loading,
           onPressed: _submit,
         ),
-        GoogleSignInSection(keyPrefix: 'register', enabled: !_loading),
+        GoogleSignInSection(
+          keyPrefix: 'register',
+          enabled: !_loading,
+          onBusyChanged: (busy) => setState(() => _googleBusy = busy),
+        ),
       ],
     );
   }
