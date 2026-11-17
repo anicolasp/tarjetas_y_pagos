@@ -274,6 +274,74 @@ class _ChangeEmailScreenState extends ConsumerState<ChangeEmailScreen>
   }
 }
 
+/// A first password for an account created with Google (#37): to sign in
+/// without Google or without internet too.
+class SetPasswordScreen extends ConsumerStatefulWidget {
+  const SetPasswordScreen({super.key});
+
+  @override
+  ConsumerState<SetPasswordScreen> createState() => _SetPasswordScreenState();
+}
+
+class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen>
+    with _CurrentPassword {
+  final _form = GlobalKey<FormState>();
+  final _new = TextEditingController();
+  final _confirm = TextEditingController();
+
+  @override
+  void dispose() {
+    _new.dispose();
+    _confirm.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final muted = Theme.of(context).textTheme.bodySmall
+        ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant);
+    final l = context.l10n;
+    return _AccountForm(
+      rootKey: const ValueKey('setPassword.root'),
+      title: l.setPassword,
+      formKey: _form,
+      saveKey: const ValueKey('setPassword.save'),
+      saving: saving,
+      onSave: () => submit(
+        _form,
+        () => ref.read(authControllerProvider.notifier).setPassword(_new.text),
+        l.passwordCreated,
+      ),
+      children: [
+        Text(l.setPasswordHint, style: muted),
+        const SizedBox(height: 14),
+        PasswordField(
+          key: const ValueKey('setPassword.new'),
+          toggleKey: const ValueKey('setPassword.toggleNew'),
+          controller: _new,
+          label: l.newPasswordLabel,
+          autofillHints: const [AutofillHints.newPassword],
+          validator: (v) => l.fieldError(validatePassword(v)),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(left: 12, top: 6),
+          child: Text(l.passwordRulesHint(passwordMinLength), style: muted),
+        ),
+        const SizedBox(height: 14),
+        PasswordField(
+          key: const ValueKey('setPassword.confirm'),
+          toggleKey: const ValueKey('setPassword.toggleConfirm'),
+          controller: _confirm,
+          label: l.confirmNewPasswordLabel,
+          textInputAction: TextInputAction.done,
+          validator: (v) =>
+              l.fieldError(validatePasswordConfirmation(v, _new.text)),
+        ),
+      ],
+    );
+  }
+}
+
 class ChangePasswordScreen extends ConsumerStatefulWidget {
   const ChangePasswordScreen({super.key});
 

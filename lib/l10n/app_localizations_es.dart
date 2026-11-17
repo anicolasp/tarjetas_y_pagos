@@ -1460,4 +1460,64 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get remindersInSettings =>
       'Puedes activarlos en los ajustes del teléfono.';
+
+  @override
+  String get orDivider => 'o';
+
+  @override
+  String get continueWithGoogle => 'Continuar con Google';
+
+  @override
+  String get googleFailed =>
+      'No se pudo iniciar con Google. Revisa tu conexión e inténtalo de nuevo.';
+
+  @override
+  String get googleMisconfigured =>
+      'El inicio con Google no está disponible en esta versión de la app.';
+
+  @override
+  String get googleLinkTitle => 'Vincular tu cuenta de Google';
+
+  @override
+  String googleLinkBody(String email) {
+    return 'Ya tienes una cuenta con $email. Escribe su contraseña para vincular Google; después podrás entrar con Google.';
+  }
+
+  @override
+  String get googleLink => 'Vincular';
+
+  @override
+  String get wrongPasswordShort => 'Contraseña incorrecta';
+
+  @override
+  String get googleAccountTaken =>
+      'Esta cuenta de Google ya está vinculada a otro usuario.';
+
+  @override
+  String googleLinkedAs(String email) {
+    return 'Vinculada: $email';
+  }
+
+  @override
+  String get googleUnlink => 'Desvincular';
+
+  @override
+  String get googleUnlinkTitle => '¿Desvincular Google?';
+
+  @override
+  String get googleUnlinkBody =>
+      'Después entrarás con tu correo y contraseña. Escribe tu contraseña para confirmar.';
+
+  @override
+  String get googleUnlinked => 'Google desvinculado';
+
+  @override
+  String get setPassword => 'Crear contraseña';
+
+  @override
+  String get setPasswordHint =>
+      'Para entrar también sin Google o sin internet.';
+
+  @override
+  String get passwordCreated => 'Contraseña creada';
 }

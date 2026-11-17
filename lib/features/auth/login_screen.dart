@@ -8,6 +8,7 @@ import '../../data/repositories/auth_repository.dart';
 import '../../l10n/l10n.dart';
 import 'auth_controller.dart';
 import 'auth_widgets.dart';
+import 'google_sign_in_section.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -151,6 +152,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             label: Text(l.loginWithFingerprintAs(biometricUser.firstName)),
           ),
         ],
+        GoogleSignInSection(keyPrefix: 'login', enabled: !_loading),
         const SizedBox(height: 12),
         Wrap(
           alignment: WrapAlignment.center,

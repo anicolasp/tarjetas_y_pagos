@@ -10,6 +10,7 @@ import '../../data/providers.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../l10n/l10n.dart';
 import '../../services/app_prefs.dart';
+import '../../services/google_auth_service.dart';
 import '../../services/providers.dart';
 
 sealed class AuthState {
@@ -76,6 +77,14 @@ AppLanguage _languageFor(AuthState auth, AppPrefs prefs) => switch (auth) {
 };
 
 enum EnableBiometricsResult { enabled, unavailable, notConfirmed }
+
+/// The Google account's email already has an account without Google: ask
+/// for its password and call [AuthController.linkGoogleAndLogin].
+class GoogleLinkRequired implements Exception {
+  const GoogleLinkRequired(this.identity);
+
+  final GoogleIdentity identity;
+}
 
 class AuthController extends Notifier<AuthState> {
   /// Texts in the app language, for the system biometric prompt. Same
@@ -171,6 +180,47 @@ class AuthController extends Notifier<AuthState> {
     await _startSession(user);
   }
 
+  // ------------------------------------------------------- google (#37)
+
+  /// Signs in with the Google account the user picks: a new one gets an
+  /// account (in the language on screen) and the setup wizard. Returns
+  /// false if the user closed Google's sheet. Throws [GoogleLinkRequired]
+  /// and [GoogleSignInFailedException].
+  Future<bool> loginWithGoogle() async {
+    final identity = await ref.read(googleAuthServiceProvider).signIn();
+    if (identity == null) return false;
+    try {
+      final (:user, :created) = await (await _repo).loginWithGoogle(
+        sub: identity.sub,
+        email: identity.email,
+        name: identity.name,
+        language: _languageFor(state, ref.read(appPrefsProvider)),
+      );
+      if (created) {
+        await ref.read(setupPendingProvider.notifier).start(user.id!);
+      }
+      await _startSession(user);
+      return true;
+    } on GoogleLinkNeededException {
+      throw GoogleLinkRequired(identity);
+    }
+  }
+
+  /// Links [identity] to the account with its email once [password] is
+  /// right, then signs in. Throws the [AuthRepository.linkGoogle]
+  /// exceptions.
+  Future<void> linkGoogleAndLogin(
+    GoogleIdentity identity,
+    String password,
+  ) async {
+    final user = await (await _repo).linkGoogle(
+      email: identity.email,
+      password: password,
+      sub: identity.sub,
+    );
+    await _startSession(user);
+  }
+
   // ------------------------------------------------------ recovery (#27)
   // Before login: they never change the session; the user logs in after.
 
@@ -228,6 +278,8 @@ class AuthController extends Notifier<AuthState> {
 
   Future<void> logout() async {
     await ref.read(sessionServiceProvider).end();
+    // The next "Continuar con Google" lets the user pick an account.
+    await ref.read(googleAuthServiceProvider).signOut();
     state = await _loggedOut(await _repo);
   }
 
@@ -288,6 +340,19 @@ class AuthController extends Notifier<AuthState> {
       _user.id!,
       currentPassword: currentPassword,
       newEmail: newEmail,
+    ),
+  );
+
+  /// A first password for an account created with Google. Throws
+  /// [FieldErrorException].
+  Future<void> setPassword(String newPassword) async =>
+      _updateUser(await (await _repo).setPassword(_user.id!, newPassword));
+
+  /// Throws the [AuthRepository.unlinkGoogle] exceptions.
+  Future<void> unlinkGoogle(String currentPassword) async => _updateUser(
+    await (await _repo).unlinkGoogle(
+      _user.id!,
+      currentPassword: currentPassword,
     ),
   );
 

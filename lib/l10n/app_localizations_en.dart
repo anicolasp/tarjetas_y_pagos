@@ -1462,4 +1462,64 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get remindersInSettings =>
       'You can turn them on in your phone settings.';
+
+  @override
+  String get orDivider => 'or';
+
+  @override
+  String get continueWithGoogle => 'Continue with Google';
+
+  @override
+  String get googleFailed =>
+      'Couldn\'t sign in with Google. Check your connection and try again.';
+
+  @override
+  String get googleMisconfigured =>
+      'Google sign-in isn\'t available in this version of the app.';
+
+  @override
+  String get googleLinkTitle => 'Link your Google account';
+
+  @override
+  String googleLinkBody(String email) {
+    return 'You already have an account with $email. Enter its password to link Google; then you can sign in with Google.';
+  }
+
+  @override
+  String get googleLink => 'Link';
+
+  @override
+  String get wrongPasswordShort => 'Wrong password';
+
+  @override
+  String get googleAccountTaken =>
+      'This Google account is already linked to another user.';
+
+  @override
+  String googleLinkedAs(String email) {
+    return 'Linked: $email';
+  }
+
+  @override
+  String get googleUnlink => 'Unlink';
+
+  @override
+  String get googleUnlinkTitle => 'Unlink Google?';
+
+  @override
+  String get googleUnlinkBody =>
+      'You\'ll then sign in with your email and password. Enter your password to confirm.';
+
+  @override
+  String get googleUnlinked => 'Google unlinked';
+
+  @override
+  String get setPassword => 'Create password';
+
+  @override
+  String get setPasswordHint =>
+      'To sign in without Google or without internet too.';
+
+  @override
+  String get passwordCreated => 'Password created';
 }

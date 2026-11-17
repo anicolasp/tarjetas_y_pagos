@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart' show ThemeMode;
+import 'package:flutter/material.dart' show StringCharacters, ThemeMode;
 import 'package:sqflite/sqflite.dart';
 
 import '../../core/language.dart';
@@ -43,6 +43,17 @@ class NoSecurityQuestionException implements Exception {
 /// The answer to the security question is wrong.
 class WrongAnswerException implements Exception {
   const WrongAnswerException();
+}
+
+/// The Google account's email already has an account without Google: it
+/// is linked with that account's password ([AuthRepository.linkGoogle]).
+class GoogleLinkNeededException implements Exception {
+  const GoogleLinkNeededException();
+}
+
+/// That Google account is already linked to another user.
+class GoogleAccountTakenException implements Exception {
+  const GoogleAccountTakenException();
 }
 
 /// Days of notice before cuts, due dates and debts (#10).
@@ -121,9 +132,7 @@ class AuthRepository {
     AppUser? user;
     await _throttled(normalized, const InvalidCredentialsException(), () async {
       user = await _findByEmail(normalized);
-      return user == null
-          ? await _hasher.hash(password, _dummySalt).then((_) => false)
-          : await _hasher.verify(password, user!.salt, user!.passwordHash);
+      return _checkPassword(user, password);
     });
     if (_hasher.needsRehash(user!.passwordHash)) {
       return _rehash(user!, password);
@@ -225,6 +234,118 @@ class AuthRepository {
       if (biometricEnabled != null)
         'biometric_enabled': biometricEnabled ? 1 : 0,
     });
+  }
+
+  // ------------------------------------------------------- google (#37)
+
+  /// The user linked to [sub], or a new one for [email] (no password;
+  /// [created] tells the caller to start the setup wizard). Throws
+  /// [GoogleLinkNeededException] when [email] already has an account
+  /// without Google.
+  Future<({AppUser user, bool created})> loginWithGoogle({
+    required String sub,
+    required String email,
+    String? name,
+    AppLanguage language = AppLanguage.es,
+  }) async {
+    final linked = await _findByGoogle(sub);
+    if (linked != null) return (user: linked, created: false);
+    final normalized = normalizeEmail(email);
+    if (await _findByEmail(normalized) != null) {
+      throw const GoogleLinkNeededException();
+    }
+    final (first, last) = _splitName(name, normalized);
+    final user = AppUser(
+      firstName: first,
+      lastName: last,
+      email: normalized,
+      passwordHash: '',
+      salt: '',
+      language: language,
+      googleSub: sub,
+      createdAt: _clock(),
+    );
+    try {
+      final id = await _db.db.insert('users', user.toMap());
+      return (user: user.copyWith(id: id), created: true);
+    } on DatabaseException catch (e) {
+      if (!e.isUniqueConstraintError()) rethrow;
+      // Lost a race: the same Google account or email was just added.
+      final now = await _findByGoogle(sub);
+      if (now != null) return (user: now, created: false);
+      throw const GoogleLinkNeededException();
+    }
+  }
+
+  /// Links [sub] to the account of [email] once its password is right (same
+  /// throttle as the login). Throws [InvalidCredentialsException],
+  /// [LockedOutException] or [GoogleAccountTakenException].
+  Future<AppUser> linkGoogle({
+    required String email,
+    required String password,
+    required String sub,
+  }) async {
+    final user = await login(email, password);
+    if (user.googleSub == sub) return user;
+    if (await _findByGoogle(sub) != null) {
+      throw const GoogleAccountTakenException();
+    }
+    try {
+      return await _update(user.id!, {'google_sub': sub});
+    } on DatabaseException catch (e) {
+      if (e.isUniqueConstraintError()) {
+        throw const GoogleAccountTakenException();
+      }
+      rethrow;
+    }
+  }
+
+  /// A first password for an account created with Google (it already
+  /// proved who it is). Throws [FieldErrorException].
+  Future<AppUser> setPassword(int userId, String newPassword) async {
+    final error = validatePassword(newPassword);
+    if (error != null) throw FieldErrorException(error);
+    final user = await getById(userId);
+    if (user == null) throw StateError('User not found');
+    // Changing an existing one needs it ([changePassword]).
+    if (user.hasPassword) throw StateError('Already has a password');
+    final salt = _hasher.newSalt();
+    return _update(userId, {
+      'salt': salt,
+      'password_hash': await _hasher.hash(newPassword, salt),
+    });
+  }
+
+  /// Unlinks Google; needs the password, so the account always keeps a way
+  /// in. Throws [WrongPasswordException] or [LockedOutException].
+  Future<AppUser> unlinkGoogle(
+    int userId, {
+    required String currentPassword,
+  }) async {
+    await _verifiedUser(userId, currentPassword);
+    return _update(userId, {'google_sub': null});
+  }
+
+  Future<AppUser?> _findByGoogle(String sub) async {
+    final rows = await _db.db.query(
+      'users',
+      where: 'google_sub = ?',
+      whereArgs: [sub],
+      limit: 1,
+    );
+    return rows.isEmpty ? null : AppUser.fromMap(rows.single);
+  }
+
+  /// "María José Pérez" → ("María", "José Pérez"); without a name, the
+  /// part of the email before "@". Longer than allowed is cut.
+  (String, String) _splitName(String? name, String email) {
+    String cut(String s) => s.characters.length > nameMaxLength
+        ? s.characters.take(nameMaxLength).toString()
+        : s;
+    final parts = (name ?? '').trim().split(RegExp(r'\s+'))
+      ..removeWhere((p) => p.isEmpty);
+    if (parts.isEmpty) return (cut(email.split('@').first), '');
+    return (cut(parts.first), cut(parts.skip(1).join(' ')));
   }
 
   // ------------------------------------------------------ recovery (#27)
@@ -331,9 +452,19 @@ class AuthRepository {
     await _throttled(
       user.email,
       const WrongPasswordException(),
-      () => _hasher.verify(password, user.salt, user.passwordHash),
+      () => _checkPassword(user, password),
     );
     return user;
+  }
+
+  /// [password] against [user]'s. No user, or one created with Google that
+  /// has none, takes as long as a wrong password: the time never tells.
+  Future<bool> _checkPassword(AppUser? user, String password) async {
+    if (user == null || !user.hasPassword) {
+      await _hasher.hash(password, _dummySalt);
+      return false;
+    }
+    return _hasher.verify(password, user.salt, user.passwordHash);
   }
 
   /// One guess (password or answer) for [email], under the login's

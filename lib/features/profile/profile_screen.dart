@@ -8,11 +8,13 @@ import '../../core/money.dart';
 import '../../core/responsive.dart';
 import '../../core/router.dart';
 import '../../core/validators.dart';
+import '../../data/repositories/auth_repository.dart';
 import '../../l10n/l10n.dart';
 import '../../services/notification_service.dart';
 import '../../services/providers.dart';
 import '../auth/auth_controller.dart';
 import '../auth/auth_widgets.dart';
+import '../auth/google_sign_in_section.dart' show GoogleLogo;
 import '../cards/cards_providers.dart';
 import '../notifications/notice_days_stepper.dart';
 
@@ -60,6 +62,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         showErrorSnackBar(context, context.l10n.fingerprintNotConfirmed);
     }
   });
+
+  Future<void> _unlinkGoogle() async {
+    final unlinked = await showDialog<bool>(
+      context: context,
+      builder: (_) => const _UnlinkGoogleDialog(),
+    );
+    if (unlinked == true && mounted) {
+      showErrorSnackBar(context, context.l10n.googleUnlinked);
+    }
+  }
 
   Future<void> _logout() async {
     final confirmed = await confirmDestructive(
@@ -129,18 +141,30 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       title: l.nameAndSurname,
                       onTap: () => context.push(Routes.profileName),
                     ),
-                    _NavTile(
-                      key: const ValueKey('profile.changeEmail'),
-                      icon: Icons.alternate_email,
-                      title: l.changeEmail,
-                      onTap: () => context.push(Routes.profileEmail),
-                    ),
-                    _NavTile(
-                      key: const ValueKey('profile.changePassword'),
-                      icon: Icons.password,
-                      title: l.changePassword,
-                      onTap: () => context.push(Routes.profilePassword),
-                    ),
+                    // Both ask for the current password: an account created
+                    // with Google sets one first.
+                    if (user.hasPassword) ...[
+                      _NavTile(
+                        key: const ValueKey('profile.changeEmail'),
+                        icon: Icons.alternate_email,
+                        title: l.changeEmail,
+                        onTap: () => context.push(Routes.profileEmail),
+                      ),
+                      _NavTile(
+                        key: const ValueKey('profile.changePassword'),
+                        icon: Icons.password,
+                        title: l.changePassword,
+                        onTap: () => context.push(Routes.profilePassword),
+                      ),
+                    ] else
+                      ListTile(
+                        key: const ValueKey('profile.setPassword'),
+                        leading: const Icon(Icons.password),
+                        title: Text(l.setPassword),
+                        subtitle: Text(l.setPasswordHint),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => context.push(Routes.profileSetPassword),
+                      ),
                   ],
                 ),
                 gap,
@@ -155,29 +179,50 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       value: user.biometricEnabled,
                       onChanged: _busy ? null : _toggleBiometrics,
                     ),
-                    ListTile(
-                      key: const ValueKey('profile.securityQuestion'),
-                      leading: Icon(
-                        user.hasSecurityQuestion
-                            ? Icons.help_outline
-                            : Icons.warning_amber,
-                        color: user.hasSecurityQuestion ? null : scheme.error,
+                    if (user.hasGoogle)
+                      ListTile(
+                        key: const ValueKey('profile.google'),
+                        leading: const GoogleLogo(size: 24),
+                        title: const Text('Google'),
+                        subtitle: Text(l.googleLinkedAs(user.email)),
+                        // Only with a password: the account keeps a way in.
+                        trailing: user.hasPassword
+                            ? TextButton(
+                                key: const ValueKey('profile.googleUnlink'),
+                                onPressed: _busy ? null : _unlinkGoogle,
+                                child: Text(l.googleUnlink),
+                              )
+                            : null,
                       ),
-                      title: Text(l.securityQuestionLabel),
-                      // Without one, the password cannot be recovered: say
-                      // so in words, not only with the icon's color.
-                      subtitle: Text(
-                        user.securityQuestion == null
-                            ? l.securityQuestionMissing
-                            : l.securityQuestionText(user.securityQuestion!),
-                        key: const ValueKey('profile.securityQuestion.status'),
-                        style: user.hasSecurityQuestion
-                            ? null
-                            : TextStyle(color: scheme.error),
+                    // Recovery replaces a forgotten password: none to recover
+                    // until the account has one.
+                    if (user.hasPassword)
+                      ListTile(
+                        key: const ValueKey('profile.securityQuestion'),
+                        leading: Icon(
+                          user.hasSecurityQuestion
+                              ? Icons.help_outline
+                              : Icons.warning_amber,
+                          color: user.hasSecurityQuestion ? null : scheme.error,
+                        ),
+                        title: Text(l.securityQuestionLabel),
+                        // Without one, the password cannot be recovered: say
+                        // so in words, not only with the icon's color.
+                        subtitle: Text(
+                          user.securityQuestion == null
+                              ? l.securityQuestionMissing
+                              : l.securityQuestionText(user.securityQuestion!),
+                          key: const ValueKey(
+                            'profile.securityQuestion.status',
+                          ),
+                          style: user.hasSecurityQuestion
+                              ? null
+                              : TextStyle(color: scheme.error),
+                        ),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () =>
+                            context.push(Routes.profileSecurityQuestion),
                       ),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => context.push(Routes.profileSecurityQuestion),
-                    ),
                   ],
                 ),
                 gap,
@@ -374,6 +419,99 @@ class _NavTile extends StatelessWidget {
       title: Text(title),
       trailing: const Icon(Icons.chevron_right),
       onTap: onTap,
+    );
+  }
+}
+
+/// "¿Desvincular Google?" with the password; true once unlinked. A wrong
+/// password keeps it open.
+class _UnlinkGoogleDialog extends ConsumerStatefulWidget {
+  const _UnlinkGoogleDialog();
+
+  @override
+  ConsumerState<_UnlinkGoogleDialog> createState() =>
+      _UnlinkGoogleDialogState();
+}
+
+class _UnlinkGoogleDialogState extends ConsumerState<_UnlinkGoogleDialog> {
+  final _password = TextEditingController();
+  String? _error;
+  var _saving = false;
+
+  @override
+  void dispose() {
+    _password.dispose();
+    super.dispose();
+  }
+
+  Future<void> _confirm() async {
+    if (_saving || _password.text.isEmpty) return;
+    final l = context.l10n;
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
+    try {
+      await ref
+          .read(authControllerProvider.notifier)
+          .unlinkGoogle(_password.text);
+      if (mounted) Navigator.pop(context, true);
+    } on WrongPasswordException {
+      if (mounted) setState(() => _error = l.wrongPasswordShort);
+    } on LockedOutException catch (e) {
+      if (mounted) {
+        setState(() => _error = l.tooManyAttemptsWait(formatWait(e.remaining)));
+      }
+    } on Exception {
+      if (mounted) setState(() => _error = unexpectedError(context));
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    return AlertDialog(
+      key: const ValueKey('googleUnlink.dialog'),
+      scrollable: true,
+      title: Text(l.googleUnlinkTitle),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(l.googleUnlinkBody),
+          const SizedBox(height: 16),
+          PasswordField(
+            key: const ValueKey('googleUnlink.password'),
+            toggleKey: const ValueKey('googleUnlink.togglePassword'),
+            controller: _password,
+            label: l.passwordLabel,
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) => _confirm(),
+          ),
+          if (_error != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                _error!,
+                key: const ValueKey('googleUnlink.error'),
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: _saving ? null : () => Navigator.pop(context, false),
+          child: Text(l.cancel),
+        ),
+        FilledButton(
+          key: const ValueKey('googleUnlink.confirm'),
+          onPressed: _saving ? null : _confirm,
+          child: Text(l.googleUnlink),
+        ),
+      ],
     );
   }
 }

@@ -12,6 +12,7 @@ import 'package:tarjetas_y_pagos/features/cards/cards_providers.dart';
 import 'package:tarjetas_y_pagos/services/exchange_rate_service.dart';
 import 'package:tarjetas_y_pagos/services/biometric_service.dart';
 import 'package:tarjetas_y_pagos/services/card_scan_service.dart';
+import 'package:tarjetas_y_pagos/services/google_auth_service.dart';
 import 'package:tarjetas_y_pagos/services/password_hasher.dart';
 import 'package:tarjetas_y_pagos/data/models/category.dart';
 import 'package:tarjetas_y_pagos/services/providers.dart';
@@ -232,6 +233,29 @@ class FakeNotificationService implements NotificationService {
   }
 }
 
+/// Google's sign-in sheet (#37). [next] is what it answers: an account, a
+/// closed sheet (null) or [failure]. Hidden unless [available].
+class FakeGoogleAuthService implements GoogleAuthService {
+  FakeGoogleAuthService({this.available = false, this.next, this.failure});
+
+  @override
+  bool available;
+  GoogleIdentity? next;
+  GoogleSignInFailure? failure;
+  var signIns = 0;
+  var signOuts = 0;
+
+  @override
+  Future<GoogleIdentity?> signIn() async {
+    signIns++;
+    if (failure case final f?) throw GoogleSignInFailedException(f);
+    return next;
+  }
+
+  @override
+  Future<void> signOut() async => signOuts++;
+}
+
 Future<List<Override>> testOverrides({
   Future<AppDatabase>? database,
   Map<String, Object> prefs = const {},
@@ -243,6 +267,7 @@ Future<List<Override>> testOverrides({
   String anthropicApiKey = '',
   FakeReceiptAiService? receiptAi,
   FakeNotificationService? notifications,
+  FakeGoogleAuthService? google,
 }) async {
   SharedPreferences.setMockInitialValues(prefs);
   final sharedPrefs = await SharedPreferences.getInstance();
@@ -269,6 +294,10 @@ Future<List<Override>> testOverrides({
     // Never schedule real notifications from tests.
     notificationServiceProvider.overrideWithValue(
       notifications ?? FakeNotificationService(),
+    ),
+    // Hidden by default; never the real Google sheet.
+    googleAuthServiceProvider.overrideWithValue(
+      google ?? FakeGoogleAuthService(),
     ),
   ];
 }

@@ -6,6 +6,7 @@ import '../../data/repositories/auth_repository.dart';
 import '../../l10n/l10n.dart';
 import 'auth_controller.dart';
 import 'auth_widgets.dart';
+import 'google_sign_in_section.dart';
 import 'security_question_fields.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
@@ -182,6 +183,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           loading: _loading,
           onPressed: _submit,
         ),
+        GoogleSignInSection(keyPrefix: 'register', enabled: !_loading),
       ],
     );
   }

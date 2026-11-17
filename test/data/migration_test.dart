@@ -145,4 +145,41 @@ void main() {
     expect(user['security_salt'], isNull);
     await v4.close();
   });
+
+  test('v4 → v5: existing users are not linked to Google; one Google '
+      'account per user', () async {
+    final v4 = await openAt(4);
+    await v4.db.insert('users', {
+      'first_name': 'Ana',
+      'last_name': 'Prueba',
+      'email': 'ana@example.com',
+      'password_hash': 'h',
+      'salt': 's',
+      'created_at': '2026-01-01T00:00:00.000Z',
+    });
+    await v4.close();
+
+    final v5 = await openAt(null);
+    final user = (await v5.db.query('users')).single;
+    expect(user['google_sub'], isNull);
+    expect(user['password_hash'], 'h');
+
+    Future<int> withSub(String email, String? sub) => v5.db.insert('users', {
+      'first_name': 'Otra',
+      'last_name': 'Persona',
+      'email': email,
+      'password_hash': '',
+      'salt': '',
+      'google_sub': sub,
+      'created_at': '2026-01-01T00:00:00.000Z',
+    });
+    // Many users without Google (NULL), only one per Google account.
+    await withSub('b@example.com', null);
+    await withSub('c@example.com', 'google-1');
+    await expectLater(
+      withSub('d@example.com', 'google-1'),
+      throwsA(isA<DatabaseException>()),
+    );
+    await v5.close();
+  });
 }

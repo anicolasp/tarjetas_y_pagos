@@ -417,5 +417,22 @@
   "remindersOn": "Reminders on",
   "remindersOff": "Reminders off",
   "remindersOffHint": "Allow notifications to get them.",
-  "remindersInSettings": "You can turn them on in your phone settings."
+  "remindersInSettings": "You can turn them on in your phone settings.",
+  "orDivider": "or",
+  "continueWithGoogle": "Continue with Google",
+  "googleFailed": "Couldn't sign in with Google. Check your connection and try again.",
+  "googleMisconfigured": "Google sign-in isn't available in this version of the app.",
+  "googleLinkTitle": "Link your Google account",
+  "googleLinkBody": "You already have an account with {email}. Enter its password to link Google; then you can sign in with Google.",
+  "googleLink": "Link",
+  "wrongPasswordShort": "Wrong password",
+  "googleAccountTaken": "This Google account is already linked to another user.",
+  "googleLinkedAs": "Linked: {email}",
+  "googleUnlink": "Unlink",
+  "googleUnlinkTitle": "Unlink Google?",
+  "googleUnlinkBody": "You'll then sign in with your email and password. Enter your password to confirm.",
+  "googleUnlinked": "Google unlinked",
+  "setPassword": "Create password",
+  "setPasswordHint": "To sign in without Google or without internet too.",
+  "passwordCreated": "Password created"
 }

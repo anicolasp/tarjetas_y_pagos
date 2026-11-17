@@ -862,5 +862,36 @@
   "remindersOn": "Recordatorios activados",
   "remindersOff": "Recordatorios desactivados",
   "remindersOffHint": "Activa los permisos para recibirlos.",
-  "remindersInSettings": "Puedes activarlos en los ajustes del teléfono."
+  "remindersInSettings": "Puedes activarlos en los ajustes del teléfono.",
+  "orDivider": "o",
+  "continueWithGoogle": "Continuar con Google",
+  "googleFailed": "No se pudo iniciar con Google. Revisa tu conexión e inténtalo de nuevo.",
+  "googleMisconfigured": "El inicio con Google no está disponible en esta versión de la app.",
+  "googleLinkTitle": "Vincular tu cuenta de Google",
+  "googleLinkBody": "Ya tienes una cuenta con {email}. Escribe su contraseña para vincular Google; después podrás entrar con Google.",
+  "@googleLinkBody": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "googleLink": "Vincular",
+  "wrongPasswordShort": "Contraseña incorrecta",
+  "googleAccountTaken": "Esta cuenta de Google ya está vinculada a otro usuario.",
+  "googleLinkedAs": "Vinculada: {email}",
+  "@googleLinkedAs": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "googleUnlink": "Desvincular",
+  "googleUnlinkTitle": "¿Desvincular Google?",
+  "googleUnlinkBody": "Después entrarás con tu correo y contraseña. Escribe tu contraseña para confirmar.",
+  "googleUnlinked": "Google desvinculado",
+  "setPassword": "Crear contraseña",
+  "setPasswordHint": "Para entrar también sin Google o sin internet.",
+  "passwordCreated": "Contraseña creada"
 }
