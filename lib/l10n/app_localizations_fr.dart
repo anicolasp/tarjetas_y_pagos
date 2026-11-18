@@ -1477,4 +1477,72 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get remindersInSettings =>
       'Vous pouvez les activer dans les réglages du téléphone.';
+
+  @override
+  String get orDivider => 'ou';
+
+  @override
+  String get continueWithGoogle => 'Continuer avec Google';
+
+  @override
+  String get googleFailed =>
+      'Impossible de se connecter avec Google. Vérifiez votre connexion et réessayez.';
+
+  @override
+  String get googleMisconfigured =>
+      'La connexion avec Google n\'est pas disponible dans cette version de l\'app.';
+
+  @override
+  String get googleLinkTitle => 'Associer votre compte Google';
+
+  @override
+  String googleLinkBody(String email) {
+    return 'Vous avez déjà un compte avec $email. Saisissez son mot de passe pour associer Google ; vous pourrez ensuite vous connecter avec Google.';
+  }
+
+  @override
+  String get googleLink => 'Associer';
+
+  @override
+  String get wrongPasswordShort => 'Mot de passe incorrect';
+
+  @override
+  String get googleAccountTaken =>
+      'Ce compte Google est déjà associé à un autre utilisateur.';
+
+  @override
+  String googleLinkedAs(String email) {
+    return 'Associé : $email';
+  }
+
+  @override
+  String get googleUnlink => 'Dissocier';
+
+  @override
+  String get googleUnlinkTitle => 'Dissocier Google ?';
+
+  @override
+  String get googleUnlinkBody =>
+      'Vous vous connecterez ensuite avec votre e-mail et votre mot de passe. Saisissez votre mot de passe pour confirmer.';
+
+  @override
+  String get googleUnlinked => 'Google dissocié';
+
+  @override
+  String get setPassword => 'Créer un mot de passe';
+
+  @override
+  String get setPasswordHint =>
+      'Pour vous connecter aussi sans Google ou sans internet.';
+
+  @override
+  String get passwordCreated => 'Mot de passe créé';
+
+  @override
+  String get googleOnlyAccount =>
+      'Ce compte a été créé avec Google : utilisez « Continuer avec Google ».';
+
+  @override
+  String get googleAlreadyLinked =>
+      'Ce compte est déjà associé à un autre compte Google.';
 }

@@ -207,3 +207,128 @@ Future<bool> confirmDestructive(
       ),
     ) ??
     false;
+
+/// A dialog that asks for the password before [onConfirm] (linking or
+/// unlinking Google, #37). A wrong password or other known error stays in
+/// the dialog as [errorFor]'s text; true once [onConfirm] succeeds. Keys
+/// are `<keyPrefix>.dialog`, `.password`, `.error` and `.confirm`.
+Future<bool> confirmWithPassword(
+  BuildContext context, {
+  required String keyPrefix,
+  required String title,
+  required String body,
+  required String confirmLabel,
+  required Future<void> Function(String password) onConfirm,
+  required String? Function(Object error) errorFor,
+}) async =>
+    await showDialog<bool>(
+      context: context,
+      builder: (_) => _PasswordConfirmDialog(
+        keyPrefix: keyPrefix,
+        title: title,
+        body: body,
+        confirmLabel: confirmLabel,
+        onConfirm: onConfirm,
+        errorFor: errorFor,
+      ),
+    ) ??
+    false;
+
+class _PasswordConfirmDialog extends StatefulWidget {
+  const _PasswordConfirmDialog({
+    required this.keyPrefix,
+    required this.title,
+    required this.body,
+    required this.confirmLabel,
+    required this.onConfirm,
+    required this.errorFor,
+  });
+
+  final String keyPrefix;
+  final String title;
+  final String body;
+  final String confirmLabel;
+  final Future<void> Function(String password) onConfirm;
+  final String? Function(Object error) errorFor;
+
+  @override
+  State<_PasswordConfirmDialog> createState() => _PasswordConfirmDialogState();
+}
+
+class _PasswordConfirmDialogState extends State<_PasswordConfirmDialog> {
+  final _password = TextEditingController();
+  String? _error;
+  var _saving = false;
+
+  @override
+  void dispose() {
+    _password.dispose();
+    super.dispose();
+  }
+
+  Future<void> _confirm() async {
+    if (_saving || _password.text.isEmpty) return;
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
+    try {
+      await widget.onConfirm(_password.text);
+      if (mounted) Navigator.pop(context, true);
+    } on Object catch (e) {
+      if (mounted) {
+        setState(() => _error = widget.errorFor(e) ?? unexpectedError(context));
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final p = widget.keyPrefix;
+    return AlertDialog(
+      key: ValueKey('$p.dialog'),
+      scrollable: true,
+      title: Text(widget.title),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(widget.body),
+          const SizedBox(height: 16),
+          PasswordField(
+            key: ValueKey('$p.password'),
+            toggleKey: ValueKey('$p.togglePassword'),
+            controller: _password,
+            label: l.passwordLabel,
+            textInputAction: TextInputAction.done,
+            autofillHints: const [AutofillHints.password],
+            onSubmitted: (_) => _confirm(),
+          ),
+          if (_error != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                _error!,
+                key: ValueKey('$p.error'),
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: _saving ? null : () => Navigator.pop(context, false),
+          child: Text(l.cancel),
+        ),
+        FilledButton(
+          key: ValueKey('$p.confirm'),
+          onPressed: _saving ? null : _confirm,
+          child: Text(widget.confirmLabel),
+        ),
+      ],
+    );
+  }
+}

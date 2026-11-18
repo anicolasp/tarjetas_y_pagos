@@ -19,6 +19,7 @@ class AppUser {
     this.notifyDaysBefore = 3,
     this.language = AppLanguage.es,
     this.securityQuestion,
+    this.googleSub,
     required this.createdAt,
   });
 
@@ -39,6 +40,15 @@ class AppUser {
   final SecurityQuestion? securityQuestion;
 
   bool get hasSecurityQuestion => securityQuestion != null;
+
+  /// Google's id for the linked account (#37); null when not linked.
+  final String? googleSub;
+
+  bool get hasGoogle => googleSub != null;
+
+  /// False for an account created with Google that has not set one: its
+  /// hash and salt are stored empty.
+  bool get hasPassword => passwordHash.isNotEmpty;
   final DateTime createdAt;
 
   factory AppUser.fromMap(Map<String, Object?> m) => AppUser(
@@ -56,6 +66,7 @@ class AppUser {
     securityQuestion: SecurityQuestion.decode(
       m['security_question'] as String?,
     ),
+    googleSub: m['google_sub'] as String?,
     createdAt: decodeTimestamp(m['created_at'] as String),
   );
 
@@ -72,6 +83,7 @@ class AppUser {
     'notify_days_before': notifyDaysBefore,
     'language': language.code,
     'security_question': securityQuestion?.encode(),
+    'google_sub': googleSub,
     'created_at': encodeTimestamp(createdAt),
   };
 
@@ -88,6 +100,7 @@ class AppUser {
     int? notifyDaysBefore,
     AppLanguage? language,
     SecurityQuestion? securityQuestion,
+    String? googleSub,
   }) => AppUser(
     id: id ?? this.id,
     firstName: firstName ?? this.firstName,
@@ -101,6 +114,7 @@ class AppUser {
     notifyDaysBefore: notifyDaysBefore ?? this.notifyDaysBefore,
     language: language ?? this.language,
     securityQuestion: securityQuestion ?? this.securityQuestion,
+    googleSub: googleSub ?? this.googleSub,
     createdAt: createdAt,
   );
 }

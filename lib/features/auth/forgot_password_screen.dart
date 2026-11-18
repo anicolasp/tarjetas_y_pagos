@@ -77,6 +77,8 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       _showError(step: 0, field: () => _emailError = l.accountNotFound);
     } on NoSecurityQuestionException {
       _showError(step: 0, field: () => _emailError = l.noSecurityQuestion);
+    } on GoogleOnlyAccountException {
+      _showError(step: 0, field: () => _emailError = l.googleOnlyAccount);
     } on WrongAnswerException {
       _showError(step: 1, field: () => _answerError = l.wrongAnswer);
     } on LockedOutException catch (e) {

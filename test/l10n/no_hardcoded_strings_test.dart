@@ -24,6 +24,8 @@ void main() {
     'lib/core/banks.dart': {'Banco López de Haro', 'Asociación Cibao'},
     // Each language is shown in its own language.
     'lib/core/language.dart': {'Español', 'Français'},
+    // The Google account row (#37): a brand, the same in every language.
+    'lib/features/profile/profile_screen.dart': {'Google'},
     // Card brands: the printed logos, and the name read out for the
     // Mastercard circles.
     'lib/features/cards/widgets/credit_card_tile.dart': {

@@ -48,7 +48,7 @@ class AppDatabase {
 
 typedef _Migration = Future<void> Function(Database db);
 
-final List<_Migration> _migrations = [_v1, _v2, _v3, _v4];
+final List<_Migration> _migrations = [_v1, _v2, _v3, _v4, _v5];
 
 /// Base categories available to every user (`user_id IS NULL`).
 /// `icon` is a key resolved to a Material icon by the UI layer.
@@ -239,5 +239,19 @@ Future<void> _v4(Database db) async {
   batch.execute('ALTER TABLE users ADD COLUMN security_question TEXT');
   batch.execute('ALTER TABLE users ADD COLUMN security_answer_hash TEXT');
   batch.execute('ALTER TABLE users ADD COLUMN security_salt TEXT');
+  await batch.commit(noResult: true);
+}
+
+/// v5 (#37): sign in with Google. `google_sub` is Google's id for the
+/// account (never a token). Accounts created with Google keep `password_hash`
+/// and `salt` empty until the user sets a password: rebuilding `users` to
+/// make them nullable would mean turning foreign keys off mid-migration.
+Future<void> _v5(Database db) async {
+  final batch = db.batch();
+  batch.execute('ALTER TABLE users ADD COLUMN google_sub TEXT');
+  batch.execute(
+    'CREATE UNIQUE INDEX idx_users_google_sub ON users(google_sub) '
+    'WHERE google_sub IS NOT NULL',
+  );
   await batch.commit(noResult: true);
 }

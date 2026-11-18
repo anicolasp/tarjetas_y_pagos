@@ -8,6 +8,7 @@ import '../../data/repositories/auth_repository.dart';
 import '../../l10n/l10n.dart';
 import 'auth_controller.dart';
 import 'auth_widgets.dart';
+import 'google_sign_in_section.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -21,6 +22,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _email = TextEditingController();
   final _password = TextEditingController();
   var _loading = false;
+
+  /// "Continuar con Google" in progress: nothing else may sign in.
+  var _googleBusy = false;
+
+  bool get _busy => _loading || _googleBusy;
 
   @override
   void initState() {
@@ -40,7 +46,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _submit() async {
-    if (_loading || !_form.currentState!.validate()) return;
+    if (_busy || !_form.currentState!.validate()) return;
     setState(() => _loading = true);
     try {
       await ref
@@ -50,6 +56,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (mounted) {
         showErrorSnackBar(context, context.l10n.wrongCredentials);
       }
+    } on GoogleOnlyAccountException {
+      if (mounted) showErrorSnackBar(context, context.l10n.googleOnlyAccount);
     } on LockedOutException catch (e) {
       if (mounted) {
         showErrorSnackBar(
@@ -65,6 +73,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _biometric() async {
+    if (_busy) return;
     final ok = await ref
         .read(authControllerProvider.notifier)
         .loginWithBiometrics();
@@ -126,9 +135,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           alignment: AlignmentDirectional.centerEnd,
           child: TextButton(
             key: const ValueKey('login.forgot'),
-            onPressed: _loading
-                ? null
-                : () => context.push(Routes.forgotPassword),
+            onPressed: _busy ? null : () => context.push(Routes.forgotPassword),
             child: Text(l.forgotPasswordLink),
           ),
         ),
@@ -146,11 +153,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             style: OutlinedButton.styleFrom(
               minimumSize: const Size.fromHeight(52),
             ),
-            onPressed: _loading ? null : _biometric,
+            onPressed: _busy ? null : _biometric,
             icon: const Icon(Icons.fingerprint),
             label: Text(l.loginWithFingerprintAs(biometricUser.firstName)),
           ),
         ],
+        GoogleSignInSection(
+          keyPrefix: 'login',
+          enabled: !_loading,
+          onBusyChanged: (busy) => setState(() => _googleBusy = busy),
+        ),
         const SizedBox(height: 12),
         Wrap(
           alignment: WrapAlignment.center,
@@ -159,7 +171,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             Text(l.noAccount),
             TextButton(
               key: const ValueKey('login.register'),
-              onPressed: _loading ? null : () => context.push(Routes.register),
+              onPressed: _busy ? null : () => context.push(Routes.register),
               child: Text(l.createAccount),
             ),
           ],

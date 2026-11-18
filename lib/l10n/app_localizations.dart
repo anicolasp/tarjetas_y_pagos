@@ -2607,6 +2607,120 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Puedes activarlos en los ajustes del teléfono.'**
   String get remindersInSettings;
+
+  /// No description provided for @orDivider.
+  ///
+  /// In es, this message translates to:
+  /// **'o'**
+  String get orDivider;
+
+  /// No description provided for @continueWithGoogle.
+  ///
+  /// In es, this message translates to:
+  /// **'Continuar con Google'**
+  String get continueWithGoogle;
+
+  /// No description provided for @googleFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo iniciar con Google. Revisa tu conexión e inténtalo de nuevo.'**
+  String get googleFailed;
+
+  /// No description provided for @googleMisconfigured.
+  ///
+  /// In es, this message translates to:
+  /// **'El inicio con Google no está disponible en esta versión de la app.'**
+  String get googleMisconfigured;
+
+  /// No description provided for @googleLinkTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Vincular tu cuenta de Google'**
+  String get googleLinkTitle;
+
+  /// No description provided for @googleLinkBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Ya tienes una cuenta con {email}. Escribe su contraseña para vincular Google; después podrás entrar con Google.'**
+  String googleLinkBody(String email);
+
+  /// No description provided for @googleLink.
+  ///
+  /// In es, this message translates to:
+  /// **'Vincular'**
+  String get googleLink;
+
+  /// No description provided for @wrongPasswordShort.
+  ///
+  /// In es, this message translates to:
+  /// **'Contraseña incorrecta'**
+  String get wrongPasswordShort;
+
+  /// No description provided for @googleAccountTaken.
+  ///
+  /// In es, this message translates to:
+  /// **'Esta cuenta de Google ya está vinculada a otro usuario.'**
+  String get googleAccountTaken;
+
+  /// No description provided for @googleLinkedAs.
+  ///
+  /// In es, this message translates to:
+  /// **'Vinculada: {email}'**
+  String googleLinkedAs(String email);
+
+  /// No description provided for @googleUnlink.
+  ///
+  /// In es, this message translates to:
+  /// **'Desvincular'**
+  String get googleUnlink;
+
+  /// No description provided for @googleUnlinkTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Desvincular Google?'**
+  String get googleUnlinkTitle;
+
+  /// No description provided for @googleUnlinkBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Después entrarás con tu correo y contraseña. Escribe tu contraseña para confirmar.'**
+  String get googleUnlinkBody;
+
+  /// No description provided for @googleUnlinked.
+  ///
+  /// In es, this message translates to:
+  /// **'Google desvinculado'**
+  String get googleUnlinked;
+
+  /// No description provided for @setPassword.
+  ///
+  /// In es, this message translates to:
+  /// **'Crear contraseña'**
+  String get setPassword;
+
+  /// No description provided for @setPasswordHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Para entrar también sin Google o sin internet.'**
+  String get setPasswordHint;
+
+  /// No description provided for @passwordCreated.
+  ///
+  /// In es, this message translates to:
+  /// **'Contraseña creada'**
+  String get passwordCreated;
+
+  /// No description provided for @googleOnlyAccount.
+  ///
+  /// In es, this message translates to:
+  /// **'Esta cuenta se creó con Google: entra con \"Continuar con Google\".'**
+  String get googleOnlyAccount;
+
+  /// No description provided for @googleAlreadyLinked.
+  ///
+  /// In es, this message translates to:
+  /// **'Esta cuenta ya está vinculada a otra cuenta de Google.'**
+  String get googleAlreadyLinked;
 }
 
 class _AppLocalizationsDelegate

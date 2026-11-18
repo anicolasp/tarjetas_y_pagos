@@ -43,6 +43,7 @@ abstract final class Routes {
   static const profileName = '/home/profile/name';
   static const profileEmail = '/home/profile/email';
   static const profilePassword = '/home/profile/password';
+  static const profileSetPassword = '/home/profile/set-password';
   static const profileSecurityQuestion = '/home/profile/security-question';
   static const categories = '/home/profile/categories';
   static const categoryNew = '/home/profile/categories/new';
@@ -182,6 +183,10 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: 'password',
                 builder: (context, state) => const ChangePasswordScreen(),
+              ),
+              GoRoute(
+                path: 'set-password',
+                builder: (context, state) => const SetPasswordScreen(),
               ),
               GoRoute(
                 path: 'security-question',

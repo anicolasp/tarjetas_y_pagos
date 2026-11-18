@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'app_prefs.dart';
 import 'biometric_service.dart';
 import 'card_scan_service.dart';
+import 'google_auth_service.dart';
 import 'login_throttle.dart';
 import 'notification_service.dart';
 import 'password_hasher.dart';
@@ -55,6 +56,12 @@ final receiptAiServiceProvider = Provider<ReceiptAiService>(
 
 final notificationServiceProvider = Provider<NotificationService>(
   (ref) => LocalNotificationService(),
+);
+
+/// Sign in with Google (#37); the Web client id comes from
+/// `dart_defines.local.json`, never from the source.
+final googleAuthServiceProvider = Provider<GoogleAuthService>(
+  (ref) => PluginGoogleAuthService(),
 );
 
 /// The id of the user who still has the setup wizard ahead, or null.

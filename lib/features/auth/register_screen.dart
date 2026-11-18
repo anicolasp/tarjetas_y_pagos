@@ -6,6 +6,7 @@ import '../../data/repositories/auth_repository.dart';
 import '../../l10n/l10n.dart';
 import 'auth_controller.dart';
 import 'auth_widgets.dart';
+import 'google_sign_in_section.dart';
 import 'security_question_fields.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
@@ -25,6 +26,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _security = SecurityQuestionInput();
   var _loading = false;
 
+  /// "Continuar con Google" in progress: no second account at once.
+  var _googleBusy = false;
+
   /// Server-side style error shown under the email field.
   String? _emailError;
 
@@ -39,7 +43,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   Future<void> _submit() async {
     setState(() => _emailError = null);
-    if (_loading || !_form.currentState!.validate()) return;
+    if (_loading || _googleBusy || !_form.currentState!.validate()) return;
     setState(() => _loading = true);
     try {
       await ref
@@ -181,6 +185,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           label: l.createAccount,
           loading: _loading,
           onPressed: _submit,
+        ),
+        GoogleSignInSection(
+          keyPrefix: 'register',
+          enabled: !_loading,
+          onBusyChanged: (busy) => setState(() => _googleBusy = busy),
         ),
       ],
     );
