@@ -331,8 +331,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               key: ValueKey('profile.textSize.${size.name}'),
                               label: Text(label),
                               selected: user.a11y.textSize == size,
-                              onSelected: (_) =>
-                                  _setA11y(user.a11y.copyWith(textSize: size)),
+                              onSelected: _busy || user.a11y.textSize == size
+                                  ? null
+                                  : (_) => _setA11y(
+                                      user.a11y.copyWith(textSize: size),
+                                    ),
                             ),
                         ],
                       ),
@@ -438,7 +441,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 }
 
-/// The label above a group of chips inside a section.
 /// A sample line with the current accessibility settings; the whole app
 /// changes at once, so it updates with them.
 class _A11yPreview extends StatelessWidget {
@@ -483,6 +485,7 @@ class _A11yPreview extends StatelessWidget {
   }
 }
 
+/// The label above a group of chips inside a section.
 class _FieldLabel extends StatelessWidget {
   const _FieldLabel(this.text);
 

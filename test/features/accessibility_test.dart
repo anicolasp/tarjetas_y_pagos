@@ -122,8 +122,7 @@ void main() {
     ).getById(user.id!);
     expect(saved!.a11y, all);
     final prefs = await SharedPreferences.getInstance();
-    expect(prefs.getString('last_text_size'), 'xlarge');
-    expect(prefs.getBool('last_high_contrast'), isTrue);
+    expect(A11ySettings.decode(prefs.getString('last_a11y')), all);
 
     // Other screens get them too.
     GoRouter.of(context).go('/home');
@@ -187,9 +186,11 @@ void main() {
       tester,
       path: null,
       prefs: {
-        'last_text_size': 'xlarge',
-        'last_legible_font': true,
-        'last_high_contrast': true,
+        'last_a11y': const A11ySettings(
+          textSize: TextSize.xlarge,
+          legibleFont: true,
+          highContrast: true,
+        ).encode(),
       },
     );
     final login = screen(tester, 'login.root');
@@ -284,10 +285,9 @@ void main() {
                   _ => path,
                 },
                 prefs: {
-                  'last_text_size': 'xlarge',
-                  'last_legible_font': true,
-                  'last_bold_text': true,
-                  'last_high_contrast': contrast,
+                  'last_a11y': biggest
+                      .copyWith(highContrast: contrast)
+                      .encode(),
                 },
               );
               expect(tester.takeException(), isNull);

@@ -33,10 +33,16 @@ Color readableOn(
 
 /// The green of paid amounts, readable as text (AA) on every surface of
 /// [scheme], high contrast included.
-Color paidColor(ColorScheme scheme) => readableOn(
-  const Color(0xFF2E7D32),
+/// Cached per surface: the app only has a few themes.
+Color paidColor(ColorScheme scheme) => _paidColors.putIfAbsent(
   // The darkest surface in light mode, the lightest in dark mode: the
   // worst case for this green on any card or list.
   scheme.surfaceContainerHighest,
-  minRatio: textContrast,
+  () => readableOn(
+    const Color(0xFF2E7D32),
+    scheme.surfaceContainerHighest,
+    minRatio: textContrast,
+  ),
 );
+
+final _paidColors = <Color, Color>{};

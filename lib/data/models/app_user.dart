@@ -72,12 +72,7 @@ class AppUser {
       m['security_question'] as String?,
     ),
     googleSub: m['google_sub'] as String?,
-    a11y: A11ySettings(
-      textSize: TextSize.fromName(m['text_size'] as String?),
-      legibleFont: decodeBool(m['legible_font']),
-      boldText: decodeBool(m['bold_text']),
-      highContrast: decodeBool(m['high_contrast']),
-    ),
+    a11y: A11ySettings.fromColumns(m),
     createdAt: decodeTimestamp(m['created_at'] as String),
   );
 
@@ -95,10 +90,7 @@ class AppUser {
     'language': language.code,
     'security_question': securityQuestion?.encode(),
     'google_sub': googleSub,
-    'text_size': a11y.textSize.name,
-    'legible_font': encodeBool(a11y.legibleFont),
-    'bold_text': encodeBool(a11y.boldText),
-    'high_contrast': encodeBool(a11y.highContrast),
+    ...a11y.toColumns(),
     'created_at': encodeTimestamp(createdAt),
   };
 

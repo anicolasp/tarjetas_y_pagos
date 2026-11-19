@@ -37,6 +37,40 @@ class A11ySettings {
   final bool boldText;
   final bool highContrast;
 
+  /// From the `users` columns (v6).
+  factory A11ySettings.fromColumns(Map<String, Object?> m) => A11ySettings(
+    textSize: TextSize.fromName(m['text_size'] as String?),
+    legibleFont: m['legible_font'] == 1,
+    boldText: m['bold_text'] == 1,
+    highContrast: m['high_contrast'] == 1,
+  );
+
+  /// The `users` columns (v6).
+  Map<String, Object> toColumns() => {
+    'text_size': textSize.name,
+    'legible_font': legibleFont ? 1 : 0,
+    'bold_text': boldText ? 1 : 0,
+    'high_contrast': highContrast ? 1 : 0,
+  };
+
+  /// One string, so the pre-login copy is always saved whole.
+  String encode() => [
+    textSize.name,
+    for (final on in [legibleFont, boldText, highContrast]) on ? '1' : '0',
+  ].join(',');
+
+  /// [encode]'s output; anything else gives the defaults.
+  static A11ySettings decode(String? value) {
+    final parts = value?.split(',') ?? const [];
+    if (parts.length != 4) return const A11ySettings();
+    return A11ySettings(
+      textSize: TextSize.fromName(parts[0]),
+      legibleFont: parts[1] == '1',
+      boldText: parts[2] == '1',
+      highContrast: parts[3] == '1',
+    );
+  }
+
   A11ySettings copyWith({
     TextSize? textSize,
     bool? legibleFont,

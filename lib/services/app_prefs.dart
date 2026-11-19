@@ -12,10 +12,7 @@ class AppPrefs {
   static const _lastThemeKey = 'last_theme_mode';
   static const _setupPendingKey = 'setup_pending_user';
   static const _lastLanguageKey = 'last_language';
-  static const _lastTextSizeKey = 'last_text_size';
-  static const _lastLegibleFontKey = 'last_legible_font';
-  static const _lastBoldTextKey = 'last_bold_text';
-  static const _lastHighContrastKey = 'last_high_contrast';
+  static const _lastA11yKey = 'last_a11y';
 
   final SharedPreferences _prefs;
 
@@ -42,19 +39,11 @@ class AppPrefs {
 
   /// The accessibility settings of the last user (#38), for the screens
   /// before login.
-  A11ySettings get lastA11y => A11ySettings(
-    textSize: TextSize.fromName(_prefs.getString(_lastTextSizeKey)),
-    legibleFont: _prefs.getBool(_lastLegibleFontKey) ?? false,
-    boldText: _prefs.getBool(_lastBoldTextKey) ?? false,
-    highContrast: _prefs.getBool(_lastHighContrastKey) ?? false,
-  );
+  A11ySettings get lastA11y =>
+      A11ySettings.decode(_prefs.getString(_lastA11yKey));
 
-  Future<void> setLastA11y(A11ySettings a11y) async {
-    await _prefs.setString(_lastTextSizeKey, a11y.textSize.name);
-    await _prefs.setBool(_lastLegibleFontKey, a11y.legibleFont);
-    await _prefs.setBool(_lastBoldTextKey, a11y.boldText);
-    await _prefs.setBool(_lastHighContrastKey, a11y.highContrast);
-  }
+  Future<void> setLastA11y(A11ySettings a11y) =>
+      _prefs.setString(_lastA11yKey, a11y.encode());
 
   /// The user who registered and has not finished (or skipped) the setup
   /// wizard yet.

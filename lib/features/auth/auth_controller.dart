@@ -305,10 +305,10 @@ class AuthController extends Notifier<AuthState> {
   /// The logged-in user after a change: every screen sees it at once.
   void _setUser(AppUser user) {
     state = AuthLoggedIn(user);
-    ref.read(appPrefsProvider)
+    final prefs = ref.read(appPrefsProvider)
       ..setLastThemeMode(user.themeMode)
-      ..setLastLanguage(user.language)
-      ..setLastA11y(user.a11y);
+      ..setLastLanguage(user.language);
+    if (prefs.lastA11y != user.a11y) prefs.setLastA11y(user.a11y);
   }
 
   /// [user] after a profile edit, unless the session ended (logout) or

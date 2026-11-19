@@ -24,6 +24,21 @@ void main() {
     expect(TextSize.fromName('huge'), TextSize.normal);
   });
 
+  test('settings encode to one string and back; bad input is default', () {
+    const all = A11ySettings(
+      textSize: TextSize.large,
+      legibleFont: true,
+      highContrast: true,
+    );
+    expect(A11ySettings.decode(all.encode()), all);
+    expect(
+      A11ySettings.decode(const A11ySettings().encode()),
+      const A11ySettings(),
+    );
+    expect(A11ySettings.decode(null), const A11ySettings());
+    expect(A11ySettings.decode('xlarge,1'), const A11ySettings());
+  });
+
   test('multiplies the phone size', () {
     const phone = TextScaler.linear(1.2);
     expect(const AppTextScaler(phone, 1).scale(10), closeTo(12, 1e-9));

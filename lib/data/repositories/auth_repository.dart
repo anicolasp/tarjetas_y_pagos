@@ -252,12 +252,7 @@ class AuthRepository {
       'language': ?language?.code,
       if (biometricEnabled != null)
         'biometric_enabled': biometricEnabled ? 1 : 0,
-      if (a11y != null) ...{
-        'text_size': a11y.textSize.name,
-        'legible_font': a11y.legibleFont ? 1 : 0,
-        'bold_text': a11y.boldText ? 1 : 0,
-        'high_contrast': a11y.highContrast ? 1 : 0,
-      },
+      ...?a11y?.toColumns(),
     });
   }
 
