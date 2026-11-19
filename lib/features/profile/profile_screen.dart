@@ -331,11 +331,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               key: ValueKey('profile.textSize.${size.name}'),
                               label: Text(label),
                               selected: user.a11y.textSize == size,
-                              onSelected: _busy || user.a11y.textSize == size
+                              // The selected chip stays enabled so it reads
+                              // as selected, not greyed out; tapping it
+                              // again saves nothing.
+                              onSelected: _busy
                                   ? null
-                                  : (_) => _setA11y(
-                                      user.a11y.copyWith(textSize: size),
-                                    ),
+                                  : (_) => user.a11y.textSize == size
+                                        ? null
+                                        : _setA11y(
+                                            user.a11y.copyWith(textSize: size),
+                                          ),
                             ),
                         ],
                       ),

@@ -205,13 +205,19 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
         appBar: AppBar(
           title: Text(context.l10n.reports),
           bottom: TabBar(
+            // With very large text the two labels no longer fit side by
+            // side: scroll instead of fading them out (#38).
+            isScrollable: _largeText(context),
+            tabAlignment: _largeText(context) ? TabAlignment.start : null,
             tabs: [
               Tab(
                 key: const ValueKey('reports.tabSummary'),
+                height: _tabHeight(context),
                 text: context.l10n.reportsSummary,
               ),
               Tab(
                 key: const ValueKey('reports.tabList'),
+                height: _tabHeight(context),
                 text: context.l10n.movementsTab,
               ),
             ],
@@ -305,13 +311,13 @@ class _FilterBar extends StatelessWidget {
             ActionChip(
               key: const ValueKey('reports.period'),
               avatar: const Icon(Icons.date_range, size: 18),
-              label: Text(context.l10n.reportPeriod(period)),
+              label: _ChipText(context.l10n.reportPeriod(period)),
               onPressed: onPeriod,
             ),
             ActionChip(
               key: const ValueKey('reports.cards'),
               avatar: const Icon(Icons.credit_card, size: 18),
-              label: Text(
+              label: _ChipText(
                 cardIds.isEmpty
                     ? context.l10n.allCards
                     : context.l10n.cardsCount(cardIds.length),
@@ -321,7 +327,7 @@ class _FilterBar extends StatelessWidget {
             ActionChip(
               key: const ValueKey('reports.moreFilters'),
               avatar: const Icon(Icons.tune, size: 18),
-              label: Text(context.l10n.moreFilters),
+              label: _ChipText(context.l10n.moreFilters),
               onPressed: onMore,
             ),
           ],
@@ -709,3 +715,26 @@ class _Message extends StatelessWidget {
     );
   }
 }
+
+/// True when the text scale (phone times the app's size, #38) is so large
+/// that fixed-width rows of labels stop fitting.
+bool _largeText(BuildContext context) =>
+    MediaQuery.textScalerOf(context).scale(10) > 20;
+
+/// A chip label that shrinks just enough to fit the screen instead of
+/// fading out with very large text (chips have a fixed height, so the text
+/// cannot wrap).
+class _ChipText extends StatelessWidget {
+  const _ChipText(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) =>
+      FittedBox(fit: BoxFit.scaleDown, child: Text(text));
+}
+
+/// Tabs have a fixed height: grow it with very large text.
+double? _tabHeight(BuildContext context) => _largeText(context)
+    ? MediaQuery.textScalerOf(context).scale(14) * 1.5 + 16
+    : null;

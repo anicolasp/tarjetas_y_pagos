@@ -50,16 +50,17 @@ class CreditCardTile extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              // Wrap: with very large text the brand moves below the bank
+              // instead of splitting the bank name mid-word.
+              Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                spacing: 8,
+                runSpacing: 4,
                 children: [
-                  Expanded(
-                    child: Text(
-                      card.bank,
-                      style: text.labelLarge?.copyWith(color: muted),
-                    ),
+                  Text(
+                    card.bank,
+                    style: text.labelLarge?.copyWith(color: muted),
                   ),
-                  const SizedBox(width: 8),
                   BrandMark(card.brand),
                 ],
               ),

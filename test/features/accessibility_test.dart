@@ -206,6 +206,35 @@ void main() {
     expect(MediaQuery.boldTextOf(screen(tester, 'profile.root')), isTrue);
   });
 
+  testWidgets('at x3, Home shortcuts take one column and Reports tabs '
+      'scroll instead of fading', (tester) async {
+    setScreen(tester, const Size(360, 640), 2);
+    await setA11y(const A11ySettings(textSize: TextSize.xlarge));
+    await start(tester, path: null);
+    final cards = tester.getTopLeft(key('home.quick.cards'));
+    final expense = tester.getTopLeft(key('home.quick.expense'));
+    expect(expense.dx, cards.dx);
+    expect(expense.dy, greaterThan(cards.dy));
+
+    GoRouter.of(screen(tester, 'home.root')).push('/home/reports');
+    await tester.pumpAndSettle();
+    expect(tester.widget<TabBar>(find.byType(TabBar)).isScrollable, isTrue);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('at normal size, Home keeps two columns and fixed tabs', (
+    tester,
+  ) async {
+    setScreen(tester, const Size(360, 640), 1);
+    await start(tester, path: null);
+    final cards = tester.getTopLeft(key('home.quick.cards'));
+    final expense = tester.getTopLeft(key('home.quick.expense'));
+    expect(expense.dy, cards.dy);
+    GoRouter.of(screen(tester, 'home.root')).push('/home/reports');
+    await tester.pumpAndSettle();
+    expect(tester.widget<TabBar>(find.byType(TabBar)).isScrollable, isFalse);
+  });
+
   group('high contrast meets AA (text 4.5:1)', () {
     for (final brightness in Brightness.values) {
       for (final (name, path, root) in [
