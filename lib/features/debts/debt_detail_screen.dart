@@ -11,6 +11,7 @@ import '../../l10n/l10n.dart';
 import '../auth/auth_widgets.dart';
 import '../cards/cards_providers.dart';
 import '../expenses/widgets/movement_tile.dart';
+import '../reports/chart_colors.dart';
 import 'debts_screen.dart';
 
 /// A debt: its figures, "Registrar abono" and the payment history (a
@@ -62,7 +63,7 @@ class DebtDetailScreen extends ConsumerWidget {
     final d = summary.debt;
     final payments = snapshot.paymentsOfDebt(debtId);
     final text = Theme.of(context).textTheme;
-    const paid = Color(0xFF2E7D32); // reads in both themes
+    final paid = paidColor(Theme.of(context).colorScheme);
 
     return Scaffold(
       key: const ValueKey('debtDetail.root'),
@@ -108,7 +109,7 @@ class DebtDetailScreen extends ConsumerWidget {
                   Row(
                     key: const ValueKey('debtDetail.settled'),
                     children: [
-                      const Icon(Icons.check_circle, color: paid),
+                      Icon(Icons.check_circle, color: paid),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(

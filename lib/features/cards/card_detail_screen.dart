@@ -20,6 +20,7 @@ import '../../l10n/l10n.dart';
 import '../auth/auth_widgets.dart';
 import '../expenses/expense_filter_sheet.dart';
 import '../expenses/widgets/movement_tile.dart';
+import '../reports/chart_colors.dart';
 import 'cards_providers.dart';
 import 'recommendation_text.dart';
 import 'widgets/credit_card_tile.dart';
@@ -492,8 +493,7 @@ class _PaymentTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Fixed green that reads well in both themes.
-    const paid = Color(0xFF2E7D32);
+    final paid = paidColor(Theme.of(context).colorScheme);
     return MovementTile(
       key: ValueKey('cardDetail.payment.${payment.id}'),
       icon: Icons.check_circle_outline,

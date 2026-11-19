@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart' show ThemeMode;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../core/accessibility.dart';
 import '../core/language.dart';
 
 /// Non-sensitive app flags.
@@ -11,6 +12,10 @@ class AppPrefs {
   static const _lastThemeKey = 'last_theme_mode';
   static const _setupPendingKey = 'setup_pending_user';
   static const _lastLanguageKey = 'last_language';
+  static const _lastTextSizeKey = 'last_text_size';
+  static const _lastLegibleFontKey = 'last_legible_font';
+  static const _lastBoldTextKey = 'last_bold_text';
+  static const _lastHighContrastKey = 'last_high_contrast';
 
   final SharedPreferences _prefs;
 
@@ -34,6 +39,22 @@ class AppPrefs {
 
   Future<void> setLastLanguage(AppLanguage language) =>
       _prefs.setString(_lastLanguageKey, language.code);
+
+  /// The accessibility settings of the last user (#38), for the screens
+  /// before login.
+  A11ySettings get lastA11y => A11ySettings(
+    textSize: TextSize.fromName(_prefs.getString(_lastTextSizeKey)),
+    legibleFont: _prefs.getBool(_lastLegibleFontKey) ?? false,
+    boldText: _prefs.getBool(_lastBoldTextKey) ?? false,
+    highContrast: _prefs.getBool(_lastHighContrastKey) ?? false,
+  );
+
+  Future<void> setLastA11y(A11ySettings a11y) async {
+    await _prefs.setString(_lastTextSizeKey, a11y.textSize.name);
+    await _prefs.setBool(_lastLegibleFontKey, a11y.legibleFont);
+    await _prefs.setBool(_lastBoldTextKey, a11y.boldText);
+    await _prefs.setBool(_lastHighContrastKey, a11y.highContrast);
+  }
 
   /// The user who registered and has not finished (or skipped) the setup
   /// wizard yet.

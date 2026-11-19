@@ -2,6 +2,7 @@ import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/accessibility.dart';
 import '../../core/language.dart';
 import '../../core/money.dart';
 import '../../core/security_question.dart';
@@ -60,6 +61,15 @@ final themeModeProvider = Provider<ThemeMode>((ref) {
   return switch (ref.watch(authControllerProvider)) {
     AuthLoggedIn(:final user) || AuthNeedsUnlock(:final user) => user.themeMode,
     _ => ref.watch(appPrefsProvider).lastThemeMode,
+  };
+});
+
+/// The accessibility settings (#38): the user's, or the last user's before
+/// login.
+final a11yProvider = Provider<A11ySettings>((ref) {
+  return switch (ref.watch(authControllerProvider)) {
+    AuthLoggedIn(:final user) || AuthNeedsUnlock(:final user) => user.a11y,
+    _ => ref.watch(appPrefsProvider).lastA11y,
   };
 });
 
@@ -297,7 +307,8 @@ class AuthController extends Notifier<AuthState> {
     state = AuthLoggedIn(user);
     ref.read(appPrefsProvider)
       ..setLastThemeMode(user.themeMode)
-      ..setLastLanguage(user.language);
+      ..setLastLanguage(user.language)
+      ..setLastA11y(user.a11y);
   }
 
   /// [user] after a profile edit, unless the session ended (logout) or
@@ -377,6 +388,7 @@ class AuthController extends Notifier<AuthState> {
     Currency? defaultCurrency,
     int? notifyDaysBefore,
     AppLanguage? language,
+    A11ySettings? a11y,
   }) async => _updateUser(
     await (await _repo).updatePreferences(
       _user.id!,
@@ -384,6 +396,7 @@ class AuthController extends Notifier<AuthState> {
       defaultCurrency: defaultCurrency,
       notifyDaysBefore: notifyDaysBefore,
       language: language,
+      a11y: a11y,
     ),
   );
 

@@ -1528,4 +1528,35 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get googleAlreadyLinked =>
       'Esta cuenta ya está vinculada a otra cuenta de Google.';
+
+  @override
+  String get sectionAccessibility => 'Accesibilidad';
+
+  @override
+  String get textSizeLabel => 'Tamaño de letra';
+
+  @override
+  String get textSizeNormal => 'Normal';
+
+  @override
+  String get textSizeLarge => 'Grande';
+
+  @override
+  String get textSizeXlarge => 'Muy grande';
+
+  @override
+  String get legibleFont => 'Letra legible';
+
+  @override
+  String get legibleFontSubtitle =>
+      'Atkinson Hyperlegible, pensada para baja visión';
+
+  @override
+  String get boldText => 'Negritas';
+
+  @override
+  String get highContrast => 'Alto contraste';
+
+  @override
+  String get a11yPreviewLabel => 'Así se verá:';
 }

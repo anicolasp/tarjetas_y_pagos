@@ -3,13 +3,25 @@ import 'package:flutter/material.dart';
 /// Brand seed: financial teal.
 const brandSeed = Color(0xFF0F766E);
 
-ThemeData buildTheme(Brightness brightness) {
+/// The bundled legible font (#38, `assets/fonts/`).
+const legibleFontFamily = 'AtkinsonHyperlegible';
+
+/// The app theme. [highContrast] is the same seed at maximum contrast (WCAG
+/// AA or better) with solid, outlined fields; [legibleFont] swaps the font
+/// for Atkinson Hyperlegible (#38).
+ThemeData buildTheme(
+  Brightness brightness, {
+  bool highContrast = false,
+  bool legibleFont = false,
+}) {
   final scheme = ColorScheme.fromSeed(
     seedColor: brandSeed,
     brightness: brightness,
+    contrastLevel: highContrast ? 1 : 0,
   );
   return ThemeData(
     colorScheme: scheme,
+    fontFamily: legibleFont ? legibleFontFamily : null,
     scaffoldBackgroundColor: scheme.surface,
     appBarTheme: AppBarTheme(
       backgroundColor: scheme.surface,
@@ -24,11 +36,22 @@ ThemeData buildTheme(Brightness brightness) {
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
+      fillColor: highContrast
+          ? scheme.surface
+          : scheme.surfaceContainerHighest.withValues(alpha: 0.5),
+      // High contrast: every field shows its edge (3:1 for components).
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide.none,
+        borderSide: highContrast
+            ? BorderSide(color: scheme.outline)
+            : BorderSide.none,
       ),
+      enabledBorder: highContrast
+          ? OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: scheme.outline),
+            )
+          : null,
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(

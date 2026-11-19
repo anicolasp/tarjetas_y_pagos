@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/accessibility.dart';
+import '../../core/formatters.dart';
 import '../../core/greeting.dart';
 import '../../core/language.dart';
 import '../../core/money.dart';
@@ -48,6 +50,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       if (mounted) setState(() => _busy = false);
     }
   }
+
+  Future<void> _setA11y(A11ySettings a11y) =>
+      _run(() => _auth.updatePreferences(a11y: a11y));
 
   Future<void> _toggleBiometrics(bool on) => _run(() async {
     if (!on) return _auth.disableBiometrics();
@@ -124,7 +129,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     foregroundColor: scheme.onPrimaryContainer,
                     child: Text(
                       initialsOf(user.firstName, user.lastName),
-                      style: text.headlineSmall,
+                      // The theme text color would win over the avatar's.
+                      style: text.headlineSmall?.copyWith(
+                        color: scheme.onPrimaryContainer,
+                      ),
                       textScaler: TextScaler.noScaling,
                     ),
                   ),
@@ -304,6 +312,66 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
                 gap,
                 _Section(
+                  title: l.sectionAccessibility,
+                  children: [
+                    _FieldLabel(l.textSizeLabel),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                      child: Wrap(
+                        key: const ValueKey('profile.textSize'),
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          for (final (size, label) in [
+                            (TextSize.normal, l.textSizeNormal),
+                            (TextSize.large, l.textSizeLarge),
+                            (TextSize.xlarge, l.textSizeXlarge),
+                          ])
+                            ChoiceChip(
+                              key: ValueKey('profile.textSize.${size.name}'),
+                              label: Text(label),
+                              selected: user.a11y.textSize == size,
+                              onSelected: (_) =>
+                                  _setA11y(user.a11y.copyWith(textSize: size)),
+                            ),
+                        ],
+                      ),
+                    ),
+                    SwitchListTile(
+                      key: const ValueKey('profile.legibleFont'),
+                      secondary: const Icon(Icons.font_download_outlined),
+                      title: Text(l.legibleFont),
+                      subtitle: Text(l.legibleFontSubtitle),
+                      value: user.a11y.legibleFont,
+                      onChanged: _busy
+                          ? null
+                          : (on) =>
+                                _setA11y(user.a11y.copyWith(legibleFont: on)),
+                    ),
+                    SwitchListTile(
+                      key: const ValueKey('profile.boldText'),
+                      secondary: const Icon(Icons.format_bold),
+                      title: Text(l.boldText),
+                      value: user.a11y.boldText,
+                      onChanged: _busy
+                          ? null
+                          : (on) => _setA11y(user.a11y.copyWith(boldText: on)),
+                    ),
+                    SwitchListTile(
+                      key: const ValueKey('profile.highContrast'),
+                      secondary: const Icon(Icons.contrast),
+                      title: Text(l.highContrast),
+                      value: user.a11y.highContrast,
+                      onChanged: _busy
+                          ? null
+                          : (on) =>
+                                _setA11y(user.a11y.copyWith(highContrast: on)),
+                    ),
+                    const _A11yPreview(),
+                  ],
+                ),
+                gap,
+                _Section(
                   title: l.sectionPreferences,
                   children: [
                     _FieldLabel(l.defaultCurrency),
@@ -371,6 +439,50 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 }
 
 /// The label above a group of chips inside a section.
+/// A sample line with the current accessibility settings; the whole app
+/// changes at once, so it updates with them.
+class _A11yPreview extends StatelessWidget {
+  const _A11yPreview();
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(l.a11yPreviewLabel, style: theme.textTheme.bodySmall),
+          const SizedBox(height: 6),
+          DecoratedBox(
+            key: const ValueKey('profile.a11yPreview'),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
+              border: Border.all(color: theme.colorScheme.outline),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                spacing: 8,
+                children: [
+                  Text(l.spentThisMonth, style: theme.textTheme.bodyLarge),
+                  Text(
+                    formatMoney(125000, Currency.dop),
+                    style: theme.textTheme.titleMedium,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _FieldLabel extends StatelessWidget {
   const _FieldLabel(this.text);
 

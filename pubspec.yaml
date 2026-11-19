@@ -74,6 +74,20 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
+  # Atkinson Hyperlegible (SIL OFL 1.1, assets/fonts/OFL.txt): the
+  # "Letra legible" option in Mi perfil (#38).
+  fonts:
+    - family: AtkinsonHyperlegible
+      fonts:
+        - asset: assets/fonts/AtkinsonHyperlegible-Regular.ttf
+        - asset: assets/fonts/AtkinsonHyperlegible-Italic.ttf
+          style: italic
+        - asset: assets/fonts/AtkinsonHyperlegible-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/AtkinsonHyperlegible-BoldItalic.ttf
+          weight: 700
+          style: italic
+
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg

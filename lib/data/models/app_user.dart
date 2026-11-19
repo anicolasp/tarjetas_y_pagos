@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart' show ThemeMode;
 
+import '../../core/accessibility.dart';
 import '../../core/language.dart';
 import '../../core/money.dart';
 import '../../core/security_question.dart';
@@ -20,6 +21,7 @@ class AppUser {
     this.language = AppLanguage.es,
     this.securityQuestion,
     this.googleSub,
+    this.a11y = const A11ySettings(),
     required this.createdAt,
   });
 
@@ -49,6 +51,9 @@ class AppUser {
   /// False for an account created with Google that has not set one: its
   /// hash and salt are stored empty.
   bool get hasPassword => passwordHash.isNotEmpty;
+
+  /// Text size, legible font, bold and high contrast (#38).
+  final A11ySettings a11y;
   final DateTime createdAt;
 
   factory AppUser.fromMap(Map<String, Object?> m) => AppUser(
@@ -67,6 +72,12 @@ class AppUser {
       m['security_question'] as String?,
     ),
     googleSub: m['google_sub'] as String?,
+    a11y: A11ySettings(
+      textSize: TextSize.fromName(m['text_size'] as String?),
+      legibleFont: decodeBool(m['legible_font']),
+      boldText: decodeBool(m['bold_text']),
+      highContrast: decodeBool(m['high_contrast']),
+    ),
     createdAt: decodeTimestamp(m['created_at'] as String),
   );
 
@@ -84,6 +95,10 @@ class AppUser {
     'language': language.code,
     'security_question': securityQuestion?.encode(),
     'google_sub': googleSub,
+    'text_size': a11y.textSize.name,
+    'legible_font': encodeBool(a11y.legibleFont),
+    'bold_text': encodeBool(a11y.boldText),
+    'high_contrast': encodeBool(a11y.highContrast),
     'created_at': encodeTimestamp(createdAt),
   };
 
@@ -101,6 +116,7 @@ class AppUser {
     AppLanguage? language,
     SecurityQuestion? securityQuestion,
     String? googleSub,
+    A11ySettings? a11y,
   }) => AppUser(
     id: id ?? this.id,
     firstName: firstName ?? this.firstName,
@@ -115,6 +131,7 @@ class AppUser {
     language: language ?? this.language,
     securityQuestion: securityQuestion ?? this.securityQuestion,
     googleSub: googleSub ?? this.googleSub,
+    a11y: a11y ?? this.a11y,
     createdAt: createdAt,
   );
 }

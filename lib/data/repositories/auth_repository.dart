@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart' show StringCharacters, ThemeMode;
 import 'package:sqflite/sqflite.dart';
 
+import '../../core/accessibility.dart';
 import '../../core/language.dart';
 import '../../core/money.dart';
 import '../../core/security_question.dart';
@@ -231,6 +232,7 @@ class AuthRepository {
     int? notifyDaysBefore,
     bool? biometricEnabled,
     AppLanguage? language,
+    A11ySettings? a11y,
   }) {
     if (notifyDaysBefore != null &&
         (notifyDaysBefore < notifyDaysRange.min ||
@@ -250,6 +252,12 @@ class AuthRepository {
       'language': ?language?.code,
       if (biometricEnabled != null)
         'biometric_enabled': biometricEnabled ? 1 : 0,
+      if (a11y != null) ...{
+        'text_size': a11y.textSize.name,
+        'legible_font': a11y.legibleFont ? 1 : 0,
+        'bold_text': a11y.boldText ? 1 : 0,
+        'high_contrast': a11y.highContrast ? 1 : 0,
+      },
     });
   }
 

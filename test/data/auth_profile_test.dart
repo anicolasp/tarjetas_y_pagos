@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:tarjetas_y_pagos/core/accessibility.dart';
 import 'package:tarjetas_y_pagos/core/money.dart';
 import 'package:tarjetas_y_pagos/data/database.dart';
 import 'package:tarjetas_y_pagos/data/models/app_user.dart';
@@ -202,6 +203,23 @@ void main() {
       () => repo.updatePreferences(ana.id!, notifyDaysBefore: -1),
       throwsArgumentError,
     );
+  });
+
+  test('accessibility settings are saved together, per user (#38)', () async {
+    const a11y = A11ySettings(
+      textSize: TextSize.xlarge,
+      legibleFont: true,
+      boldText: true,
+      highContrast: true,
+    );
+    var u = await repo.updatePreferences(ana.id!, a11y: a11y);
+    expect(u.a11y, a11y);
+    expect((await repo.getById(ana.id!))!.a11y, a11y);
+    // Other preferences leave them alone.
+    u = await repo.updatePreferences(ana.id!, themeMode: ThemeMode.dark);
+    expect(u.a11y, a11y);
+    final otra = await repo.login('otra@example.com', 'xyz98765');
+    expect(otra.a11y, const A11ySettings());
   });
 
   test('changes only touch the given user', () async {

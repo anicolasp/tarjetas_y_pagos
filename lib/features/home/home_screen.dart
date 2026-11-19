@@ -80,13 +80,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   gap,
                   const _QuickAccess(),
                   gap,
-                  Row(
+                  // Wrap: with very large text the button moves below.
+                  Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      Expanded(
-                        child: Text(
-                          context.l10n.myCards,
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
+                      Text(
+                        context.l10n.myCards,
+                        style: Theme.of(context).textTheme.titleMedium,
                       ),
                       if (ranked.isNotEmpty)
                         TextButton(
