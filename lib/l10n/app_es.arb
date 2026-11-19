@@ -895,5 +895,15 @@
   "setPasswordHint": "Para entrar también sin Google o sin internet.",
   "passwordCreated": "Contraseña creada",
   "googleOnlyAccount": "Esta cuenta se creó con Google: entra con \"Continuar con Google\".",
-  "googleAlreadyLinked": "Esta cuenta ya está vinculada a otra cuenta de Google."
+  "googleAlreadyLinked": "Esta cuenta ya está vinculada a otra cuenta de Google.",
+  "sectionAccessibility": "Accesibilidad",
+  "textSizeLabel": "Tamaño de letra",
+  "textSizeNormal": "Normal",
+  "textSizeLarge": "Grande",
+  "textSizeXlarge": "Muy grande",
+  "legibleFont": "Letra legible",
+  "legibleFontSubtitle": "Atkinson Hyperlegible, pensada para baja visión",
+  "boldText": "Negritas",
+  "highContrast": "Alto contraste",
+  "a11yPreviewLabel": "Así se verá:"
 }

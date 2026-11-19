@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart' show ThemeMode;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../core/accessibility.dart';
 import '../core/language.dart';
 
 /// Non-sensitive app flags.
@@ -11,6 +12,7 @@ class AppPrefs {
   static const _lastThemeKey = 'last_theme_mode';
   static const _setupPendingKey = 'setup_pending_user';
   static const _lastLanguageKey = 'last_language';
+  static const _lastA11yKey = 'last_a11y';
 
   final SharedPreferences _prefs;
 
@@ -34,6 +36,14 @@ class AppPrefs {
 
   Future<void> setLastLanguage(AppLanguage language) =>
       _prefs.setString(_lastLanguageKey, language.code);
+
+  /// The accessibility settings of the last user (#38), for the screens
+  /// before login.
+  A11ySettings get lastA11y =>
+      A11ySettings.decode(_prefs.getString(_lastA11yKey));
+
+  Future<void> setLastA11y(A11ySettings a11y) =>
+      _prefs.setString(_lastA11yKey, a11y.encode());
 
   /// The user who registered and has not finished (or skipped) the setup
   /// wizard yet.

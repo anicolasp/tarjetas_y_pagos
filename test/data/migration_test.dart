@@ -2,8 +2,10 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:tarjetas_y_pagos/core/accessibility.dart';
 import 'package:tarjetas_y_pagos/core/money.dart';
 import 'package:tarjetas_y_pagos/data/database.dart';
+import 'package:tarjetas_y_pagos/data/models/app_user.dart';
 import 'package:tarjetas_y_pagos/data/models/credit_card.dart';
 import 'package:tarjetas_y_pagos/data/models/expense.dart';
 
@@ -181,5 +183,31 @@ void main() {
       throwsA(isA<DatabaseException>()),
     );
     await v5.close();
+  });
+
+  test('v5 → v6: existing users keep their data with default '
+      'accessibility settings', () async {
+    final v5 = await openAt(5);
+    await v5.db.insert('users', {
+      'first_name': 'Ana',
+      'last_name': 'Prueba',
+      'email': 'ana@example.com',
+      'password_hash': 'h',
+      'salt': 's',
+      'language': 'en',
+      'created_at': '2026-01-01T00:00:00.000Z',
+    });
+    await v5.close();
+
+    final v6 = await openAt(null);
+    final row = (await v6.db.query('users')).single;
+    expect(row['email'], 'ana@example.com');
+    expect(row['language'], 'en');
+    expect(row['text_size'], 'normal');
+    expect(row['legible_font'], 0);
+    expect(row['bold_text'], 0);
+    expect(row['high_contrast'], 0);
+    expect(AppUser.fromMap(row).a11y, const A11ySettings());
+    await v6.close();
   });
 }

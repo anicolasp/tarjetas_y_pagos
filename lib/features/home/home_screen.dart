@@ -80,13 +80,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   gap,
                   const _QuickAccess(),
                   gap,
-                  Row(
+                  // Wrap: with very large text the button moves below.
+                  Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      Expanded(
-                        child: Text(
-                          context.l10n.myCards,
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
+                      Text(
+                        context.l10n.myCards,
+                        style: Theme.of(context).textTheme.titleMedium,
                       ),
                       if (ranked.isNotEmpty)
                         TextButton(
@@ -456,11 +457,17 @@ class _QuickAccess extends StatelessWidget {
       ),
     ];
 
-    // 2 columns on phones, 4 when there is room. Rows size to their content
-    // so labels can wrap with large text.
+    // 2 columns on phones, 4 when there is room, 1 with very large text
+    // (#38) so no label splits mid-word. Rows size to their content so
+    // labels can wrap with large text.
+    final hugeText = MediaQuery.textScalerOf(context).scale(10) > 25;
     return LayoutBuilder(
       builder: (context, constraints) {
-        final columns = constraints.maxWidth >= 520 ? 4 : 2;
+        final columns = constraints.maxWidth >= 520
+            ? 4
+            : hugeText
+            ? 1
+            : 2;
         final rows = <Widget>[];
         for (var i = 0; i < items.length; i += columns) {
           final row = items.skip(i).take(columns).toList();

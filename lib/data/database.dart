@@ -48,7 +48,7 @@ class AppDatabase {
 
 typedef _Migration = Future<void> Function(Database db);
 
-final List<_Migration> _migrations = [_v1, _v2, _v3, _v4, _v5];
+final List<_Migration> _migrations = [_v1, _v2, _v3, _v4, _v5, _v6];
 
 /// Base categories available to every user (`user_id IS NULL`).
 /// `icon` is a key resolved to a Material icon by the UI layer.
@@ -253,5 +253,20 @@ Future<void> _v5(Database db) async {
     'CREATE UNIQUE INDEX idx_users_google_sub ON users(google_sub) '
     'WHERE google_sub IS NOT NULL',
   );
+  await batch.commit(noResult: true);
+}
+
+/// v6 (#38): each user's accessibility settings, applied on top of the
+/// phone's own.
+Future<void> _v6(Database db) async {
+  final batch = db.batch();
+  batch.execute(
+    "ALTER TABLE users ADD COLUMN text_size TEXT NOT NULL DEFAULT 'normal'",
+  );
+  for (final column in ['legible_font', 'bold_text', 'high_contrast']) {
+    batch.execute(
+      'ALTER TABLE users ADD COLUMN $column INTEGER NOT NULL DEFAULT 0',
+    );
+  }
   await batch.commit(noResult: true);
 }

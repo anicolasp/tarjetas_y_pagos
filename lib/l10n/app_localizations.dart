@@ -2721,6 +2721,66 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Esta cuenta ya está vinculada a otra cuenta de Google.'**
   String get googleAlreadyLinked;
+
+  /// No description provided for @sectionAccessibility.
+  ///
+  /// In es, this message translates to:
+  /// **'Accesibilidad'**
+  String get sectionAccessibility;
+
+  /// No description provided for @textSizeLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Tamaño de letra'**
+  String get textSizeLabel;
+
+  /// No description provided for @textSizeNormal.
+  ///
+  /// In es, this message translates to:
+  /// **'Normal'**
+  String get textSizeNormal;
+
+  /// No description provided for @textSizeLarge.
+  ///
+  /// In es, this message translates to:
+  /// **'Grande'**
+  String get textSizeLarge;
+
+  /// No description provided for @textSizeXlarge.
+  ///
+  /// In es, this message translates to:
+  /// **'Muy grande'**
+  String get textSizeXlarge;
+
+  /// No description provided for @legibleFont.
+  ///
+  /// In es, this message translates to:
+  /// **'Letra legible'**
+  String get legibleFont;
+
+  /// No description provided for @legibleFontSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Atkinson Hyperlegible, pensada para baja visión'**
+  String get legibleFontSubtitle;
+
+  /// No description provided for @boldText.
+  ///
+  /// In es, this message translates to:
+  /// **'Negritas'**
+  String get boldText;
+
+  /// No description provided for @highContrast.
+  ///
+  /// In es, this message translates to:
+  /// **'Alto contraste'**
+  String get highContrast;
+
+  /// No description provided for @a11yPreviewLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Así se verá:'**
+  String get a11yPreviewLabel;
 }
 
 class _AppLocalizationsDelegate
