@@ -179,11 +179,11 @@ extension SpokenMoney on AppLocalizations {
   /// for `Text.semanticsLabel`. Null when [text] has no amount, so the
   /// text is read as it is.
   String? speakMoney(String text) {
-    if (!formattedMoney.hasMatch(text)) return null;
-    return text.replaceAllMapped(formattedMoney, (m) {
+    final spoken = text.replaceAllMapped(formattedMoney, (m) {
       final (:cents, :currency) = parseFormattedMoney(m);
       return moneySemantics(cents, currency);
     });
+    return identical(spoken, text) || spoken == text ? null : spoken;
   }
 }
 

@@ -40,7 +40,8 @@ class CreditCardTile extends StatelessWidget {
     // dominicanos", with the tap kept as its action.
     final spoken = [
       card.alias,
-      l.cardEndingIn(brand, card.last4),
+      // Digit by digit: "4 3 2 1", not "four thousand…".
+      l.cardEndingIn(brand, card.last4.split('').join(' ')),
       card.bank,
       l.cutOn(formatDate(recommendation.nextCut)),
       available.isEmpty ? l.availableNone : l.availableAmount(available),

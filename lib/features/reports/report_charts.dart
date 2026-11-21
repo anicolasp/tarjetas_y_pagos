@@ -166,6 +166,7 @@ class CategoryDonut extends StatelessWidget {
     // readable row by row.
     final donut = Semantics(
       label: context.l10n.chartDonutSemantics(
+        context.l10n.moneySemantics(total, currency),
         [
           for (final (i, s) in slices.indexed)
             '${s.label}, '
@@ -202,8 +203,8 @@ class CategoryDonut extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(36),
               child: FittedBox(
-                child: spokenText(
-                  context,
+                // Read in the chart summary above.
+                child: Text(
                   formatMoney(total, currency),
                   style: Theme.of(context).textTheme.titleMedium,
                 ),

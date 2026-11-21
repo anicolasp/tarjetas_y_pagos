@@ -1638,8 +1638,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get cardOtherBrand => 'Carte';
 
   @override
-  String chartDonutSemantics(String items) {
-    return 'Graphique circulaire par catégorie. $items';
+  String chartDonutSemantics(String total, String items) {
+    return 'Graphique circulaire par catégorie, total $total. $items';
   }
 
   @override

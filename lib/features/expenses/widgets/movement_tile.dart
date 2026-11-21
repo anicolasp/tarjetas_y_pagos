@@ -53,7 +53,8 @@ class MovementTile extends StatelessWidget {
                     children: [
                       Text(title, style: text.bodyLarge),
                       if (subtitle != null)
-                        Text(
+                        spokenText(
+                          context,
                           subtitle!,
                           style: text.bodySmall?.copyWith(
                             color: Theme.of(context)

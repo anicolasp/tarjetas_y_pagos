@@ -19,6 +19,7 @@ import '../../services/providers.dart';
 import '../auth/auth_widgets.dart';
 import '../scan/scan_widgets.dart';
 import 'cards_providers.dart';
+import 'widgets/color_dot.dart';
 
 const defaultPaymentDays = 20;
 
@@ -512,7 +513,7 @@ class _CardFormState extends ConsumerState<_CardForm> {
                         runSpacing: 2,
                         children: [
                           for (final (i, c) in cardColors.indexed)
-                            _ColorDot(
+                            ColorDot(
                               key: ValueKey('cardForm.color.$i'),
                               label: context.l10n.colorNumber(i + 1),
                               color: Color(c),
@@ -625,56 +626,6 @@ class _BankFieldState extends State<_BankField> {
                     onTap: () => onSelected(o),
                   ),
               ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ColorDot extends StatelessWidget {
-  const _ColorDot({
-    super.key,
-    required this.label,
-    required this.color,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final Color color;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      selected: selected,
-      label: label,
-      child: InkResponse(
-        onTap: onTap,
-        radius: 26,
-        child: SizedBox.square(
-          dimension: 48,
-          child: Center(
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: color,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: selected
-                      ? Theme.of(context).colorScheme.onSurface
-                      : Colors.transparent,
-                  width: 3,
-                ),
-              ),
-              child: selected
-                  ? const Icon(Icons.check, color: Colors.white, size: 20)
-                  : null,
             ),
           ),
         ),

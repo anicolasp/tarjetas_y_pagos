@@ -11,6 +11,7 @@ import '../../data/repositories/categories_repository.dart';
 import '../../l10n/l10n.dart';
 import '../auth/auth_widgets.dart';
 import '../cards/cards_providers.dart';
+import '../cards/widgets/color_dot.dart';
 import '../reports/chart_colors.dart';
 
 /// New category ([categoryId] null) or edit/delete an own one: name, icon
@@ -243,40 +244,13 @@ class _CategoryFormState extends ConsumerState<_CategoryForm> {
                     runSpacing: 2,
                     children: [
                       for (final (i, c) in categoryColors.indexed)
-                        Semantics(
-                          button: true,
-                          selected: _color == c,
+                        ColorDot(
+                          key: ValueKey('categoryForm.color.$i'),
                           label: context.l10n.colorNumber(i + 1),
-                          child: InkResponse(
-                            key: ValueKey('categoryForm.color.$i'),
-                            onTap: () => setState(() => _color = c),
-                            radius: 26,
-                            child: SizedBox.square(
-                              dimension: 48,
-                              child: Center(
-                                child: Container(
-                                  width: 40,
-                                  height: 40,
-                                  decoration: BoxDecoration(
-                                    color: Color(c),
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: _color == c
-                                          ? scheme.onSurface
-                                          : Colors.transparent,
-                                      width: 3,
-                                    ),
-                                  ),
-                                  child: _color == c
-                                      ? const Icon(
-                                          Icons.check,
-                                          color: Colors.white,
-                                        )
-                                      : null,
-                                ),
-                              ),
-                            ),
-                          ),
+                          color: Color(c),
+                          selected: _color == c,
+                          checkSize: 24,
+                          onTap: () => setState(() => _color = c),
                         ),
                     ],
                   ),

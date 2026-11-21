@@ -457,6 +457,6 @@
   "spokenMinus": "moins {amount}",
   "cardEndingIn": "{brand} se terminant par {last4}",
   "cardOtherBrand": "Carte",
-  "chartDonutSemantics": "Graphique circulaire par catégorie. {items}",
+  "chartDonutSemantics": "Graphique circulaire par catégorie, total {total}. {items}",
   "chartMonthsSemantics": "Graphique en barres par mois. {items}"
 }

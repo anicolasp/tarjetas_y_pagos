@@ -457,6 +457,6 @@
   "spokenMinus": "minus {amount}",
   "cardEndingIn": "{brand} ending in {last4}",
   "cardOtherBrand": "Card",
-  "chartDonutSemantics": "Pie chart by category. {items}",
+  "chartDonutSemantics": "Pie chart by category, total {total}. {items}",
   "chartMonthsSemantics": "Bar chart by month. {items}"
 }

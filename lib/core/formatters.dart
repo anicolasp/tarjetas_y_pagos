@@ -22,7 +22,8 @@ String formatMoney(int cents, Currency currency) {
 /// groups 1 sign ("-" or the typographic "−"), 2 symbol, 3 integer part
 /// with commas, 4 cents.
 final formattedMoney = RegExp(
-  r'([-−]?)(RD\$|US\$) (\d{1,3}(?:,\d{3})*)\.(\d{2})',
+  '([-−]?)(${Currency.values.map((c) => RegExp.escape(c.symbol)).join('|')})'
+  r' (\d{1,3}(?:,\d{3})*)\.(\d{2})',
 );
 
 /// The cents and currency of a [formattedMoney] match.

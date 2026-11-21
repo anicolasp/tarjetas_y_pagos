@@ -43,6 +43,11 @@ void main() {
         'menos 50 pesos dominicanos',
       );
       expect(es.moneySemantics(0, Currency.dop), '0 pesos dominicanos');
+      // French says zero in the singular ("zéro euro"), as CLDR does.
+      expect(
+        fr.moneySemantics(50, Currency.dop),
+        '0 peso dominicain et 50 centimes',
+      );
     });
 
     test('speakMoney replaces every amount in a sentence, any sign', () {
@@ -129,7 +134,7 @@ void main() {
         find.byKey(ValueKey('home.carousel.$cardId')),
       );
       expect(tile.label, startsWith('Gastos de la casa, '));
-      expect(tile.label, contains('terminada en 4321'));
+      expect(tile.label, contains('terminada en 4 3 2 1'));
       expect(tile.label, contains('Corte '));
       expect(tile.label, isNot(contains('•')));
       expect(tile.getSemanticsData().hasAction(SemanticsAction.tap), isTrue);
@@ -162,7 +167,7 @@ void main() {
       expect(
         find.bySemanticsLabel(
           RegExp(
-            r'^Gráfico circular por categoría\. '
+            r'^Gráfico circular por categoría, total 1250 pesos dominicanos\. '
             r'Supermercado, 1250 pesos dominicanos, 100 %',
           ),
         ),

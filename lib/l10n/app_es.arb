@@ -970,9 +970,12 @@
     }
   },
   "cardOtherBrand": "Tarjeta",
-  "chartDonutSemantics": "Gráfico circular por categoría. {items}",
+  "chartDonutSemantics": "Gráfico circular por categoría, total {total}. {items}",
   "@chartDonutSemantics": {
     "placeholders": {
+      "total": {
+        "type": "String"
+      },
       "items": {
         "type": "String"
       }

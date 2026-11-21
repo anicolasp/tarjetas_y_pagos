@@ -1623,8 +1623,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cardOtherBrand => 'Card';
 
   @override
-  String chartDonutSemantics(String items) {
-    return 'Pie chart by category. $items';
+  String chartDonutSemantics(String total, String items) {
+    return 'Pie chart by category, total $total. $items';
   }
 
   @override

@@ -2845,8 +2845,8 @@ abstract class AppLocalizations {
   /// No description provided for @chartDonutSemantics.
   ///
   /// In es, this message translates to:
-  /// **'Gráfico circular por categoría. {items}'**
-  String chartDonutSemantics(String items);
+  /// **'Gráfico circular por categoría, total {total}. {items}'**
+  String chartDonutSemantics(String total, String items);
 
   /// No description provided for @chartMonthsSemantics.
   ///
