@@ -260,9 +260,12 @@ class FakeGoogleAuthService implements GoogleAuthService {
 /// The app window brightness (#39). [applied] is what the window shows:
 /// null is the phone's [systemValue]; [calls] logs every apply/reset.
 class FakeBrightnessService implements BrightnessService {
-  FakeBrightnessService({this.systemValue = 0.5});
+  FakeBrightnessService({this.systemValue = 0.5, this.available = true});
 
   double? systemValue;
+
+  @override
+  final bool available;
   double? applied;
   final calls = <String>[];
 

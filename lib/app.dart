@@ -67,7 +67,8 @@ class _AppBrightnessState extends ConsumerState<_AppBrightness> {
     _lifecycle = AppLifecycleListener(
       onHide: () {
         _visible = false;
-        ref.read(brightnessServiceProvider).reset();
+        final service = ref.read(brightnessServiceProvider);
+        if (service.available) service.reset();
       },
       onShow: () {
         _visible = true;
@@ -78,8 +79,8 @@ class _AppBrightnessState extends ConsumerState<_AppBrightness> {
   }
 
   void _apply(double? value) {
-    if (!_visible) return;
     final service = ref.read(brightnessServiceProvider);
+    if (!_visible || !service.available) return;
     value == null ? service.reset() : service.apply(value);
   }
 

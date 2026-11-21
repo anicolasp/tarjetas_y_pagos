@@ -1,8 +1,13 @@
+import 'package:flutter/foundation.dart';
 import 'package:screen_brightness/screen_brightness.dart';
 
 /// The app window's own brightness (#39). Only ever changes this app's
 /// window; the phone's brightness setting is never touched.
 abstract interface class BrightnessService {
+  /// False where the setting would dim the whole display (desktop) or
+  /// does not exist: the profile hides it and nothing is applied.
+  bool get available;
+
   /// The phone's current brightness (0–1), or null when unknown.
   Future<double?> system();
 
@@ -16,11 +21,22 @@ abstract interface class BrightnessService {
 class PluginBrightnessService implements BrightnessService {
   ScreenBrightness get _plugin => ScreenBrightness.instance;
 
+  /// The app resets and re-applies on its own lifecycle (`app.dart`); the
+  /// plugin's auto-reset would send a second, competing change.
+  var _autoResetOff = false;
+
+  @override
+  bool get available =>
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.android ||
+          defaultTargetPlatform == TargetPlatform.iOS);
+
   // Brightness is a comfort setting: a platform without it, or a plugin
   // error, leaves the screen as it is instead of breaking the app.
 
   @override
   Future<double?> system() async {
+    if (!available) return null;
     try {
       return await _plugin.system;
     } on Object {
@@ -30,7 +46,12 @@ class PluginBrightnessService implements BrightnessService {
 
   @override
   Future<void> apply(double value) async {
+    if (!available) return;
     try {
+      if (!_autoResetOff) {
+        await _plugin.setAutoReset(false);
+        _autoResetOff = true;
+      }
       await _plugin.setApplicationScreenBrightness(value);
     } on Object {
       // See above.
@@ -39,6 +60,7 @@ class PluginBrightnessService implements BrightnessService {
 
   @override
   Future<void> reset() async {
+    if (!available) return;
     try {
       await _plugin.resetApplicationScreenBrightness();
     } on Object {

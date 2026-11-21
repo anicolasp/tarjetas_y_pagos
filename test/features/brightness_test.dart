@@ -104,6 +104,26 @@ void main() {
     expect(brightness.calls, isNot(contains(startsWith('apply'))));
   });
 
+  testWidgets("following the phone, the disabled slider shows the phone's "
+      'level, not 100 %', (tester) async {
+    await start(tester);
+    expect(slider(tester).value, closeTo(0.4, 1e-9));
+    expect(key('profile.brightness.value'), findsNothing);
+  });
+
+  testWidgets('hidden where the platform has no app brightness (desktop)', (
+    tester,
+  ) async {
+    brightness = FakeBrightnessService(available: false);
+    await start(tester, toProfile: false);
+    GoRouter.of(tester.element(find.byType(Navigator).first))
+        .push('/home/profile');
+    await tester.pumpAndSettle();
+    expect(key('profile.brightness'), findsNothing);
+    expect(key('profile.brightnessSystem'), findsNothing);
+    expect(brightness.calls, isEmpty);
+  });
+
   testWidgets('unchecking starts from the phone brightness and saves it', (
     tester,
   ) async {

@@ -232,6 +232,7 @@ void main() {
     final otra = await repo.login('otra@example.com', 'xyz98765');
     expect(otra.a11y.brightness, isNull);
     u = await repo.updatePreferences(ana.id!, a11y: const A11ySettings());
+    expect(u.a11y.brightness, isNull);
     expect((await repo.getById(ana.id!))!.a11y.brightness, isNull);
   });
 

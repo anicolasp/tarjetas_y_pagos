@@ -377,12 +377,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 _setA11y(user.a11y.copyWith(highContrast: on)),
                     ),
                     const _A11yPreview(),
-                    _Brightness(
-                      value: user.a11y.brightness,
-                      enabled: !_busy,
-                      onSave: (value) =>
-                          _setA11y(user.a11y.copyWith(brightness: () => value)),
-                    ),
+                    if (ref.read(brightnessServiceProvider).available)
+                      _Brightness(
+                        value: user.a11y.brightness,
+                        enabled: !_busy,
+                        onSave: (value) => _setA11y(
+                          user.a11y.copyWith(brightness: () => value),
+                        ),
+                      ),
                   ],
                 ),
                 gap,
@@ -473,23 +475,55 @@ class _Brightness extends ConsumerStatefulWidget {
 }
 
 class _BrightnessState extends ConsumerState<_Brightness> {
-  /// The value under the finger, until it is saved.
+  /// The value under the finger, until the saved one arrives.
   double? _dragging;
 
+  /// The phone's brightness, shown (disabled) while the app follows it.
+  double? _system;
+
+  /// A save (or the read before it) is running: no second one.
+  var _working = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _readSystem();
+  }
+
+  Future<void> _readSystem() async {
+    final system = await ref.read(brightnessServiceProvider).system();
+    if (mounted) setState(() => _system = system);
+  }
+
+  @override
+  void didUpdateWidget(_Brightness old) {
+    super.didUpdateWidget(old);
+    // The saved value arrived: stop showing the dragged one.
+    if (widget.value != old.value) _dragging = null;
+  }
+
   Future<void> _save(double? value) async {
-    await widget.onSave(value);
+    setState(() => _working = true);
+    try {
+      await widget.onSave(value);
+    } finally {
+      if (mounted) setState(() => _working = false);
+    }
     if (!mounted) return;
-    setState(() => _dragging = null);
-    // A failed save leaves the old setting: show it again.
-    if (widget.value != value) {
+    // A failed save keeps the old setting: show that one again. On
+    // success the app already applies the new one.
+    final saved = ref.read(a11yProvider).brightness;
+    if (saved != value) {
+      setState(() => _dragging = null);
       final service = ref.read(brightnessServiceProvider);
-      final saved = widget.value;
       saved == null ? service.reset() : service.apply(saved);
     }
   }
 
   Future<void> _useSystem(bool? on) async {
+    if (_working) return;
     if (on ?? true) return _save(null);
+    setState(() => _working = true);
     // Start from what the phone shows, so the screen does not jump.
     final system = await ref.read(brightnessServiceProvider).system();
     if (!mounted) return;
@@ -500,7 +534,10 @@ class _BrightnessState extends ConsumerState<_Brightness> {
   Widget build(BuildContext context) {
     final l = context.l10n;
     final followsPhone = widget.value == null;
-    final shown = _dragging ?? widget.value;
+    final enabled = widget.enabled && !_working;
+    final own = _dragging ?? widget.value;
+    // Following the phone, the disabled slider shows the phone's level.
+    final shown = (own ?? _system ?? 1).clamp(minAppBrightness, 1.0);
     final percent = NumberFormat.percentPattern();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -521,23 +558,23 @@ class _BrightnessState extends ConsumerState<_Brightness> {
               Expanded(
                 child: Slider(
                   key: const ValueKey('profile.brightness'),
-                  value: shown ?? 1,
+                  value: shown,
                   min: minAppBrightness,
                   divisions: 18,
-                  label: percent.format(shown ?? 1),
+                  label: percent.format(shown),
                   semanticFormatterCallback: percent.format,
-                  onChanged: followsPhone || !widget.enabled
+                  onChanged: followsPhone || !enabled
                       ? null
                       : (v) {
                           setState(() => _dragging = v);
                           ref.read(brightnessServiceProvider).apply(v);
                         },
-                  onChangeEnd: followsPhone || !widget.enabled ? null : _save,
+                  onChangeEnd: followsPhone || !enabled ? null : _save,
                 ),
               ),
-              if (shown != null)
+              if (own != null)
                 Text(
-                  percent.format(shown),
+                  percent.format(own),
                   key: const ValueKey('profile.brightness.value'),
                 ),
             ],
@@ -547,7 +584,7 @@ class _BrightnessState extends ConsumerState<_Brightness> {
           key: const ValueKey('profile.brightnessSystem'),
           title: Text(l.useSystemBrightness),
           value: followsPhone,
-          onChanged: widget.enabled ? _useSystem : null,
+          onChanged: enabled ? _useSystem : null,
         ),
       ],
     );
