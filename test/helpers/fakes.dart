@@ -11,6 +11,7 @@ import 'package:tarjetas_y_pagos/data/providers.dart';
 import 'package:tarjetas_y_pagos/features/cards/cards_providers.dart';
 import 'package:tarjetas_y_pagos/services/exchange_rate_service.dart';
 import 'package:tarjetas_y_pagos/services/biometric_service.dart';
+import 'package:tarjetas_y_pagos/services/brightness_service.dart';
 import 'package:tarjetas_y_pagos/services/card_scan_service.dart';
 import 'package:tarjetas_y_pagos/services/google_auth_service.dart';
 import 'package:tarjetas_y_pagos/services/password_hasher.dart';
@@ -256,6 +257,34 @@ class FakeGoogleAuthService implements GoogleAuthService {
   Future<void> signOut() async => signOuts++;
 }
 
+/// The app window brightness (#39). [applied] is what the window shows:
+/// null is the phone's [systemValue]; [calls] logs every apply/reset.
+class FakeBrightnessService implements BrightnessService {
+  FakeBrightnessService({this.systemValue = 0.5, this.available = true});
+
+  double? systemValue;
+
+  @override
+  final bool available;
+  double? applied;
+  final calls = <String>[];
+
+  @override
+  Future<double?> system() async => systemValue;
+
+  @override
+  Future<void> apply(double value) async {
+    applied = value;
+    calls.add('apply $value');
+  }
+
+  @override
+  Future<void> reset() async {
+    applied = null;
+    calls.add('reset');
+  }
+}
+
 Future<List<Override>> testOverrides({
   Future<AppDatabase>? database,
   Map<String, Object> prefs = const {},
@@ -268,6 +297,7 @@ Future<List<Override>> testOverrides({
   FakeReceiptAiService? receiptAi,
   FakeNotificationService? notifications,
   FakeGoogleAuthService? google,
+  FakeBrightnessService? brightness,
 }) async {
   SharedPreferences.setMockInitialValues(prefs);
   final sharedPrefs = await SharedPreferences.getInstance();
@@ -298,6 +328,10 @@ Future<List<Override>> testOverrides({
     // Hidden by default; never the real Google sheet.
     googleAuthServiceProvider.overrideWithValue(
       google ?? FakeGoogleAuthService(),
+    ),
+    // Never the real window brightness.
+    brightnessServiceProvider.overrideWithValue(
+      brightness ?? FakeBrightnessService(),
     ),
   ];
 }

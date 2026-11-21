@@ -222,6 +222,20 @@ void main() {
     expect(otra.a11y, const A11ySettings());
   });
 
+  test('app brightness is saved per user and can go back to the phone '
+      '(#39)', () async {
+    var u = await repo.updatePreferences(
+      ana.id!,
+      a11y: const A11ySettings(brightness: 0.8),
+    );
+    expect(u.a11y.brightness, 0.8);
+    final otra = await repo.login('otra@example.com', 'xyz98765');
+    expect(otra.a11y.brightness, isNull);
+    u = await repo.updatePreferences(ana.id!, a11y: const A11ySettings());
+    expect(u.a11y.brightness, isNull);
+    expect((await repo.getById(ana.id!))!.a11y.brightness, isNull);
+  });
+
   test('changes only touch the given user', () async {
     final otra = await repo.login('otra@example.com', 'xyz98765');
     await repo.updateName(ana.id!, 'Cambiada', 'Nombre');

@@ -39,6 +39,34 @@ void main() {
     expect(A11ySettings.decode('xlarge,1'), const A11ySettings());
   });
 
+  test('brightness (#39) round-trips; null is the phone; old 4-field '
+      'strings still read', () {
+    const set = A11ySettings(boldText: true, brightness: 0.75);
+    expect(A11ySettings.decode(set.encode()), set);
+    expect(A11ySettings.decode(const A11ySettings().encode()).brightness, null);
+    expect(
+      A11ySettings.decode('large,1,0,1'),
+      const A11ySettings(
+        textSize: TextSize.large,
+        legibleFont: true,
+        highContrast: true,
+      ),
+    );
+    // Out of range or garbage: clamped or the phone's.
+    expect(
+      A11ySettings.decode('normal,0,0,0,0.01').brightness,
+      minAppBrightness,
+    );
+    expect(A11ySettings.decode('normal,0,0,0,x').brightness, isNull);
+  });
+
+  test('copyWith can set the brightness back to the phone', () {
+    const set = A11ySettings(brightness: 0.6);
+    expect(set.copyWith(boldText: true).brightness, 0.6);
+    expect(set.copyWith(brightness: () => null).brightness, isNull);
+    expect(A11ySettings.fromColumns({'app_brightness': 2}).brightness, 1);
+  });
+
   test('multiplies the phone size', () {
     const phone = TextScaler.linear(1.2);
     expect(const AppTextScaler(phone, 1).scale(10), closeTo(12, 1e-9));

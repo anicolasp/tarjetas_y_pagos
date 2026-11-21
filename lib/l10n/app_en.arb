@@ -446,5 +446,8 @@
   "legibleFontSubtitle": "Atkinson Hyperlegible, designed for low vision",
   "boldText": "Bold text",
   "highContrast": "High contrast",
-  "a11yPreviewLabel": "Preview:"
+  "a11yPreviewLabel": "Preview:",
+  "appBrightness": "App brightness",
+  "useSystemBrightness": "Use the phone's",
+  "appBrightnessHint": "Only while the app is open"
 }

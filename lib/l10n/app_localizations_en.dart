@@ -1561,4 +1561,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get a11yPreviewLabel => 'Preview:';
+
+  @override
+  String get appBrightness => 'App brightness';
+
+  @override
+  String get useSystemBrightness => 'Use the phone\'s';
+
+  @override
+  String get appBrightnessHint => 'Only while the app is open';
 }
