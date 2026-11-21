@@ -458,5 +458,8 @@
   "cardEndingIn": "{brand} ending in {last4}",
   "cardOtherBrand": "Card",
   "chartDonutSemantics": "Pie chart by category, total {total}. {items}",
-  "chartMonthsSemantics": "Bar chart by month. {items}"
+  "chartMonthsSemantics": "Bar chart by month. {items}",
+  "currencyDopName": "Dominican pesos (DOP)",
+  "currencyUsdName": "US dollars (USD)",
+  "endingInDigits": "ending in {digits}"
 }

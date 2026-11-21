@@ -425,7 +425,7 @@ class _CardPickerState extends State<_CardPicker> {
                 CheckboxListTile(
                   key: ValueKey('reports.cardOption.${c.id}'),
                   value: _selected.contains(c.id),
-                  title: Text(c.label),
+                  title: spokenText(context, c.label),
                   subtitle: Text(
                     c.archived
                         ? context.l10n.archivedCardSubtitle(c.bank)
@@ -554,8 +554,9 @@ class _Summary extends ConsumerWidget {
               for (final c in currencies)
                 ButtonSegment(
                   value: c,
-                  label: Text(
-                    '${c.symbol} ${c.code}',
+                  label: currencyChipText(
+                    context,
+                    c,
                     key: ValueKey('reports.currency.${c.code}'),
                   ),
                 ),

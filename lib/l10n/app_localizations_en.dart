@@ -1631,4 +1631,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String chartMonthsSemantics(String items) {
     return 'Bar chart by month. $items';
   }
+
+  @override
+  String get currencyDopName => 'Dominican pesos (DOP)';
+
+  @override
+  String get currencyUsdName => 'US dollars (USD)';
+
+  @override
+  String endingInDigits(String digits) {
+    return 'ending in $digits';
+  }
 }

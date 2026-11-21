@@ -458,5 +458,8 @@
   "cardEndingIn": "{brand} se terminant par {last4}",
   "cardOtherBrand": "Carte",
   "chartDonutSemantics": "Graphique circulaire par catégorie, total {total}. {items}",
-  "chartMonthsSemantics": "Graphique en barres par mois. {items}"
+  "chartMonthsSemantics": "Graphique en barres par mois. {items}",
+  "currencyDopName": "Pesos dominicains (DOP)",
+  "currencyUsdName": "Dollars américains (USD)",
+  "endingInDigits": "se terminant par {digits}"
 }

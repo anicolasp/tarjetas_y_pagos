@@ -158,7 +158,10 @@ extension AppTexts on AppLocalizations {
   }
 }
 
-/// Amounts as a screen reader should say them (#40).
+/// "•••• 4321" as [CreditCard.label] writes it.
+final _maskedCard = RegExp(r' ?•••• (\d{4})');
+
+/// Amounts, cards and currencies as a screen reader should say them (#40).
 extension SpokenMoney on AppLocalizations {
   /// `RD$ 1,250.50` → "1250 pesos dominicanos con 50 centavos". The number
   /// has no thousands commas: Spanish and French voices would read them as
@@ -183,19 +186,32 @@ extension SpokenMoney on AppLocalizations {
     card.last4.split('').join(' '),
   );
 
-  /// [text] with every formatted amount in it spoken ([moneySemantics]),
-  /// for `Text.semanticsLabel`. Null when [text] has no amount, so the
-  /// text is read as it is.
-  String? speakMoney(String text) {
-    final spoken = text.replaceAllMapped(formattedMoney, (m) {
-      final (:cents, :currency) = parseFormattedMoney(m);
-      return moneySemantics(cents, currency);
-    });
-    return identical(spoken, text) || spoken == text ? null : spoken;
+  /// "Pesos dominicanos (DOP)" for a "RD$ DOP" chip.
+  String currencyName(Currency c) => switch (c) {
+    Currency.dop => currencyDopName,
+    Currency.usd => currencyUsdName,
+  };
+
+  /// [text] as a screen reader should say it, for `Text.semanticsLabel`:
+  /// every formatted amount in words ([moneySemantics]) and a masked card
+  /// number ("•••• 4321") as "ending in 4 3 2 1". Null when there is
+  /// nothing to change, so the text is read as it is.
+  String? spokenLabel(String text) {
+    final spoken = text
+        .replaceAllMapped(formattedMoney, (m) {
+          final (:cents, :currency) = parseFormattedMoney(m);
+          return moneySemantics(cents, currency);
+        })
+        .replaceAllMapped(
+          _maskedCard,
+          (m) => ', ${endingInDigits(m[1]!.split('').join(' '))}',
+        );
+    return spoken == text ? null : spoken;
   }
 }
 
-/// A [Text] whose amounts a screen reader says in words ([speakMoney]),
+/// A [Text] whose amounts and card numbers a screen reader says in words
+/// ([SpokenMoney.spokenLabel]),
 /// e.g. "1250 pesos dominicanos" instead of "R D dollar 1,250.00" (#40).
 /// It is a plain [Text]: same look, same widget type.
 Text spokenText(
@@ -215,5 +231,12 @@ Text spokenText(
   maxLines: maxLines,
   overflow: overflow,
   softWrap: softWrap,
-  semanticsLabel: context.l10n.speakMoney(data),
+  semanticsLabel: context.l10n.spokenLabel(data),
+);
+
+/// A "RD$ DOP" currency chip label; read as "Pesos dominicanos (DOP)".
+Text currencyChipText(BuildContext context, Currency c, {Key? key}) => Text(
+  '${c.symbol} ${c.code}',
+  key: key,
+  semanticsLabel: context.l10n.currencyName(c),
 );

@@ -577,7 +577,8 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
                             DropdownMenuItem(
                               key: ValueKey('expenseForm.cardOption.${c.id}'),
                               value: c.id,
-                              child: Text(
+                              child: spokenText(
+                                context,
                                 '${c.alias} •••• ${c.last4}',
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -598,7 +599,7 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
                           for (final c in Currency.values)
                             ChoiceChip(
                               key: ValueKey('expenseForm.currency.${c.code}'),
-                              label: Text('${c.symbol} ${c.code}'),
+                              label: currencyChipText(context, c),
                               selected: _currency == c,
                               onSelected: (_) => _selectCurrency(c),
                             ),

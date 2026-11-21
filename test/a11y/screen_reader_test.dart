@@ -56,14 +56,19 @@ void main() {
         formatMoney(100000, Currency.dop),
       );
       expect(
-        es.speakMoney(sentence),
+        es.spokenLabel(sentence),
         es.debtSplit('850 pesos dominicanos', '1000 pesos dominicanos'),
       );
       expect(
-        es.speakMoney('−${formatMoney(2550, Currency.usd)}'),
+        es.spokenLabel('−${formatMoney(2550, Currency.usd)}'),
         'menos 25 dólares con 50 centavos',
       );
-      expect(es.speakMoney('Supermercado'), isNull);
+      expect(es.spokenLabel('Supermercado'), isNull);
+      expect(
+        es.spokenLabel('Gastos de la casa •••• 4321'),
+        'Gastos de la casa, terminada en 4 3 2 1',
+      );
+      expect(es.currencyName(Currency.dop), 'Pesos dominicanos (DOP)');
     });
   });
 
@@ -208,7 +213,21 @@ void main() {
     });
 
     testWidgets('a form with errors announces the first one', (tester) async {
+      final semantics = tester.ensureSemantics();
       await start(tester, loggedIn: false);
+      // The fields are named by their label ("Correo, edit box").
+      for (final (k, label) in [
+        ('login.email', es.emailLabel),
+        ('login.password', es.passwordLabel),
+      ]) {
+        expect(
+          find.descendant(
+            of: find.byKey(ValueKey(k)),
+            matching: find.bySemanticsLabel(RegExp(RegExp.escape(label))),
+          ),
+          findsWidgets,
+        );
+      }
       await tester.tap(find.byKey(const ValueKey('login.submit')));
       await tester.pumpAndSettle();
       expect(
@@ -220,6 +239,7 @@ void main() {
           ),
         ),
       );
+      semantics.dispose();
     });
   });
 

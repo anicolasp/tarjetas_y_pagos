@@ -199,7 +199,7 @@ class _CardDebtTile extends StatelessWidget {
                 alignment: WrapAlignment.spaceBetween,
                 spacing: 12,
                 children: [
-                  Text(card.label, style: text.titleSmall),
+                  spokenText(context, card.label, style: text.titleSmall),
                   Row(
                     key: ValueKey('debts.card.$cardId.payBy'),
                     mainAxisSize: MainAxisSize.min,

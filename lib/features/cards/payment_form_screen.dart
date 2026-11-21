@@ -148,7 +148,7 @@ class _PaymentFormState extends ConsumerState<_PaymentForm> {
                         for (final c in widget.card.currencies)
                           ChoiceChip(
                             key: ValueKey('paymentForm.currency.${c.code}'),
-                            label: Text('${c.symbol} ${c.code}'),
+                            label: currencyChipText(context, c),
                             selected: _currency == c,
                             onSelected: (_) => setState(() => _currency = c),
                           ),

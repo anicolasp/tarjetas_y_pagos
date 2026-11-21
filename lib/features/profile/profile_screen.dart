@@ -401,7 +401,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           for (final c in Currency.values)
                             ChoiceChip(
                               key: ValueKey('profile.currency.${c.code}'),
-                              label: Text('${c.symbol} ${c.code}'),
+                              label: currencyChipText(context, c),
                               selected: user.defaultCurrency == c,
                               onSelected: (_) => _run(
                                 () =>

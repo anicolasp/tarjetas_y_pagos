@@ -27,55 +27,60 @@ class MovementTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            CircleAvatar(
-              backgroundColor: color.withValues(alpha: 0.15),
-              foregroundColor: color,
-              child: Icon(icon),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Wrap(
-                alignment: WrapAlignment.spaceBetween,
-                spacing: 12,
-                runSpacing: 2,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(title, style: text.bodyLarge),
-                      if (subtitle != null)
-                        spokenText(
-                          context,
-                          subtitle!,
-                          style: text.bodySmall?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurfaceVariant,
-                          ),
-                        ),
-                    ],
-                  ),
-                  spokenText(
-                    context,
-                    amount,
-                    style: text.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: amountColor,
-                    ),
-                  ),
-                ],
+    // Its own node (#40): without it, the section title and date above
+    // merged into the first movement as one tappable element.
+    return Semantics(
+      container: true,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CircleAvatar(
+                backgroundColor: color.withValues(alpha: 0.15),
+                foregroundColor: color,
+                child: Icon(icon),
               ),
-            ),
-          ],
+              const SizedBox(width: 12),
+              Expanded(
+                child: Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  spacing: 12,
+                  runSpacing: 2,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(title, style: text.bodyLarge),
+                        if (subtitle != null)
+                          spokenText(
+                            context,
+                            subtitle!,
+                            style: text.bodySmall?.copyWith(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
+                            ),
+                          ),
+                      ],
+                    ),
+                    spokenText(
+                      context,
+                      amount,
+                      style: text.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: amountColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

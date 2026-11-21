@@ -171,9 +171,12 @@ class _Body extends ConsumerWidget {
               Row(
                 children: [
                   Expanded(
-                    child: Text(
-                      context.l10n.movements,
-                      style: text.titleMedium,
+                    child: Semantics(
+                      header: true,
+                      child: Text(
+                        context.l10n.movements,
+                        style: text.titleMedium,
+                      ),
                     ),
                   ),
                   if (!filter.isEmpty)
@@ -215,10 +218,13 @@ class _Body extends ConsumerWidget {
                 for (final (day, items) in groups) ...[
                   Padding(
                     padding: const EdgeInsets.only(top: 12, bottom: 4),
-                    child: Text(
-                      _dayLabel(context.l10n, day, today),
-                      style: text.labelLarge?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    child: Semantics(
+                      header: true,
+                      child: Text(
+                        _dayLabel(context.l10n, day, today),
+                        style: text.labelLarge?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     ),
                   ),

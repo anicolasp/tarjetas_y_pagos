@@ -988,5 +988,15 @@
         "type": "String"
       }
     }
+  },
+  "currencyDopName": "Pesos dominicanos (DOP)",
+  "currencyUsdName": "Dólares estadounidenses (USD)",
+  "endingInDigits": "terminada en {digits}",
+  "@endingInDigits": {
+    "placeholders": {
+      "digits": {
+        "type": "String"
+      }
+    }
   }
 }

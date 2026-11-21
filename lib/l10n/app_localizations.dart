@@ -2853,6 +2853,24 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Gráfico de barras por mes. {items}'**
   String chartMonthsSemantics(String items);
+
+  /// No description provided for @currencyDopName.
+  ///
+  /// In es, this message translates to:
+  /// **'Pesos dominicanos (DOP)'**
+  String get currencyDopName;
+
+  /// No description provided for @currencyUsdName.
+  ///
+  /// In es, this message translates to:
+  /// **'Dólares estadounidenses (USD)'**
+  String get currencyUsdName;
+
+  /// No description provided for @endingInDigits.
+  ///
+  /// In es, this message translates to:
+  /// **'terminada en {digits}'**
+  String endingInDigits(String digits);
 }
 
 class _AppLocalizationsDelegate

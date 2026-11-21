@@ -430,7 +430,7 @@ class _CardFormState extends ConsumerState<_CardForm> {
                           for (final c in Currency.values)
                             ChoiceChip(
                               key: ValueKey('cardForm.currency.${c.code}'),
-                              label: Text('${c.symbol} ${c.code}'),
+                              label: currencyChipText(context, c),
                               selected: !_dual && _currency == c,
                               onSelected: (_) => setState(() {
                                 _currency = c;

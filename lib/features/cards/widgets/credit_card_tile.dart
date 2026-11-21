@@ -47,7 +47,7 @@ class CreditCardTile extends StatelessWidget {
     return Semantics(
       container: true,
       button: onTap != null,
-      label: l.speakMoney(spoken) ?? spoken,
+      label: l.spokenLabel(spoken) ?? spoken,
       onTap: onTap,
       excludeSemantics: true,
       child: Material(

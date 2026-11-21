@@ -316,7 +316,7 @@ class _LegendRow extends StatelessWidget {
                   ),
                   // The amount in words (#40); the text stays as shown.
                   semanticsLabel:
-                      '${context.l10n.speakMoney(value) ?? value}, $percent',
+                      '${context.l10n.spokenLabel(value) ?? value}, $percent',
                   style: text.bodyMedium,
                 ),
               ],
@@ -562,7 +562,8 @@ class CardTotals extends StatelessWidget {
                   alignment: WrapAlignment.spaceBetween,
                   spacing: 12,
                   children: [
-                    Text(
+                    spokenText(
+                      context,
                       _cardName(context.l10n, cards[t.cardId]),
                       style: text.bodyMedium,
                     ),
@@ -576,15 +577,19 @@ class CardTotals extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 6),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: t.totalCents / largest,
-                    minHeight: 6,
-                    backgroundColor: scheme.surfaceContainerHighest,
-                    color: readableOn(
-                      Color(cards[t.cardId]?.color ?? 0xFF757575),
-                      scheme.surface,
+                // Only a visual comparison with the largest card; its amount
+                // is read just above (#40).
+                ExcludeSemantics(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: t.totalCents / largest,
+                      minHeight: 6,
+                      backgroundColor: scheme.surfaceContainerHighest,
+                      color: readableOn(
+                        Color(cards[t.cardId]?.color ?? 0xFF757575),
+                        scheme.surface,
+                      ),
                     ),
                   ),
                 ),

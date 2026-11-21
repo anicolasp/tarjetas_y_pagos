@@ -105,7 +105,7 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
           for (final c in Currency.values)
             ChoiceChip(
               key: ValueKey('setup.currency.${c.code}'),
-              label: Text('${c.symbol} ${c.code}'),
+              label: currencyChipText(context, c),
               selected: user.defaultCurrency == c,
               onSelected: (_) =>
                   _run(() => _auth.updatePreferences(defaultCurrency: c)),
