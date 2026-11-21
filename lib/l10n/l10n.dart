@@ -1,11 +1,14 @@
 import 'package:flutter/widgets.dart';
 
+import '../core/formatters.dart';
 import '../core/greeting.dart';
 import '../core/language.dart';
+import '../core/money.dart';
 import '../core/report.dart' show ReportPeriod;
 import '../core/security_question.dart';
 import '../core/validators.dart';
 import '../data/models/category.dart';
+import '../data/models/credit_card.dart';
 import '../data/repositories/categories_repository.dart'
     show categoryNameMaxLength;
 import '../data/repositories/debts_repository.dart' show creditorMaxLength;
@@ -154,3 +157,86 @@ extension AppTexts on AppLocalizations {
     });
   }
 }
+
+/// "•••• 4321" as [CreditCard.label] writes it.
+final _maskedCard = RegExp(r' ?•••• (\d{4})');
+
+/// Amounts, cards and currencies as a screen reader should say them (#40).
+extension SpokenMoney on AppLocalizations {
+  /// `RD$ 1,250.50` → "1250 pesos dominicanos con 50 centavos". The number
+  /// has no thousands commas: Spanish and French voices would read them as
+  /// decimals.
+  String moneySemantics(int cents, Currency currency) {
+    final whole = cents.abs() ~/ 100;
+    final rest = cents.abs() % 100;
+    final units = switch (currency) {
+      Currency.dop => spokenPesos(whole, '$whole'),
+      Currency.usd => spokenDollars(whole, '$whole'),
+    };
+    final amount = rest == 0
+        ? units
+        : spokenWithCents(units, spokenCents(rest));
+    return cents < 0 ? spokenMinus(amount) : amount;
+  }
+
+  /// "Visa ending in 4 3 2 1": the last 4 digit by digit, not "four
+  /// thousand…".
+  String spokenCardEnding(CreditCard card) => cardEndingIn(
+    card.brand == CardBrand.other ? cardOtherBrand : card.brand.label,
+    card.last4.split('').join(' '),
+  );
+
+  /// "Pesos dominicanos (DOP)" for a "RD$ DOP" chip.
+  String currencyName(Currency c) => switch (c) {
+    Currency.dop => currencyDopName,
+    Currency.usd => currencyUsdName,
+  };
+
+  /// [text] as a screen reader should say it, for `Text.semanticsLabel`:
+  /// every formatted amount in words ([moneySemantics]) and a masked card
+  /// number ("•••• 4321") as "ending in 4 3 2 1". Null when there is
+  /// nothing to change, so the text is read as it is.
+  String? spokenLabel(String text) {
+    final spoken = text
+        .replaceAllMapped(formattedMoney, (m) {
+          final (:cents, :currency) = parseFormattedMoney(m);
+          return moneySemantics(cents, currency);
+        })
+        .replaceAllMapped(
+          _maskedCard,
+          (m) => ', ${endingInDigits(m[1]!.split('').join(' '))}',
+        );
+    return spoken == text ? null : spoken;
+  }
+}
+
+/// A [Text] whose amounts and card numbers a screen reader says in words
+/// ([SpokenMoney.spokenLabel]),
+/// e.g. "1250 pesos dominicanos" instead of "R D dollar 1,250.00" (#40).
+/// It is a plain [Text]: same look, same widget type.
+Text spokenText(
+  BuildContext context,
+  String data, {
+  Key? key,
+  TextStyle? style,
+  TextAlign? textAlign,
+  int? maxLines,
+  TextOverflow? overflow,
+  bool? softWrap,
+}) => Text(
+  data,
+  key: key,
+  style: style,
+  textAlign: textAlign,
+  maxLines: maxLines,
+  overflow: overflow,
+  softWrap: softWrap,
+  semanticsLabel: context.l10n.spokenLabel(data),
+);
+
+/// A "RD$ DOP" currency chip label; read as "Pesos dominicanos (DOP)".
+Text currencyChipText(BuildContext context, Currency c, {Key? key}) => Text(
+  '${c.symbol} ${c.code}',
+  key: key,
+  semanticsLabel: context.l10n.currencyName(c),
+);

@@ -18,6 +18,21 @@ String formatMoney(int cents, Currency currency) {
   return '$sign${currency.symbol} ${_amount.format(cents.abs() / 100)}';
 }
 
+/// An amount as [formatMoney] writes it, anywhere in a text (#40):
+/// groups 1 sign ("-" or the typographic "−"), 2 symbol, 3 integer part
+/// with commas, 4 cents.
+final formattedMoney = RegExp(
+  '([-−]?)(${Currency.values.map((c) => RegExp.escape(c.symbol)).join('|')})'
+  r' (\d{1,3}(?:,\d{3})*)\.(\d{2})',
+);
+
+/// The cents and currency of a [formattedMoney] match.
+({int cents, Currency currency}) parseFormattedMoney(Match m) {
+  final currency = Currency.values.firstWhere((c) => c.symbol == m[2]);
+  final cents = int.parse(m[3]!.replaceAll(',', '')) * 100 + int.parse(m[4]!);
+  return (cents: m[1]!.isEmpty ? cents : -cents, currency: currency);
+}
+
 /// Plain digits ("15000.5") or well-formed thousands groups ("15,000.50").
 /// A comma used as the decimal separator ("1500,50") is rejected instead of
 /// being read as 150050. Up to 10 integer digits (9,999,999,999.99): far

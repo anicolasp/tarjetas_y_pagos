@@ -207,7 +207,7 @@ class _DebtFormState extends ConsumerState<_DebtForm> {
                       for (final c in Currency.values)
                         ChoiceChip(
                           key: ValueKey('debtForm.currency.${c.code}'),
-                          label: Text('${c.symbol} ${c.code}'),
+                          label: currencyChipText(context, c),
                           selected: _currency == c,
                           onSelected: _currencyLocked
                               ? null

@@ -401,7 +401,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           for (final c in Currency.values)
                             ChoiceChip(
                               key: ValueKey('profile.currency.${c.code}'),
-                              label: Text('${c.symbol} ${c.code}'),
+                              label: currencyChipText(context, c),
                               selected: user.defaultCurrency == c,
                               onSelected: (_) => _run(
                                 () =>
@@ -621,7 +621,8 @@ class _A11yPreview extends StatelessWidget {
                 spacing: 8,
                 children: [
                   Text(l.spentThisMonth, style: theme.textTheme.bodyLarge),
-                  Text(
+                  spokenText(
+                    context,
                     formatMoney(125000, Currency.dop),
                     style: theme.textTheme.titleMedium,
                   ),
@@ -663,7 +664,11 @@ class _Section extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.only(left: 4, bottom: 6),
-          child: Text(title, style: Theme.of(context).textTheme.titleSmall),
+          // A heading TalkBack can jump to (#40).
+          child: Semantics(
+            header: true,
+            child: Text(title, style: Theme.of(context).textTheme.titleSmall),
+          ),
         ),
         Card(
           margin: EdgeInsets.zero,

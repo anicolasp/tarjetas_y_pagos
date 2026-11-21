@@ -11,6 +11,7 @@ import '../../data/repositories/categories_repository.dart';
 import '../../l10n/l10n.dart';
 import '../auth/auth_widgets.dart';
 import '../cards/cards_providers.dart';
+import '../cards/widgets/color_dot.dart';
 import '../reports/chart_colors.dart';
 
 /// New category ([categoryId] null) or edit/delete an own one: name, icon
@@ -236,41 +237,25 @@ class _CategoryFormState extends ConsumerState<_CategoryForm> {
                   gap,
                   Text(context.l10n.color, style: text.labelLarge),
                   const SizedBox(height: 6),
+                  // 48 dp touch areas around 40 dp dots: the same 10 dp gap
+                  // between dots as before (#40).
                   Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
+                    spacing: 2,
+                    runSpacing: 2,
                     children: [
                       for (final (i, c) in categoryColors.indexed)
-                        Semantics(
-                          button: true,
-                          selected: _color == c,
+                        ColorDot(
+                          key: ValueKey('categoryForm.color.$i'),
                           label: context.l10n.colorNumber(i + 1),
-                          child: InkResponse(
-                            key: ValueKey('categoryForm.color.$i'),
-                            onTap: () => setState(() => _color = c),
-                            radius: 26,
-                            child: Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: Color(c),
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: _color == c
-                                      ? scheme.onSurface
-                                      : Colors.transparent,
-                                  width: 3,
-                                ),
-                              ),
-                              child: _color == c
-                                  ? const Icon(Icons.check, color: Colors.white)
-                                  : null,
-                            ),
-                          ),
+                          color: Color(c),
+                          selected: _color == c,
+                          checkSize: 24,
+                          onTap: () => setState(() => _color = c),
                         ),
                     ],
                   ),
-                  const SizedBox(height: 28),
+                  // 28 minus the 8 dp the touch areas add below the last row.
+                  const SizedBox(height: 20),
                   LoadingButton(
                     key: const ValueKey('categoryForm.save'),
                     label: _editing

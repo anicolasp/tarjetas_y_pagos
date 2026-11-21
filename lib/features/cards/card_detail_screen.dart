@@ -171,9 +171,12 @@ class _Body extends ConsumerWidget {
               Row(
                 children: [
                   Expanded(
-                    child: Text(
-                      context.l10n.movements,
-                      style: text.titleMedium,
+                    child: Semantics(
+                      header: true,
+                      child: Text(
+                        context.l10n.movements,
+                        style: text.titleMedium,
+                      ),
                     ),
                   ),
                   if (!filter.isEmpty)
@@ -215,10 +218,13 @@ class _Body extends ConsumerWidget {
                 for (final (day, items) in groups) ...[
                   Padding(
                     padding: const EdgeInsets.only(top: 12, bottom: 4),
-                    child: Text(
-                      _dayLabel(context.l10n, day, today),
-                      style: text.labelLarge?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    child: Semantics(
+                      header: true,
+                      child: Text(
+                        _dayLabel(context.l10n, day, today),
+                        style: text.labelLarge?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     ),
                   ),
@@ -316,6 +322,12 @@ class _StatementCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               explainRecommendation(context.l10n, recommendation, today),
+              semanticsLabel: explainRecommendation(
+                context.l10n,
+                recommendation,
+                today,
+                spoken: true,
+              ),
               style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
             ),
             const SizedBox(height: 12),
@@ -379,7 +391,8 @@ class _CurrencyBlock extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          Text(
+          spokenText(
+            context,
             context.l10n.availableOf(
               formatMoney(limit - s.balanceCents, c),
               formatMoney(limit, c),
@@ -401,7 +414,8 @@ class _CurrencyBlock extends StatelessWidget {
         if (s.overdue)
           Padding(
             padding: const EdgeInsets.only(top: 4),
-            child: Text(
+            child: spokenText(
+              context,
               context.l10n.overdueSince(
                 formatMoney(s.overdueCents, c),
                 formatDate(s.overdueSince!),
@@ -459,7 +473,8 @@ class _PaymentTile extends ConsumerWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(context.l10n.deletePaymentTitle),
-        content: Text(
+        content: spokenText(
+          context,
           context.l10n.deletePaymentBody(
             formatMoney(payment.amountCents, payment.currency),
           ),
@@ -564,7 +579,8 @@ class _Row extends StatelessWidget {
         runSpacing: 2,
         children: [
           Text(label, style: text.bodyMedium),
-          Text(
+          spokenText(
+            context,
             value,
             key: valueKey == null ? null : ValueKey<String>(valueKey!),
             style: (emphasize ? text.titleMedium : text.bodyMedium)?.copyWith(

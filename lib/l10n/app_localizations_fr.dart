@@ -1585,4 +1585,76 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get appBrightnessHint => 'Seulement quand l\'app est ouverte';
+
+  @override
+  String spokenPesos(int count, String amount) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$amount pesos dominicains',
+      one: '$amount peso dominicain',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String spokenDollars(int count, String amount) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$amount dollars américains',
+      one: '$amount dollar américain',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String spokenCents(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count centimes',
+      one: '1 centime',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String spokenWithCents(String units, String cents) {
+    return '$units et $cents';
+  }
+
+  @override
+  String spokenMinus(String amount) {
+    return 'moins $amount';
+  }
+
+  @override
+  String cardEndingIn(String brand, String last4) {
+    return '$brand se terminant par $last4';
+  }
+
+  @override
+  String get cardOtherBrand => 'Carte';
+
+  @override
+  String chartDonutSemantics(String total, String items) {
+    return 'Graphique circulaire par catégorie, total $total. $items';
+  }
+
+  @override
+  String chartMonthsSemantics(String items) {
+    return 'Graphique en barres par mois. $items';
+  }
+
+  @override
+  String get currencyDopName => 'Pesos dominicains (DOP)';
+
+  @override
+  String get currencyUsdName => 'Dollars américains (USD)';
+
+  @override
+  String endingInDigits(String digits) {
+    return 'se terminant par $digits';
+  }
 }

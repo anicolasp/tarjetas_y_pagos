@@ -19,6 +19,7 @@ import '../../services/providers.dart';
 import '../auth/auth_widgets.dart';
 import '../scan/scan_widgets.dart';
 import 'cards_providers.dart';
+import 'widgets/color_dot.dart';
 
 const defaultPaymentDays = 20;
 
@@ -429,7 +430,7 @@ class _CardFormState extends ConsumerState<_CardForm> {
                           for (final c in Currency.values)
                             ChoiceChip(
                               key: ValueKey('cardForm.currency.${c.code}'),
-                              label: Text('${c.symbol} ${c.code}'),
+                              label: currencyChipText(context, c),
                               selected: !_dual && _currency == c,
                               onSelected: (_) => setState(() {
                                 _currency = c;
@@ -505,20 +506,24 @@ class _CardFormState extends ConsumerState<_CardForm> {
                       gap,
                       Text(context.l10n.color, style: text.labelLarge),
                       const SizedBox(height: 6),
+                      // 48 dp touch areas around 40 dp dots: the same 10 dp
+                      // gap between dots as before (#40).
                       Wrap(
-                        spacing: 10,
-                        runSpacing: 10,
+                        spacing: 2,
+                        runSpacing: 2,
                         children: [
                           for (final (i, c) in cardColors.indexed)
-                            _ColorDot(
+                            ColorDot(
                               key: ValueKey('cardForm.color.$i'),
+                              label: context.l10n.colorNumber(i + 1),
                               color: Color(c),
                               selected: _color == c,
                               onTap: () => setState(() => _color = c),
                             ),
                         ],
                       ),
-                      const SizedBox(height: 28),
+                      // 28 minus the 8 dp the touch areas add below the last row.
+                      const SizedBox(height: 20),
                       LoadingButton(
                         key: const ValueKey('cardForm.save'),
                         label: _editing
@@ -623,48 +628,6 @@ class _BankFieldState extends State<_BankField> {
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ColorDot extends StatelessWidget {
-  const _ColorDot({
-    super.key,
-    required this.color,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final Color color;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      selected: selected,
-      child: InkResponse(
-        onTap: onTap,
-        radius: 26,
-        child: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: selected
-                  ? Theme.of(context).colorScheme.onSurface
-                  : Colors.transparent,
-              width: 3,
-            ),
-          ),
-          child: selected
-              ? const Icon(Icons.check, color: Colors.white, size: 20)
-              : null,
         ),
       ),
     );

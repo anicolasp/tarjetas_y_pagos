@@ -1570,4 +1570,76 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get appBrightnessHint => 'Only while the app is open';
+
+  @override
+  String spokenPesos(int count, String amount) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$amount Dominican pesos',
+      one: '$amount Dominican peso',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String spokenDollars(int count, String amount) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$amount US dollars',
+      one: '$amount US dollar',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String spokenCents(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count cents',
+      one: '1 cent',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String spokenWithCents(String units, String cents) {
+    return '$units and $cents';
+  }
+
+  @override
+  String spokenMinus(String amount) {
+    return 'minus $amount';
+  }
+
+  @override
+  String cardEndingIn(String brand, String last4) {
+    return '$brand ending in $last4';
+  }
+
+  @override
+  String get cardOtherBrand => 'Card';
+
+  @override
+  String chartDonutSemantics(String total, String items) {
+    return 'Pie chart by category, total $total. $items';
+  }
+
+  @override
+  String chartMonthsSemantics(String items) {
+    return 'Bar chart by month. $items';
+  }
+
+  @override
+  String get currencyDopName => 'Dominican pesos (DOP)';
+
+  @override
+  String get currencyUsdName => 'US dollars (USD)';
+
+  @override
+  String endingInDigits(String digits) {
+    return 'ending in $digits';
+  }
 }

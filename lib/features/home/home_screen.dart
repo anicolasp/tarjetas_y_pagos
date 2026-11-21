@@ -85,9 +85,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     alignment: WrapAlignment.spaceBetween,
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      Text(
-                        context.l10n.myCards,
-                        style: Theme.of(context).textTheme.titleMedium,
+                      Semantics(
+                        header: true,
+                        child: Text(
+                          context.l10n.myCards,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
                       ),
                       if (ranked.isNotEmpty)
                         TextButton(
@@ -155,16 +158,24 @@ class _Header extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Text(
-            context.l10n.greeting(greetingFor(now), user.firstName),
-            key: const ValueKey('home.greeting'),
-            style: text.headlineSmall?.copyWith(fontWeight: FontWeight.w600),
+          child: Semantics(
+            header: true,
+            child: Text(
+              context.l10n.greeting(greetingFor(now), user.firstName),
+              key: const ValueKey('home.greeting'),
+              style: text.headlineSmall?.copyWith(fontWeight: FontWeight.w600),
+            ),
           ),
         ),
         const SizedBox(width: 12),
+        // Its own node (#40): without container it merged with the whole
+        // header into one "button"; the initials are not read.
         Semantics(
+          container: true,
           button: true,
           label: context.l10n.profileTitle,
+          onTap: () => context.push(Routes.profile),
+          excludeSemantics: true,
           child: InkWell(
             key: const ValueKey('home.avatar'),
             customBorder: const CircleBorder(),
@@ -245,7 +256,8 @@ class _MonthSummary extends StatelessWidget {
               if ((otherDebt[c] ?? 0) > 0)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 6),
-                  child: Text(
+                  child: spokenText(
+                    context,
                     context.l10n.debtSplit(
                       formatMoney(cardDebt[c] ?? 0, c),
                       formatMoney(otherDebt[c]!, c),
@@ -286,7 +298,8 @@ class _SummaryRow extends StatelessWidget {
         spacing: 12,
         children: [
           Text(label, style: text.bodyMedium),
-          Text(
+          spokenText(
+            context,
             formatMoney(cents, currency),
             style: text.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
           ),
@@ -389,6 +402,11 @@ class _RankRow extends StatelessWidget {
         children: [
           Text(
             '$position. ${r.card.alias} •••• ${r.card.last4}',
+            // "1. Gastos de la casa, Visa ending in 4 3 2 1", not the dots
+            // and "four thousand…" (#40).
+            semanticsLabel:
+                '$position. ${r.card.alias}, '
+                '${context.l10n.spokenCardEnding(r.card)}',
             style: (first ? text.titleLarge : text.bodyLarge)?.copyWith(
               color: scheme.onPrimaryContainer,
               fontWeight: first ? FontWeight.w700 : FontWeight.w500,
@@ -396,6 +414,12 @@ class _RankRow extends StatelessWidget {
           ),
           Text(
             explainRecommendation(context.l10n, r, today),
+            semanticsLabel: explainRecommendation(
+              context.l10n,
+              r,
+              today,
+              spoken: true,
+            ),
             style: text.bodySmall?.copyWith(color: scheme.onPrimaryContainer),
           ),
           if (r.lowCredit)

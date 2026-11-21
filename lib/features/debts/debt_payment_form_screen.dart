@@ -131,7 +131,8 @@ class _PaymentFormState extends ConsumerState<_PaymentForm> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(s.debt.creditor, style: text.titleMedium),
-                  Text(
+                  spokenText(
+                    context,
                     context.l10n.debtRemaining(
                       formatMoney(s.remainingCents, currency),
                     ),

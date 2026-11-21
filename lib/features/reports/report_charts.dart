@@ -50,7 +50,14 @@ class ReportSection extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(title, style: Theme.of(context).textTheme.titleMedium),
+            // A heading TalkBack can jump to (#40).
+            Semantics(
+              header: true,
+              child: Text(
+                title,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
             const SizedBox(height: 12),
             child,
           ],
@@ -82,7 +89,7 @@ class CurrencyTotalsTile extends StatelessWidget {
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
-          Text(value, style: text.titleLarge),
+          spokenText(context, value, style: text.titleLarge),
         ],
       ),
     );
@@ -158,43 +165,63 @@ class CategoryDonut extends StatelessWidget {
         ),
     ];
 
-    final donut = SizedBox.square(
-      dimension: 180,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          PieChart(
-            PieChartData(
-              // No touch: it would take the page's vertical drag.
-              pieTouchData: PieTouchData(enabled: false),
-              sectionsSpace: 2,
-              centerSpaceRadius: 58,
-              startDegreeOffset: -90,
-              sections: [
-                for (final s in slices)
-                  PieChartSectionData(
-                    value: s.cents.toDouble(),
-                    color: s.color,
-                    radius: 28,
-                    showTitle: false,
-                  ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(36),
-            child: FittedBox(
-              child: Text(
-                formatMoney(total, currency),
-                style: Theme.of(context).textTheme.titleMedium,
+    final percents = wholePercents([for (final s in slices) s.cents]);
+    String percentText(int i) => percents[i] == 0 && slices[i].cents > 0
+        ? context.l10n.percentBelowOne
+        : context.l10n.percentValue(percents[i]);
+    // The drawing as one spoken summary (#40); the legend below stays
+    // readable row by row.
+    final donut = Semantics(
+      label: context.l10n.chartDonutSemantics(
+        context.l10n.moneySemantics(total, currency),
+        [
+          for (final (i, s) in slices.indexed)
+            '${s.label}, '
+                '${context.l10n.moneySemantics(s.cents, currency)}, '
+                '${percentText(i)}',
+        ].join('; '),
+      ),
+      container: true,
+      image: true,
+      excludeSemantics: true,
+      child: SizedBox.square(
+        dimension: 180,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            PieChart(
+              PieChartData(
+                // No touch: it would take the page's vertical drag.
+                pieTouchData: PieTouchData(enabled: false),
+                sectionsSpace: 2,
+                centerSpaceRadius: 58,
+                startDegreeOffset: -90,
+                sections: [
+                  for (final s in slices)
+                    PieChartSectionData(
+                      value: s.cents.toDouble(),
+                      color: s.color,
+                      radius: 28,
+                      showTitle: false,
+                    ),
+                ],
               ),
             ),
-          ),
-        ],
+            Padding(
+              padding: const EdgeInsets.all(36),
+              child: FittedBox(
+                // Read in the chart summary above.
+                child: Text(
+                  formatMoney(total, currency),
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
 
-    final percents = wholePercents([for (final s in slices) s.cents]);
     final legend = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -205,9 +232,7 @@ class CategoryDonut extends StatelessWidget {
             color: s.color,
             label: s.label,
             value: formatMoney(s.cents, currency),
-            percent: percents[i] == 0 && s.cents > 0
-                ? context.l10n.percentBelowOne
-                : context.l10n.percentValue(percents[i]),
+            percent: percentText(i),
           ),
       ],
     );
@@ -289,6 +314,9 @@ class _LegendRow extends StatelessWidget {
                       ),
                     ],
                   ),
+                  // The amount in words (#40); the text stays as shown.
+                  semanticsLabel:
+                      '${context.l10n.spokenLabel(value) ?? value}, $percent',
                   style: text.bodyMedium,
                 ),
               ],
@@ -360,92 +388,106 @@ class _MonthBarsState extends State<MonthBars> {
     }
 
     final shown = _shown;
-    final chart = SizedBox(
-      height: 200 + 24 * scale,
-      child: LayoutBuilder(
-        builder: (context, constraints) => GestureDetector(
-          key: const ValueKey('reports.monthBars'),
-          behavior: HitTestBehavior.opaque,
-          // Bars are evenly spread over the plot (right of the y axis).
-          onTapUp: (d) {
-            final plot = constraints.maxWidth - leftAxis;
-            final i = ((d.localPosition.dx - leftAxis) / plot * months.length)
-                .floor();
-            if (i >= 0 && i < months.length) setState(() => _selected = i);
-          },
-          child: BarChart(
-            BarChartData(
-              maxY: maxCents == 0 ? 1 : maxCents * 1.15,
-              alignment: BarChartAlignment.spaceAround,
-              borderData: FlBorderData(show: false),
-              barTouchData: BarTouchData(enabled: false),
-              gridData: FlGridData(
-                drawVerticalLine: false,
-                getDrawingHorizontalLine: (_) =>
-                    FlLine(color: scheme.outlineVariant, strokeWidth: 1),
-              ),
-              titlesData: FlTitlesData(
-                topTitles: const AxisTitles(),
-                rightTitles: const AxisTitles(),
-                leftTitles: AxisTitles(
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    reservedSize: leftAxis,
-                    // The top of the axis is maxY (115 % of the largest
-                    // month), not a round step: its label would collide.
-                    getTitlesWidget: (value, meta) => value == meta.max
-                        ? const SizedBox.shrink()
-                        : SideTitleWidget(
-                            meta: meta,
-                            child: Text(
-                              compact.format(value / 100),
-                              style: text.labelSmall?.copyWith(
-                                color: scheme.onSurfaceVariant,
+    // The bars and axis labels ("1.5K", "oct") as one spoken summary (#40):
+    // every month with its amount.
+    final chart = Semantics(
+      label: context.l10n.chartMonthsSemantics(
+        [
+          for (final m in months)
+            '${monthLabel(m.month, long: true)}, '
+                '${context.l10n.moneySemantics(m.totalCents, currency)}',
+        ].join('; '),
+      ),
+      container: true,
+      image: true,
+      excludeSemantics: true,
+      child: SizedBox(
+        height: 200 + 24 * scale,
+        child: LayoutBuilder(
+          builder: (context, constraints) => GestureDetector(
+            key: const ValueKey('reports.monthBars'),
+            behavior: HitTestBehavior.opaque,
+            // Bars are evenly spread over the plot (right of the y axis).
+            onTapUp: (d) {
+              final plot = constraints.maxWidth - leftAxis;
+              final i = ((d.localPosition.dx - leftAxis) / plot * months.length)
+                  .floor();
+              if (i >= 0 && i < months.length) setState(() => _selected = i);
+            },
+            child: BarChart(
+              BarChartData(
+                maxY: maxCents == 0 ? 1 : maxCents * 1.15,
+                alignment: BarChartAlignment.spaceAround,
+                borderData: FlBorderData(show: false),
+                barTouchData: BarTouchData(enabled: false),
+                gridData: FlGridData(
+                  drawVerticalLine: false,
+                  getDrawingHorizontalLine: (_) =>
+                      FlLine(color: scheme.outlineVariant, strokeWidth: 1),
+                ),
+                titlesData: FlTitlesData(
+                  topTitles: const AxisTitles(),
+                  rightTitles: const AxisTitles(),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: leftAxis,
+                      // The top of the axis is maxY (115 % of the largest
+                      // month), not a round step: its label would collide.
+                      getTitlesWidget: (value, meta) => value == meta.max
+                          ? const SizedBox.shrink()
+                          : SideTitleWidget(
+                              meta: meta,
+                              child: Text(
+                                compact.format(value / 100),
+                                style: text.labelSmall?.copyWith(
+                                  color: scheme.onSurfaceVariant,
+                                ),
                               ),
                             ),
-                          ),
+                    ),
                   ),
-                ),
-                bottomTitles: AxisTitles(
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    reservedSize: 24 * scale,
-                    getTitlesWidget: (value, meta) => SideTitleWidget(
-                      meta: meta,
-                      child: Text(
-                        monthLabel(months[value.toInt()].month),
-                        style: text.labelSmall?.copyWith(
-                          color: value.toInt() == shown
-                              ? scheme.onSurface
-                              : scheme.onSurfaceVariant,
-                          fontWeight: value.toInt() == shown
-                              ? FontWeight.w700
-                              : null,
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 24 * scale,
+                      getTitlesWidget: (value, meta) => SideTitleWidget(
+                        meta: meta,
+                        child: Text(
+                          monthLabel(months[value.toInt()].month),
+                          style: text.labelSmall?.copyWith(
+                            color: value.toInt() == shown
+                                ? scheme.onSurface
+                                : scheme.onSurfaceVariant,
+                            fontWeight: value.toInt() == shown
+                                ? FontWeight.w700
+                                : null,
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
-              ),
-              barGroups: [
-                for (final (i, m) in months.indexed)
-                  BarChartGroupData(
-                    x: i,
-                    barRods: [
-                      BarChartRodData(
-                        toY: m.totalCents.toDouble(),
-                        // The selected month in full color, the rest muted.
-                        color: i == shown
-                            ? scheme.primary
-                            : scheme.primary.withValues(alpha: 0.45),
-                        width: months.length > 8 ? 10 : 18,
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(4),
+                barGroups: [
+                  for (final (i, m) in months.indexed)
+                    BarChartGroupData(
+                      x: i,
+                      barRods: [
+                        BarChartRodData(
+                          toY: m.totalCents.toDouble(),
+                          // The selected month in full color, the rest muted.
+                          color: i == shown
+                              ? scheme.primary
+                              : scheme.primary.withValues(alpha: 0.45),
+                          width: months.length > 8 ? 10 : 18,
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(4),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-              ],
+                      ],
+                    ),
+                ],
+              ),
             ),
           ),
         ),
@@ -470,11 +512,17 @@ class _MonthBarsState extends State<MonthBars> {
               ),
             ],
           ),
+          semanticsLabel:
+              '${monthLabel(months[shown].month, long: true)}: '
+              '${context.l10n.moneySemantics(months[shown].totalCents, currency)}',
           style: text.bodyMedium,
         ),
-        Text(
-          context.l10n.tapBarHint,
-          style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+        // The chart summary already reads every month (#40).
+        ExcludeSemantics(
+          child: Text(
+            context.l10n.tapBarHint,
+            style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+          ),
         ),
       ],
     );
@@ -514,11 +562,13 @@ class CardTotals extends StatelessWidget {
                   alignment: WrapAlignment.spaceBetween,
                   spacing: 12,
                   children: [
-                    Text(
+                    spokenText(
+                      context,
                       _cardName(context.l10n, cards[t.cardId]),
                       style: text.bodyMedium,
                     ),
-                    Text(
+                    spokenText(
+                      context,
                       formatMoney(t.totalCents, currency),
                       style: text.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w600,
@@ -527,15 +577,19 @@ class CardTotals extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 6),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: t.totalCents / largest,
-                    minHeight: 6,
-                    backgroundColor: scheme.surfaceContainerHighest,
-                    color: readableOn(
-                      Color(cards[t.cardId]?.color ?? 0xFF757575),
-                      scheme.surface,
+                // Only a visual comparison with the largest card; its amount
+                // is read just above (#40).
+                ExcludeSemantics(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: t.totalCents / largest,
+                      minHeight: 6,
+                      backgroundColor: scheme.surfaceContainerHighest,
+                      color: readableOn(
+                        Color(cards[t.cardId]?.color ?? 0xFF757575),
+                        scheme.surface,
+                      ),
                     ),
                   ),
                 ),
