@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app_prefs.dart';
 import 'biometric_service.dart';
+import 'brightness_service.dart';
 import 'card_scan_service.dart';
 import 'google_auth_service.dart';
 import 'login_throttle.dart';
@@ -62,6 +63,11 @@ final notificationServiceProvider = Provider<NotificationService>(
 /// `dart_defines.local.json`, never from the source.
 final googleAuthServiceProvider = Provider<GoogleAuthService>(
   (ref) => PluginGoogleAuthService(),
+);
+
+/// The app window's own brightness (#39).
+final brightnessServiceProvider = Provider<BrightnessService>(
+  (ref) => PluginBrightnessService(),
 );
 
 /// The id of the user who still has the setup wizard ahead, or null.

@@ -2781,6 +2781,24 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Así se verá:'**
   String get a11yPreviewLabel;
+
+  /// No description provided for @appBrightness.
+  ///
+  /// In es, this message translates to:
+  /// **'Brillo de la app'**
+  String get appBrightness;
+
+  /// No description provided for @useSystemBrightness.
+  ///
+  /// In es, this message translates to:
+  /// **'Usar el del teléfono'**
+  String get useSystemBrightness;
+
+  /// No description provided for @appBrightnessHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Solo mientras la app está abierta'**
+  String get appBrightnessHint;
 }
 
 class _AppLocalizationsDelegate

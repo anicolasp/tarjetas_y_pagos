@@ -905,5 +905,8 @@
   "legibleFontSubtitle": "Atkinson Hyperlegible, pensada para baja visión",
   "boldText": "Negritas",
   "highContrast": "Alto contraste",
-  "a11yPreviewLabel": "Así se verá:"
+  "a11yPreviewLabel": "Así se verá:",
+  "appBrightness": "Brillo de la app",
+  "useSystemBrightness": "Usar el del teléfono",
+  "appBrightnessHint": "Solo mientras la app está abierta"
 }

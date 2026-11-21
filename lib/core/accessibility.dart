@@ -22,7 +22,11 @@ enum TextSize {
 /// times [TextSize.factor]); past it some screens become unusable.
 const maxTextScale = 3.0;
 
-/// A user's accessibility settings (#38), applied on top of the phone's.
+/// The lowest in-app brightness (#39): the screen never goes black.
+const minAppBrightness = 0.1;
+
+/// A user's accessibility settings (#38, #39), applied on top of the
+/// phone's.
 @immutable
 class A11ySettings {
   const A11ySettings({
@@ -30,6 +34,7 @@ class A11ySettings {
     this.legibleFont = false,
     this.boldText = false,
     this.highContrast = false,
+    this.brightness,
   });
 
   final TextSize textSize;
@@ -37,50 +42,65 @@ class A11ySettings {
   final bool boldText;
   final bool highContrast;
 
-  /// From the `users` columns (v6).
+  /// The app's own screen brightness (0.1–1) while it is open; null uses
+  /// the phone's. Never changes the phone's setting (#39).
+  final double? brightness;
+
+  /// From the `users` columns (v6, v7).
   factory A11ySettings.fromColumns(Map<String, Object?> m) => A11ySettings(
     textSize: TextSize.fromName(m['text_size'] as String?),
     legibleFont: m['legible_font'] == 1,
     boldText: m['bold_text'] == 1,
     highContrast: m['high_contrast'] == 1,
+    brightness: _validBrightness((m['app_brightness'] as num?)?.toDouble()),
   );
 
-  /// The `users` columns (v6).
-  Map<String, Object> toColumns() => {
+  /// The `users` columns (v6, v7).
+  Map<String, Object?> toColumns() => {
     'text_size': textSize.name,
     'legible_font': legibleFont ? 1 : 0,
     'bold_text': boldText ? 1 : 0,
     'high_contrast': highContrast ? 1 : 0,
+    'app_brightness': brightness,
   };
 
-  /// One string, so the pre-login copy is always saved whole.
+  /// One string, so the pre-login copy is always saved whole. The
+  /// brightness is last and empty when it follows the phone.
   String encode() => [
     textSize.name,
     for (final on in [legibleFont, boldText, highContrast]) on ? '1' : '0',
+    brightness?.toString() ?? '',
   ].join(',');
 
-  /// [encode]'s output; anything else gives the defaults.
+  /// [encode]'s output, also the 4-field one from before #39; anything else
+  /// gives the defaults.
   static A11ySettings decode(String? value) {
     final parts = value?.split(',') ?? const [];
-    if (parts.length != 4) return const A11ySettings();
+    if (parts.length != 4 && parts.length != 5) return const A11ySettings();
     return A11ySettings(
       textSize: TextSize.fromName(parts[0]),
       legibleFont: parts[1] == '1',
       boldText: parts[2] == '1',
       highContrast: parts[3] == '1',
+      brightness: parts.length == 5
+          ? _validBrightness(double.tryParse(parts[4]))
+          : null,
     );
   }
 
+  /// [brightness] is a getter so it can be set back to null (the phone's).
   A11ySettings copyWith({
     TextSize? textSize,
     bool? legibleFont,
     bool? boldText,
     bool? highContrast,
+    ValueGetter<double?>? brightness,
   }) => A11ySettings(
     textSize: textSize ?? this.textSize,
     legibleFont: legibleFont ?? this.legibleFont,
     boldText: boldText ?? this.boldText,
     highContrast: highContrast ?? this.highContrast,
+    brightness: brightness == null ? this.brightness : brightness(),
   );
 
   @override
@@ -89,12 +109,17 @@ class A11ySettings {
       other.textSize == textSize &&
       other.legibleFont == legibleFont &&
       other.boldText == boldText &&
-      other.highContrast == highContrast;
+      other.highContrast == highContrast &&
+      other.brightness == brightness;
 
   @override
   int get hashCode =>
-      Object.hash(textSize, legibleFont, boldText, highContrast);
+      Object.hash(textSize, legibleFont, boldText, highContrast, brightness);
 }
+
+/// [value] clamped to [minAppBrightness]–1; null when missing or invalid.
+double? _validBrightness(double? value) =>
+    value == null || value.isNaN ? null : value.clamp(minAppBrightness, 1);
 
 /// The phone's [base] scaler times [factor], capped at [maxTextScale]. The
 /// cap only limits what the app adds: a phone already past it keeps its own

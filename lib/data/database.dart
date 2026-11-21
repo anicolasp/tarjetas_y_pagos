@@ -48,7 +48,7 @@ class AppDatabase {
 
 typedef _Migration = Future<void> Function(Database db);
 
-final List<_Migration> _migrations = [_v1, _v2, _v3, _v4, _v5, _v6];
+final List<_Migration> _migrations = [_v1, _v2, _v3, _v4, _v5, _v6, _v7];
 
 /// Base categories available to every user (`user_id IS NULL`).
 /// `icon` is a key resolved to a Material icon by the UI layer.
@@ -270,3 +270,7 @@ Future<void> _v6(Database db) async {
   }
   await batch.commit(noResult: true);
 }
+
+/// v7 (#39): the app's own screen brightness; NULL follows the phone.
+Future<void> _v7(Database db) =>
+    db.execute('ALTER TABLE users ADD COLUMN app_brightness REAL');

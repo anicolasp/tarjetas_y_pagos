@@ -210,4 +210,26 @@ void main() {
     expect(AppUser.fromMap(row).a11y, const A11ySettings());
     await v6.close();
   });
+
+  test('v6 → v7: existing users follow the phone brightness', () async {
+    final v6 = await openAt(6);
+    await v6.db.insert('users', {
+      'first_name': 'Ana',
+      'last_name': 'Prueba',
+      'email': 'ana@example.com',
+      'password_hash': 'h',
+      'salt': 's',
+      'bold_text': 1,
+      'created_at': '2026-01-01T00:00:00.000Z',
+    });
+    await v6.close();
+
+    final v7 = await openAt(null);
+    final row = (await v7.db.query('users')).single;
+    expect(row['app_brightness'], isNull);
+    final a11y = AppUser.fromMap(row).a11y;
+    expect(a11y.boldText, isTrue);
+    expect(a11y.brightness, isNull);
+    await v7.close();
+  });
 }

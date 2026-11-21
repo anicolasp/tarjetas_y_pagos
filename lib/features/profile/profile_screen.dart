@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../core/accessibility.dart';
 import '../../core/formatters.dart';
@@ -376,6 +377,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 _setA11y(user.a11y.copyWith(highContrast: on)),
                     ),
                     const _A11yPreview(),
+                    _Brightness(
+                      value: user.a11y.brightness,
+                      enabled: !_busy,
+                      onSave: (value) =>
+                          _setA11y(user.a11y.copyWith(brightness: () => value)),
+                    ),
                   ],
                 ),
                 gap,
@@ -442,6 +449,107 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// The app's own screen brightness (#39): the phone's by default, or a
+/// value from [minAppBrightness] to 100 % while the app is open. Dragging
+/// previews it; it is saved when the drag ends.
+class _Brightness extends ConsumerStatefulWidget {
+  const _Brightness({
+    required this.value,
+    required this.enabled,
+    required this.onSave,
+  });
+
+  /// Null: the phone's brightness.
+  final double? value;
+  final bool enabled;
+  final Future<void> Function(double? value) onSave;
+
+  @override
+  ConsumerState<_Brightness> createState() => _BrightnessState();
+}
+
+class _BrightnessState extends ConsumerState<_Brightness> {
+  /// The value under the finger, until it is saved.
+  double? _dragging;
+
+  Future<void> _save(double? value) async {
+    await widget.onSave(value);
+    if (!mounted) return;
+    setState(() => _dragging = null);
+    // A failed save leaves the old setting: show it again.
+    if (widget.value != value) {
+      final service = ref.read(brightnessServiceProvider);
+      final saved = widget.value;
+      saved == null ? service.reset() : service.apply(saved);
+    }
+  }
+
+  Future<void> _useSystem(bool? on) async {
+    if (on ?? true) return _save(null);
+    // Start from what the phone shows, so the screen does not jump.
+    final system = await ref.read(brightnessServiceProvider).system();
+    if (!mounted) return;
+    await _save((system ?? 1).clamp(minAppBrightness, 1));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final followsPhone = widget.value == null;
+    final shown = _dragging ?? widget.value;
+    final percent = NumberFormat.percentPattern();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _FieldLabel(l.appBrightness),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+          child: Text(
+            l.appBrightnessHint,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(8, 0, 16, 0),
+          child: Row(
+            children: [
+              const Icon(Icons.brightness_6_outlined),
+              Expanded(
+                child: Slider(
+                  key: const ValueKey('profile.brightness'),
+                  value: shown ?? 1,
+                  min: minAppBrightness,
+                  divisions: 18,
+                  label: percent.format(shown ?? 1),
+                  semanticFormatterCallback: percent.format,
+                  onChanged: followsPhone || !widget.enabled
+                      ? null
+                      : (v) {
+                          setState(() => _dragging = v);
+                          ref.read(brightnessServiceProvider).apply(v);
+                        },
+                  onChangeEnd: followsPhone || !widget.enabled ? null : _save,
+                ),
+              ),
+              if (shown != null)
+                Text(
+                  percent.format(shown),
+                  key: const ValueKey('profile.brightness.value'),
+                ),
+            ],
+          ),
+        ),
+        CheckboxListTile(
+          key: const ValueKey('profile.brightnessSystem'),
+          title: Text(l.useSystemBrightness),
+          value: followsPhone,
+          onChanged: widget.enabled ? _useSystem : null,
+        ),
+      ],
     );
   }
 }

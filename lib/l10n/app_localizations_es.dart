@@ -1559,4 +1559,13 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get a11yPreviewLabel => 'Así se verá:';
+
+  @override
+  String get appBrightness => 'Brillo de la app';
+
+  @override
+  String get useSystemBrightness => 'Usar el del teléfono';
+
+  @override
+  String get appBrightnessHint => 'Solo mientras la app está abierta';
 }
