@@ -449,5 +449,14 @@
   "a11yPreviewLabel": "Aperçu :",
   "appBrightness": "Luminosité de l'app",
   "useSystemBrightness": "Utiliser celle du téléphone",
-  "appBrightnessHint": "Seulement quand l'app est ouverte"
+  "appBrightnessHint": "Seulement quand l'app est ouverte",
+  "spokenPesos": "{count, plural, =1{{amount} peso dominicain} other{{amount} pesos dominicains}}",
+  "spokenDollars": "{count, plural, =1{{amount} dollar américain} other{{amount} dollars américains}}",
+  "spokenCents": "{count, plural, =1{1 centime} other{{count} centimes}}",
+  "spokenWithCents": "{units} et {cents}",
+  "spokenMinus": "moins {amount}",
+  "cardEndingIn": "{brand} se terminant par {last4}",
+  "cardOtherBrand": "Carte",
+  "chartDonutSemantics": "Graphique circulaire par catégorie. {items}",
+  "chartMonthsSemantics": "Graphique en barres par mois. {items}"
 }

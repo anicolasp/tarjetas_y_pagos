@@ -236,9 +236,11 @@ class _CategoryFormState extends ConsumerState<_CategoryForm> {
                   gap,
                   Text(context.l10n.color, style: text.labelLarge),
                   const SizedBox(height: 6),
+                  // 48 dp touch areas around 40 dp dots: the same 10 dp gap
+                  // between dots as before (#40).
                   Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
+                    spacing: 2,
+                    runSpacing: 2,
                     children: [
                       for (final (i, c) in categoryColors.indexed)
                         Semantics(
@@ -249,28 +251,37 @@ class _CategoryFormState extends ConsumerState<_CategoryForm> {
                             key: ValueKey('categoryForm.color.$i'),
                             onTap: () => setState(() => _color = c),
                             radius: 26,
-                            child: Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: Color(c),
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: _color == c
-                                      ? scheme.onSurface
-                                      : Colors.transparent,
-                                  width: 3,
+                            child: SizedBox.square(
+                              dimension: 48,
+                              child: Center(
+                                child: Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    color: Color(c),
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: _color == c
+                                          ? scheme.onSurface
+                                          : Colors.transparent,
+                                      width: 3,
+                                    ),
+                                  ),
+                                  child: _color == c
+                                      ? const Icon(
+                                          Icons.check,
+                                          color: Colors.white,
+                                        )
+                                      : null,
                                 ),
                               ),
-                              child: _color == c
-                                  ? const Icon(Icons.check, color: Colors.white)
-                                  : null,
                             ),
                           ),
                         ),
                     ],
                   ),
-                  const SizedBox(height: 28),
+                  // 28 minus the 8 dp the touch areas add below the last row.
+                  const SizedBox(height: 20),
                   LoadingButton(
                     key: const ValueKey('categoryForm.save'),
                     label: _editing

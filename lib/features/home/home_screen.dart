@@ -245,7 +245,8 @@ class _MonthSummary extends StatelessWidget {
               if ((otherDebt[c] ?? 0) > 0)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 6),
-                  child: Text(
+                  child: spokenText(
+                    context,
                     context.l10n.debtSplit(
                       formatMoney(cardDebt[c] ?? 0, c),
                       formatMoney(otherDebt[c]!, c),
@@ -286,7 +287,8 @@ class _SummaryRow extends StatelessWidget {
         spacing: 12,
         children: [
           Text(label, style: text.bodyMedium),
-          Text(
+          spokenText(
+            context,
             formatMoney(cents, currency),
             style: text.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
           ),

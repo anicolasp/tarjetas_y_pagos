@@ -31,79 +31,104 @@ class CreditCardTile extends StatelessWidget {
         .map((e) => formatMoney(e.value, e.key))
         .join(' · ');
 
-    return Material(
-      color: color,
-      borderRadius: BorderRadius.circular(18),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Container(
-          constraints: const BoxConstraints(minHeight: 170),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [color, Color.lerp(color, Colors.black, 0.35)!],
+    final l = context.l10n;
+    final brand = card.brand == CardBrand.other
+        ? l.cardOtherBrand
+        : card.brand.label;
+    // One element for screen readers (#40): "Gastos de la casa, Visa
+    // ending in 4321, Banco Ficticio, Corte 5/dic, Disponible 50000 pesos
+    // dominicanos", with the tap kept as its action.
+    final spoken = [
+      card.alias,
+      l.cardEndingIn(brand, card.last4),
+      card.bank,
+      l.cutOn(formatDate(recommendation.nextCut)),
+      available.isEmpty ? l.availableNone : l.availableAmount(available),
+      if (card.dualCurrency) l.dualBalance,
+    ].join(', ');
+
+    return Semantics(
+      container: true,
+      button: onTap != null,
+      label: l.speakMoney(spoken) ?? spoken,
+      onTap: onTap,
+      excludeSemantics: true,
+      child: Material(
+        color: color,
+        borderRadius: BorderRadius.circular(18),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 170),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [color, Color.lerp(color, Colors.black, 0.35)!],
+              ),
             ),
-          ),
-          padding: const EdgeInsets.all(18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Wrap: with very large text the brand moves below the bank
-              // instead of splitting the bank name mid-word.
-              Wrap(
-                alignment: WrapAlignment.spaceBetween,
-                spacing: 8,
-                runSpacing: 4,
-                children: [
-                  Text(
-                    card.bank,
-                    style: text.labelLarge?.copyWith(color: muted),
-                  ),
-                  BrandMark(card.brand),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Text(
-                card.alias,
-                style: text.titleLarge?.copyWith(
-                  color: onCard,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 14),
-              Text(
-                '•••• ${card.last4}',
-                style: text.titleMedium?.copyWith(
-                  color: onCard,
-                  letterSpacing: 2,
-                  fontFeatures: const [FontFeature.tabularFigures()],
-                ),
-              ),
-              const SizedBox(height: 14),
-              Wrap(
-                spacing: 16,
-                runSpacing: 4,
-                children: [
-                  Text(
-                    context.l10n.cutOn(formatDayMonth(recommendation.nextCut)),
-                    style: text.bodySmall?.copyWith(color: muted),
-                  ),
-                  Text(
-                    available.isEmpty
-                        ? context.l10n.availableNone
-                        : context.l10n.availableAmount(available),
-                    style: text.bodySmall?.copyWith(color: muted),
-                  ),
-                  if (card.dualCurrency)
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Wrap: with very large text the brand moves below the bank
+                // instead of splitting the bank name mid-word.
+                Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  spacing: 8,
+                  runSpacing: 4,
+                  children: [
                     Text(
-                      context.l10n.dualBalance,
+                      card.bank,
+                      style: text.labelLarge?.copyWith(color: muted),
+                    ),
+                    BrandMark(card.brand),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  card.alias,
+                  style: text.titleLarge?.copyWith(
+                    color: onCard,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  '•••• ${card.last4}',
+                  style: text.titleMedium?.copyWith(
+                    color: onCard,
+                    letterSpacing: 2,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Wrap(
+                  spacing: 16,
+                  runSpacing: 4,
+                  children: [
+                    Text(
+                      context.l10n.cutOn(
+                        formatDayMonth(recommendation.nextCut),
+                      ),
                       style: text.bodySmall?.copyWith(color: muted),
                     ),
-                ],
-              ),
-            ],
+                    Text(
+                      available.isEmpty
+                          ? context.l10n.availableNone
+                          : context.l10n.availableAmount(available),
+                      style: text.bodySmall?.copyWith(color: muted),
+                    ),
+                    if (card.dualCurrency)
+                      Text(
+                        context.l10n.dualBalance,
+                        style: text.bodySmall?.copyWith(color: muted),
+                      ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),

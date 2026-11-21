@@ -169,7 +169,7 @@ String unexpectedError(BuildContext context) => context.l10n.unexpectedError;
 void showErrorSnackBar(BuildContext context, String message) {
   ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(content: Text(message)));
+    ..showSnackBar(SnackBar(content: spokenText(context, message)));
 }
 
 /// "30 s", "2 min"…

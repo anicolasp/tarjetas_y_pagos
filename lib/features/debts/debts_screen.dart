@@ -234,7 +234,8 @@ class _CardDebtTile extends StatelessWidget {
               const SizedBox(height: 6),
               for (final s in statement.byCurrency.values)
                 if (s.balanceCents > 0)
-                  Text(
+                  spokenText(
+                    context,
                     formatMoney(s.balanceCents, s.currency),
                     key: ValueKey('debts.card.$cardId.${s.currency.code}'),
                     style: text.titleMedium?.copyWith(
@@ -310,7 +311,8 @@ class DebtSummaryView extends StatelessWidget {
           spacing: 12,
           runSpacing: 4,
           children: [
-            Text(
+            spokenText(
+              context,
               summary.settled
                   ? context.l10n.debtSettledShort
                   : context.l10n.debtRemaining(
@@ -319,7 +321,8 @@ class DebtSummaryView extends StatelessWidget {
               key: ValueKey('debt.${d.id}.remaining'),
               style: text.titleMedium?.copyWith(fontWeight: FontWeight.w600),
             ),
-            Text(
+            spokenText(
+              context,
               context.l10n.debtPaidOf(
                 formatMoney(summary.paidCents, d.currency),
                 formatMoney(d.amountCents, d.currency),

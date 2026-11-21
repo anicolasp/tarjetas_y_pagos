@@ -908,5 +908,82 @@
   "a11yPreviewLabel": "Así se verá:",
   "appBrightness": "Brillo de la app",
   "useSystemBrightness": "Usar el del teléfono",
-  "appBrightnessHint": "Solo mientras la app está abierta"
+  "appBrightnessHint": "Solo mientras la app está abierta",
+  "spokenPesos": "{count, plural, =1{{amount} peso dominicano} other{{amount} pesos dominicanos}}",
+  "@spokenPesos": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "spokenDollars": "{count, plural, =1{{amount} dólar} other{{amount} dólares}}",
+  "@spokenDollars": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "spokenCents": "{count, plural, =1{1 centavo} other{{count} centavos}}",
+  "@spokenCents": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "spokenWithCents": "{units} con {cents}",
+  "@spokenWithCents": {
+    "placeholders": {
+      "units": {
+        "type": "String"
+      },
+      "cents": {
+        "type": "String"
+      }
+    }
+  },
+  "spokenMinus": "menos {amount}",
+  "@spokenMinus": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "cardEndingIn": "{brand} terminada en {last4}",
+  "@cardEndingIn": {
+    "placeholders": {
+      "brand": {
+        "type": "String"
+      },
+      "last4": {
+        "type": "String"
+      }
+    }
+  },
+  "cardOtherBrand": "Tarjeta",
+  "chartDonutSemantics": "Gráfico circular por categoría. {items}",
+  "@chartDonutSemantics": {
+    "placeholders": {
+      "items": {
+        "type": "String"
+      }
+    }
+  },
+  "chartMonthsSemantics": "Gráfico de barras por mes. {items}",
+  "@chartMonthsSemantics": {
+    "placeholders": {
+      "items": {
+        "type": "String"
+      }
+    }
+  }
 }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/l10n.dart';
+
 /// A movement row. Unlike ListTile, the amount can wrap below the title
 /// with large text instead of overflowing.
 class MovementTile extends StatelessWidget {
@@ -61,7 +63,8 @@ class MovementTile extends StatelessWidget {
                         ),
                     ],
                   ),
-                  Text(
+                  spokenText(
+                    context,
                     amount,
                     style: text.bodyLarge?.copyWith(
                       fontWeight: FontWeight.w600,

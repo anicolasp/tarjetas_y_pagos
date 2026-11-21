@@ -640,7 +640,8 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
                         if (_cardAmountCents case final cents?)
                           Padding(
                             padding: const EdgeInsets.only(left: 12, top: 8),
-                            child: Text(
+                            child: spokenText(
+                              context,
                               context.l10n.recordedOnCardAs(
                                 formatMoney(cents, _card!.currency),
                               ),

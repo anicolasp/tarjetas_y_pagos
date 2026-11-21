@@ -2799,6 +2799,60 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Solo mientras la app está abierta'**
   String get appBrightnessHint;
+
+  /// No description provided for @spokenPesos.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{{amount} peso dominicano} other{{amount} pesos dominicanos}}'**
+  String spokenPesos(int count, String amount);
+
+  /// No description provided for @spokenDollars.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{{amount} dólar} other{{amount} dólares}}'**
+  String spokenDollars(int count, String amount);
+
+  /// No description provided for @spokenCents.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 centavo} other{{count} centavos}}'**
+  String spokenCents(int count);
+
+  /// No description provided for @spokenWithCents.
+  ///
+  /// In es, this message translates to:
+  /// **'{units} con {cents}'**
+  String spokenWithCents(String units, String cents);
+
+  /// No description provided for @spokenMinus.
+  ///
+  /// In es, this message translates to:
+  /// **'menos {amount}'**
+  String spokenMinus(String amount);
+
+  /// No description provided for @cardEndingIn.
+  ///
+  /// In es, this message translates to:
+  /// **'{brand} terminada en {last4}'**
+  String cardEndingIn(String brand, String last4);
+
+  /// No description provided for @cardOtherBrand.
+  ///
+  /// In es, this message translates to:
+  /// **'Tarjeta'**
+  String get cardOtherBrand;
+
+  /// No description provided for @chartDonutSemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'Gráfico circular por categoría. {items}'**
+  String chartDonutSemantics(String items);
+
+  /// No description provided for @chartMonthsSemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'Gráfico de barras por mes. {items}'**
+  String chartMonthsSemantics(String items);
 }
 
 class _AppLocalizationsDelegate

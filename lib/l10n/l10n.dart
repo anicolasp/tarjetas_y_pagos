@@ -1,7 +1,9 @@
 import 'package:flutter/widgets.dart';
 
+import '../core/formatters.dart';
 import '../core/greeting.dart';
 import '../core/language.dart';
+import '../core/money.dart';
 import '../core/report.dart' show ReportPeriod;
 import '../core/security_question.dart';
 import '../core/validators.dart';
@@ -154,3 +156,56 @@ extension AppTexts on AppLocalizations {
     });
   }
 }
+
+/// Amounts as a screen reader should say them (#40).
+extension SpokenMoney on AppLocalizations {
+  /// `RD$ 1,250.50` → "1250 pesos dominicanos con 50 centavos". The number
+  /// has no thousands commas: Spanish and French voices would read them as
+  /// decimals.
+  String moneySemantics(int cents, Currency currency) {
+    final whole = cents.abs() ~/ 100;
+    final rest = cents.abs() % 100;
+    final units = switch (currency) {
+      Currency.dop => spokenPesos(whole, '$whole'),
+      Currency.usd => spokenDollars(whole, '$whole'),
+    };
+    final amount = rest == 0
+        ? units
+        : spokenWithCents(units, spokenCents(rest));
+    return cents < 0 ? spokenMinus(amount) : amount;
+  }
+
+  /// [text] with every formatted amount in it spoken ([moneySemantics]),
+  /// for `Text.semanticsLabel`. Null when [text] has no amount, so the
+  /// text is read as it is.
+  String? speakMoney(String text) {
+    if (!formattedMoney.hasMatch(text)) return null;
+    return text.replaceAllMapped(formattedMoney, (m) {
+      final (:cents, :currency) = parseFormattedMoney(m);
+      return moneySemantics(cents, currency);
+    });
+  }
+}
+
+/// A [Text] whose amounts a screen reader says in words ([speakMoney]),
+/// e.g. "1250 pesos dominicanos" instead of "R D dollar 1,250.00" (#40).
+/// It is a plain [Text]: same look, same widget type.
+Text spokenText(
+  BuildContext context,
+  String data, {
+  Key? key,
+  TextStyle? style,
+  TextAlign? textAlign,
+  int? maxLines,
+  TextOverflow? overflow,
+  bool? softWrap,
+}) => Text(
+  data,
+  key: key,
+  style: style,
+  textAlign: textAlign,
+  maxLines: maxLines,
+  overflow: overflow,
+  softWrap: softWrap,
+  semanticsLabel: context.l10n.speakMoney(data),
+);

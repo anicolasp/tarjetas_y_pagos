@@ -505,20 +505,24 @@ class _CardFormState extends ConsumerState<_CardForm> {
                       gap,
                       Text(context.l10n.color, style: text.labelLarge),
                       const SizedBox(height: 6),
+                      // 48 dp touch areas around 40 dp dots: the same 10 dp
+                      // gap between dots as before (#40).
                       Wrap(
-                        spacing: 10,
-                        runSpacing: 10,
+                        spacing: 2,
+                        runSpacing: 2,
                         children: [
                           for (final (i, c) in cardColors.indexed)
                             _ColorDot(
                               key: ValueKey('cardForm.color.$i'),
+                              label: context.l10n.colorNumber(i + 1),
                               color: Color(c),
                               selected: _color == c,
                               onTap: () => setState(() => _color = c),
                             ),
                         ],
                       ),
-                      const SizedBox(height: 28),
+                      // 28 minus the 8 dp the touch areas add below the last row.
+                      const SizedBox(height: 20),
                       LoadingButton(
                         key: const ValueKey('cardForm.save'),
                         label: _editing
@@ -632,11 +636,13 @@ class _BankFieldState extends State<_BankField> {
 class _ColorDot extends StatelessWidget {
   const _ColorDot({
     super.key,
+    required this.label,
     required this.color,
     required this.selected,
     required this.onTap,
   });
 
+  final String label;
   final Color color;
   final bool selected;
   final VoidCallback onTap;
@@ -646,25 +652,31 @@ class _ColorDot extends StatelessWidget {
     return Semantics(
       button: true,
       selected: selected,
+      label: label,
       child: InkResponse(
         onTap: onTap,
         radius: 26,
-        child: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: selected
-                  ? Theme.of(context).colorScheme.onSurface
-                  : Colors.transparent,
-              width: 3,
+        child: SizedBox.square(
+          dimension: 48,
+          child: Center(
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: color,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: selected
+                      ? Theme.of(context).colorScheme.onSurface
+                      : Colors.transparent,
+                  width: 3,
+                ),
+              ),
+              child: selected
+                  ? const Icon(Icons.check, color: Colors.white, size: 20)
+                  : null,
             ),
           ),
-          child: selected
-              ? const Icon(Icons.check, color: Colors.white, size: 20)
-              : null,
         ),
       ),
     );

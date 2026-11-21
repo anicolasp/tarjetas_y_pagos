@@ -181,7 +181,8 @@ class _PaymentFormState extends ConsumerState<_PaymentForm> {
                         key: const ValueKey('paymentForm.fillDue'),
                         onPressed: () =>
                             setState(() => _amount.text = centsToInput(due)),
-                        child: Text(
+                        child: spokenText(
+                          context,
                           context.l10n.payStatementDue(
                             formatMoney(due, _currency),
                           ),

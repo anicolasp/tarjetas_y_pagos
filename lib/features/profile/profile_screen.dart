@@ -621,7 +621,8 @@ class _A11yPreview extends StatelessWidget {
                 spacing: 8,
                 children: [
                   Text(l.spentThisMonth, style: theme.textTheme.bodyLarge),
-                  Text(
+                  spokenText(
+                    context,
                     formatMoney(125000, Currency.dop),
                     style: theme.textTheme.titleMedium,
                   ),

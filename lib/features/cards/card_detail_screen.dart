@@ -379,7 +379,8 @@ class _CurrencyBlock extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          Text(
+          spokenText(
+            context,
             context.l10n.availableOf(
               formatMoney(limit - s.balanceCents, c),
               formatMoney(limit, c),
@@ -401,7 +402,8 @@ class _CurrencyBlock extends StatelessWidget {
         if (s.overdue)
           Padding(
             padding: const EdgeInsets.only(top: 4),
-            child: Text(
+            child: spokenText(
+              context,
               context.l10n.overdueSince(
                 formatMoney(s.overdueCents, c),
                 formatDate(s.overdueSince!),
@@ -459,7 +461,8 @@ class _PaymentTile extends ConsumerWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(context.l10n.deletePaymentTitle),
-        content: Text(
+        content: spokenText(
+          context,
           context.l10n.deletePaymentBody(
             formatMoney(payment.amountCents, payment.currency),
           ),
@@ -564,7 +567,8 @@ class _Row extends StatelessWidget {
         runSpacing: 2,
         children: [
           Text(label, style: text.bodyMedium),
-          Text(
+          spokenText(
+            context,
             value,
             key: valueKey == null ? null : ValueKey<String>(valueKey!),
             style: (emphasize ? text.titleMedium : text.bodyMedium)?.copyWith(
