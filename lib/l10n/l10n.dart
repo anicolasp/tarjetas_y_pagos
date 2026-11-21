@@ -8,6 +8,7 @@ import '../core/report.dart' show ReportPeriod;
 import '../core/security_question.dart';
 import '../core/validators.dart';
 import '../data/models/category.dart';
+import '../data/models/credit_card.dart';
 import '../data/repositories/categories_repository.dart'
     show categoryNameMaxLength;
 import '../data/repositories/debts_repository.dart' show creditorMaxLength;
@@ -174,6 +175,13 @@ extension SpokenMoney on AppLocalizations {
         : spokenWithCents(units, spokenCents(rest));
     return cents < 0 ? spokenMinus(amount) : amount;
   }
+
+  /// "Visa ending in 4 3 2 1": the last 4 digit by digit, not "four
+  /// thousand…".
+  String spokenCardEnding(CreditCard card) => cardEndingIn(
+    card.brand == CardBrand.other ? cardOtherBrand : card.brand.label,
+    card.last4.split('').join(' '),
+  );
 
   /// [text] with every formatted amount in it spoken ([moneySemantics]),
   /// for `Text.semanticsLabel`. Null when [text] has no amount, so the

@@ -316,6 +316,12 @@ class _StatementCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               explainRecommendation(context.l10n, recommendation, today),
+              semanticsLabel: explainRecommendation(
+                context.l10n,
+                recommendation,
+                today,
+                spoken: true,
+              ),
               style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
             ),
             const SizedBox(height: 12),

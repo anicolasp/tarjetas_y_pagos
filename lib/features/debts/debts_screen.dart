@@ -219,6 +219,11 @@ class _CardDebtTile extends StatelessWidget {
                                   formatDayMonth(due),
                                 )
                               : context.l10n.cardDueOn(formatDayMonth(due)),
+                          // The full date for screen readers ("15/dic" would
+                          // be read "15 slash dic") (#40).
+                          semanticsLabel: late
+                              ? context.l10n.cardOverdueSince(formatDate(due))
+                              : context.l10n.cardDueOn(formatDate(due)),
                           style: late
                               ? text.bodySmall?.copyWith(
                                   color: scheme.error,

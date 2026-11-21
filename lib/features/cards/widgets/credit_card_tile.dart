@@ -32,16 +32,12 @@ class CreditCardTile extends StatelessWidget {
         .join(' · ');
 
     final l = context.l10n;
-    final brand = card.brand == CardBrand.other
-        ? l.cardOtherBrand
-        : card.brand.label;
     // One element for screen readers (#40): "Gastos de la casa, Visa
     // ending in 4321, Banco Ficticio, Corte 5/dic, Disponible 50000 pesos
     // dominicanos", with the tap kept as its action.
     final spoken = [
       card.alias,
-      // Digit by digit: "4 3 2 1", not "four thousand…".
-      l.cardEndingIn(brand, card.last4.split('').join(' ')),
+      l.spokenCardEnding(card),
       card.bank,
       l.cutOn(formatDate(recommendation.nextCut)),
       available.isEmpty ? l.availableNone : l.availableAmount(available),

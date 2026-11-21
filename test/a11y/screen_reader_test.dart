@@ -141,6 +141,37 @@ void main() {
       semantics.dispose();
     });
 
+    testWidgets('Home header: greeting is a heading, the avatar a separate '
+        '"Mi perfil" button without initials; best card in words', (
+      tester,
+    ) async {
+      final semantics = tester.ensureSemantics();
+      await start(tester);
+      final greeting = tester.getSemantics(
+        find.byKey(const ValueKey('home.greeting')),
+      );
+      expect(greeting.label, isNot(contains(es.profileTitle)));
+      expect(greeting.getSemanticsData().flagsCollection.isHeader, isTrue);
+      expect(
+        tester.getSemantics(find.byKey(const ValueKey('home.avatar'))),
+        isSemantics(label: es.profileTitle, isButton: true, hasTapAction: true),
+      );
+      // Merged with its explanation in the best-card node.
+      expect(
+        find.bySemanticsLabel(
+          RegExp(
+            RegExp.escape(
+              '1. Gastos de la casa, ${es.cardEndingIn('Visa', '4 3 2 1')}',
+            ),
+          ),
+        ),
+        findsOneWidget,
+      );
+      // Dates in full: "15/nov" would be read "15 slash nov".
+      expect(find.bySemanticsLabel(RegExp(r'\d/\w')), findsNothing);
+      semantics.dispose();
+    });
+
     testWidgets('amounts are read in words', (tester) async {
       final semantics = tester.ensureSemantics();
       await start(tester, path: '/home/cards/$cardId');
